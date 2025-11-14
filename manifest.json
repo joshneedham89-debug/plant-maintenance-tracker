@@ -1,0 +1,10 @@
+{
+  "name": "Plant Maintenance Tracker",
+  "short_name": "PM Tracker",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f1724",
+  "theme_color": "#FFD700",
+  "icons": []
+}
