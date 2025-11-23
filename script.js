@@ -1,18 +1,4 @@
-// Offline Plant Maintenance Tracker (baseline from your file)
-
-// We’re using your Excel sheet names as default categories:
-const presetCategories = [
-  'Virgin Side',
-  'Recycle Side',
-  'Drum',
-  'Baghouse',
-  'SilosDrag',
-  'Tank Farm',
-  'Motors',
-  'Gearboxes',
-  'Belts',
-  'Parts'
-];
+// Offline Plant Maintenance Tracker with preloaded data
 
 const PARTS_KEY = 'pm_offline_parts';
 const CATS_KEY  = 'pm_offline_cats';
@@ -67,12 +53,17 @@ function loadState() {
     parts = [];
   }
   try {
-    categories = JSON.parse(localStorage.getItem(CATS_KEY));
+    categories = JSON.parse(localStorage.getItem(CATS_KEY)) || [];
   } catch {
-    categories = null;
+    categories = [];
   }
-  if (!Array.isArray(categories) || categories.length === 0) {
-    categories = presetCategories.slice();
+
+  // Seed from preloaded data if empty
+  if ((!parts || parts.length === 0) && typeof PRELOADED_PARTS !== 'undefined') {
+    parts = PRELOADED_PARTS.slice();
+  }
+  if ((!categories || categories.length === 0) && typeof PRELOADED_CATEGORIES !== 'undefined') {
+    categories = PRELOADED_CATEGORIES.slice();
   }
 
   const theme = localStorage.getItem(THEME_KEY);
@@ -175,8 +166,8 @@ function renderParts() {
       '<div class="part-meta">Last: ' + (p.date || '-') + ' (' + (isFinite(st.days) ? st.days : '-') + ' days ago)</div>' +
       '<div class="part-meta">Next: ' + nextText + '</div>' +
       '<div class="part-meta">' +
-        (p.description ? ('Desc: ' + p.description + ' · ') : '') +
         (p.partNumber ? ('Part#: ' + p.partNumber + ' · ') : '') +
+        (p.description ? ('Desc: ' + p.description + ' · ') : '') +
         (p.location ? ('Loc: ' + p.location) : '') +
       '</div>' +
       '<div class="part-meta">' + (p.notes || '') + '</div>';
@@ -243,8 +234,10 @@ function openAddPart() {
   modalTitle.textContent = 'Add Part';
   if (activeCategory !== 'ALL' && categories.includes(activeCategory)) {
     partCategory.value = activeCategory;
+  } else if (categories.length) {
+    partCategory.value = categories[0];
   } else {
-    partCategory.value = categories[0] || '';
+    partCategory.value = '';
   }
   partName.value = '';
   partSection.value = '';
@@ -288,8 +281,7 @@ function savePart() {
     lastTons: Number(partLastTons.value) || 0,
     tonInterval: Number(partTonInterval.value) || 0,
     notes: (partNotes.value || '').trim(),
-    // placeholders for future baseline fields:
-    description: '', 
+    description: '',
     partNumber: '',
     location: ''
   };
@@ -340,8 +332,8 @@ function exportData() {
 
 function resetAll() {
   if (!confirm('Reset ALL data?')) return;
-  parts = [];
-  categories = presetCategories.slice();
+  parts = (typeof PRELOADED_PARTS !== 'undefined') ? PRELOADED_PARTS.slice() : [];
+  categories = (typeof PRELOADED_CATEGORIES !== 'undefined') ? PRELOADED_CATEGORIES.slice() : [];
   activeCategory = 'ALL';
   saveState();
   populateCategoryDropdowns();

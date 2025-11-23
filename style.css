@@ -228,8 +228,3 @@ body.light-mode .summary-item.yellow{background:#facc15;}
 body.light-mode .summary-item.red{background:#fecaca;}
 body.light-mode .secondary-btn{background:#0f1724;color:#e5e7eb;}
 body.light-mode .footer{background:#0f1724;color:#e5e7eb;}
-
-.more-toggle-row{
-  margin-top:8px;
-  text-align:right;
-}

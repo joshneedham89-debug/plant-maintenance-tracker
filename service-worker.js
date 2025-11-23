@@ -1,9 +1,10 @@
-const CACHE_NAME = 'pm-offline-cache-v1';
+const CACHE_NAME = 'pm-offline-cache-v2';
 const ASSETS = [
   './',
   'index.html',
   'style.css',
   'script.js',
+  'data.js',
   'manifest.json'
 ];
 
