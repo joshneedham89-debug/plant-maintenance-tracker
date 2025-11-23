@@ -1,24 +1,24 @@
+// Offline Plant Maintenance Tracker (baseline from your file)
 
-// Plant Maintenance Tracker - dropdown + dashboard + PWA
-const PARTS_KEY = 'pm_parts_final_parts';
-const TONS_KEY  = 'pm_parts_final_tons';
-const CATS_KEY  = 'pm_parts_final_cats';
-const THEME_KEY = 'pm_parts_theme';
-
+// We’re using your Excel sheet names as default categories:
 const presetCategories = [
-  'Cold Feed / Aggregate Handling',
-  'Dryer Drum',
-  'Baghouse / Dust Collection',
-  'Hot Elevator / Screening',
-  'Mixer / Pugmill',
-  'Slat Conveyor',
-  'Asphalt Tank / Pump',
-  'Control System / Electrical',
-  'General Plant'
+  'Virgin Side',
+  'Recycle Side',
+  'Drum',
+  'Baghouse',
+  'SilosDrag',
+  'Tank Farm',
+  'Motors',
+  'Gearboxes',
+  'Belts',
+  'Parts'
 ];
 
+const PARTS_KEY = 'pm_offline_parts';
+const CATS_KEY  = 'pm_offline_cats';
+const THEME_KEY = 'pm_offline_theme';
+
 let parts = [];
-let currentTons = 0;
 let categories = [];
 let activeCategory = 'ALL';
 let editingIndex = null;
@@ -28,17 +28,8 @@ const okCountEl = document.getElementById('okCount');
 const dueCountEl = document.getElementById('dueCount');
 const overCountEl = document.getElementById('overCount');
 const totalPartsEl = document.getElementById('totalParts');
+const totalCatsEl = document.getElementById('totalCats');
 const nextDueEl = document.getElementById('nextDue');
-const tonsRunEl = document.getElementById('tonsRun');
-
-const currentTonsInput = document.getElementById('currentTons');
-const updateTonsBtn = document.getElementById('updateTonsBtn');
-const addTonsBtn = document.getElementById('addTonsBtn');
-const addTonsModal = document.getElementById('addTonsModal');
-const addTonsAmount = document.getElementById('addTonsAmount');
-const confirmAddTonsBtn = document.getElementById('confirmAddTonsBtn');
-const cancelAddTonsBtn = document.getElementById('cancelAddTonsBtn');
-
 
 const partsList = document.getElementById('partsList');
 const categoryFilter = document.getElementById('categoryFilter');
@@ -75,7 +66,6 @@ function loadState() {
   } catch {
     parts = [];
   }
-  currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
   try {
     categories = JSON.parse(localStorage.getItem(CATS_KEY));
   } catch {
@@ -91,20 +81,16 @@ function loadState() {
     themeToggle.checked = true;
   }
 
-  currentTonsInput.value = currentTons || '';
-
   populateCategoryDropdowns();
   renderAll();
 }
 
 function saveState() {
   localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
-  localStorage.setItem(TONS_KEY, String(currentTons));
   localStorage.setItem(CATS_KEY, JSON.stringify(categories));
 }
 
 function populateCategoryDropdowns() {
-  // filter dropdown
   categoryFilter.innerHTML = '';
   const allOpt = document.createElement('option');
   allOpt.value = 'ALL';
@@ -119,9 +105,12 @@ function populateCategoryDropdowns() {
   });
 
   if (!activeCategory) activeCategory = 'ALL';
+  if (![...categoryFilter.options].some(o => o.value === activeCategory)) {
+    activeCategory = 'ALL';
+  }
   categoryFilter.value = activeCategory;
 
-  // modal category dropdown
+  // modal category
   partCategory.innerHTML = '';
   categories.forEach(cat => {
     const opt = document.createElement('option');
@@ -141,25 +130,18 @@ function daysSince(dateStr) {
 function calcStatus(part) {
   const days = daysSince(part.date);
   const intervalDays = Number(part.days) || 0;
-  const tonsSince = Number(currentTons) - Number(part.lastTons || 0);
-  const tonInterval = Number(part.tonInterval) || 0;
 
   const daysLeft = intervalDays ? intervalDays - days : Infinity;
-  const tonsLeft = tonInterval ? tonInterval - tonsSince : Infinity;
 
   let status = 'ok';
-  if (daysLeft < 0 || tonsLeft < 0) {
+  if (daysLeft < 0) {
     status = 'overdue';
-  } else {
-    const daysThresh = intervalDays ? Math.max(3, Math.round(intervalDays * 0.2)) : 0;
-    const tonsThresh = tonInterval ? Math.max(100, Math.round(tonInterval * 0.2)) : 0;
-    if ((intervalDays && daysLeft <= daysThresh) ||
-        (tonInterval && tonsLeft <= tonsThresh)) {
-      status = 'due';
-    }
+  } else if (intervalDays) {
+    const thresh = Math.max(3, Math.round(intervalDays * 0.2));
+    if (daysLeft <= thresh) status = 'due';
   }
 
-  return { status, days, daysLeft, tonsSince, tonsLeft };
+  return { status, days, daysLeft };
 }
 
 function renderParts() {
@@ -192,8 +174,11 @@ function renderParts() {
       '<div class="part-meta">' + (p.category || '') + ' · ' + (p.section || '') + '</div>' +
       '<div class="part-meta">Last: ' + (p.date || '-') + ' (' + (isFinite(st.days) ? st.days : '-') + ' days ago)</div>' +
       '<div class="part-meta">Next: ' + nextText + '</div>' +
-      '<div class="part-meta">Tons since: ' + (isFinite(st.tonsSince) ? st.tonsSince : '-') +
-      (p.tonInterval ? (' / ' + p.tonInterval + ' interval') : '') + '</div>' +
+      '<div class="part-meta">' +
+        (p.description ? ('Desc: ' + p.description + ' · ') : '') +
+        (p.partNumber ? ('Part#: ' + p.partNumber + ' · ') : '') +
+        (p.location ? ('Loc: ' + p.location) : '') +
+      '</div>' +
       '<div class="part-meta">' + (p.notes || '') + '</div>';
 
     const actions = document.createElement('div');
@@ -207,7 +192,6 @@ function renderParts() {
     actions.appendChild(editBtn);
     actions.appendChild(delBtn);
 
-    // Color strip
     const strip = document.createElement('div');
     if (st.status === 'ok') strip.style.borderLeft = '6px solid #00C853';
     else if (st.status === 'due') strip.style.borderLeft = '6px solid #FFD600';
@@ -216,9 +200,6 @@ function renderParts() {
 
     card.appendChild(left);
     card.appendChild(actions);
-    card.style.display = 'flex';
-    card.style.justifyContent = 'space-between';
-    card.style.alignItems = 'center';
     card.insertBefore(strip, left);
 
     partsList.appendChild(card);
@@ -245,7 +226,7 @@ function computeNextDue() {
 
 function renderSummary() {
   totalPartsEl.textContent = parts.length;
-  tonsRunEl.textContent = currentTons || 0;
+  totalCatsEl.textContent = categories.length;
   const n = computeNextDue();
   if (!n) nextDueEl.textContent = '—';
   else if (n.score < 0) nextDueEl.textContent = n.name + ' (OVERDUE)';
@@ -260,7 +241,6 @@ function renderAll() {
 function openAddPart() {
   editingIndex = null;
   modalTitle.textContent = 'Add Part';
-  // default category = active filter or first
   if (activeCategory !== 'ALL' && categories.includes(activeCategory)) {
     partCategory.value = activeCategory;
   } else {
@@ -271,8 +251,8 @@ function openAddPart() {
   const today = new Date();
   partDate.value = today.toISOString().slice(0, 10);
   partDays.value = '30';
-  partLastTons.value = String(currentTons || 0);
-  partTonInterval.value = '10000';
+  partLastTons.value = '';
+  partTonInterval.value = '';
   partNotes.value = '';
   moreOptions.style.display = 'none';
   partModal.style.display = 'flex';
@@ -300,14 +280,18 @@ function closePartModal() {
 
 function savePart() {
   const part = {
-    category: partCategory.value || 'General Plant',
-    name: partName.value.trim(),
-    section: partSection.value.trim(),
-    date: partDate.value,
+    category: partCategory.value || 'General',
+    name: (partName.value || '').trim(),
+    section: (partSection.value || '').trim(),
+    date: partDate.value || '',
     days: Number(partDays.value) || 0,
     lastTons: Number(partLastTons.value) || 0,
     tonInterval: Number(partTonInterval.value) || 0,
-    notes: partNotes.value.trim()
+    notes: (partNotes.value || '').trim(),
+    // placeholders for future baseline fields:
+    description: '', 
+    partNumber: '',
+    location: ''
   };
   if (!part.name) {
     alert('Please enter a part name');
@@ -339,45 +323,17 @@ function addCategory() {
     categories.push(trimmed);
     saveState();
     populateCategoryDropdowns();
+    renderAll();
   }
-}
-
-
-function openAddTonsModal() {
-  addTonsAmount.value = '';
-  addTonsModal.style.display = 'flex';
-}
-function closeAddTonsModal() {
-  addTonsModal.style.display = 'none';
-}
-function confirmAddTons() {
-  const amount = Number(addTonsAmount.value);
-  if (isNaN(amount) || amount === 0) {
-    alert('Enter a valid tons amount');
-    return;
-  }
-  currentTons = (Number(currentTons) || 0) + amount;
-  currentTonsInput.value = currentTons;
-  saveState();
-  renderAll();
-  closeAddTonsModal();
-}
-
-function updateTons() {
-  const v = Number(currentTonsInput.value);
-  if (isNaN(v)) return;
-  currentTons = v;
-  saveState();
-  renderAll();
 }
 
 function exportData() {
-  const data = { parts, currentTons, categories };
+  const data = { parts, categories };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'plant_maintenance_export.json';
+  a.download = 'plant_maintenance_offline_export.json';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -385,10 +341,8 @@ function exportData() {
 function resetAll() {
   if (!confirm('Reset ALL data?')) return;
   parts = [];
-  currentTons = 0;
   categories = presetCategories.slice();
   activeCategory = 'ALL';
-  currentTonsInput.value = '';
   saveState();
   populateCategoryDropdowns();
   renderAll();
@@ -413,10 +367,6 @@ function toggleTheme(e) {
 }
 
 // Events
-updateTonsBtn.addEventListener('click', updateTons);
-addTonsBtn.addEventListener('click', openAddTonsModal);
-confirmAddTonsBtn.addEventListener('click', confirmAddTons);
-cancelAddTonsBtn.addEventListener('click', closeAddTonsModal);
 addPartBtn.addEventListener('click', openAddPart);
 viewPartsBtn.addEventListener('click', renderAll);
 categoryFilter.addEventListener('change', (e) => {
@@ -439,7 +389,6 @@ themeToggle.addEventListener('change', toggleTheme);
 window.addEventListener('click', (e) => {
   if (e.target === partModal) closePartModal();
   if (e.target === settingsModal) closeSettings();
-  if (e.target === addTonsModal) closeAddTonsModal();
 });
 
 // init
