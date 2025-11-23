@@ -1,5 +1,4 @@
-
-const CACHE_NAME = 'pm-final-cache-v1';
+const CACHE_NAME = 'pm-offline-cache-v1';
 const ASSETS = [
   './',
   'index.html',
