@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -26,25 +25,19 @@
         <h1>Plant Maintenance Tracker</h1>
         <button id="settingsBtn" class="icon-btn">⚙️</button>
       </div>
-      <p class="subtitle">Ton &amp; Time tracker — offline</p>
+      <p class="subtitle">Offline parts & maintenance tracker</p>
     </header>
 
     <section class="summary-row">
       <div class="summary-item green" id="okCount">🟢 OK: 0</div>
       <div class="summary-item yellow" id="dueCount">🟡 Due: 0</div>
       <div class="summary-item red" id="overCount">🔴 Overdue: 0</div>
-      <div class="tons-input">
-        <label for="currentTons">Current Tons</label>
-        <input id="currentTons" type="number" inputmode="numeric" />
-        <button id="updateTonsBtn">Update</button>
-        <button id="addTonsBtn" class="small-btn">+ Add Tons</button>
-      </div>
     </section>
 
     <section class="quick-stats">
       <div class="stat">Total Parts<br><span id="totalParts">0</span></div>
+      <div class="stat">Categories<br><span id="totalCats">0</span></div>
       <div class="stat">Next Due<br><span id="nextDue">—</span></div>
-      <div class="stat">Tons Run<br><span id="tonsRun">0</span></div>
     </section>
 
     <section class="actions-row">
@@ -108,20 +101,6 @@
     </div>
   </div>
 
-  
-  <!-- Add Tons Modal -->
-  <div id="addTonsModal" class="modal">
-    <div class="modal-content small">
-      <h3>Add Tons</h3>
-      <label for="addTonsAmount">Amount to add</label>
-      <input id="addTonsAmount" type="number" inputmode="numeric" />
-      <div class="modal-actions">
-        <button id="confirmAddTonsBtn" class="primary-btn">Add</button>
-        <button id="cancelAddTonsBtn" class="secondary-btn">Cancel</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Settings Modal -->
   <div id="settingsModal" class="modal">
     <div class="modal-content small">
@@ -136,3 +115,7 @@
   <script src="script.js"></script>
 </body>
 </html>
+  <script src="script.js"></script>
+</body>
+</html>
+
