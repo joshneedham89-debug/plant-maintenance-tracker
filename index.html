@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -13,32 +14,30 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('service-worker.js');
+        navigator.serviceWorker.register('service-worker.js').catch(console.error);
       });
     }
   </script>
 </head>
-
 <body>
   <div class="app">
-
     <header class="header">
       <div class="title-row">
         <h1>Plant Maintenance Tracker</h1>
         <button id="settingsBtn" class="icon-btn">⚙️</button>
       </div>
-      <p class="subtitle">Tons • Time • Parts — Offline</p>
+      <p class="subtitle">Ton &amp; Time tracker — offline</p>
     </header>
 
     <section class="summary-row">
       <div class="summary-item green" id="okCount">🟢 OK: 0</div>
       <div class="summary-item yellow" id="dueCount">🟡 Due: 0</div>
       <div class="summary-item red" id="overCount">🔴 Overdue: 0</div>
-
       <div class="tons-input">
-        <label for="currentTons">Tons</label>
-        <input id="currentTons" type="number" />
+        <label for="currentTons">Current Tons</label>
+        <input id="currentTons" type="number" inputmode="numeric" />
         <button id="updateTonsBtn">Update</button>
+        <button id="addTonsBtn" class="small-btn">+ Add Tons</button>
       </div>
     </section>
 
@@ -56,19 +55,18 @@
     <section class="filter-row">
       <label for="categoryFilter">Category:</label>
       <select id="categoryFilter"></select>
-      <button id="addCategoryBtn" class="small-btn">+ Add</button>
+      <button id="addCategoryBtn" class="small-btn">+ Add Category</button>
     </section>
 
     <main id="partsList" class="parts-list"></main>
 
     <footer class="footer">
-      <button id="exportBtn">Export</button>
+      <button id="exportBtn">Export JSON</button>
       <button id="resetBtn">Reset</button>
     </footer>
-
   </div>
 
-  <!-- PART MODAL -->
+  <!-- Add / Edit Part Modal -->
   <div id="partModal" class="modal">
     <div class="modal-content">
       <h2 id="modalTitle">Add Part</h2>
@@ -77,23 +75,23 @@
       <select id="partCategory"></select>
 
       <label for="partName">Part Name</label>
-      <input id="partName" />
+      <input id="partName" placeholder="e.g., Drag Chain" />
 
-      <label for="partSection">Section</label>
-      <input id="partSection" />
+      <label for="partSection">Section / Location</label>
+      <input id="partSection" placeholder="e.g., Slat Conveyor" />
 
-      <label for="partDate">Last Maintenance</label>
+      <label for="partDate">Last Maintenance Date</label>
       <input id="partDate" type="date" />
 
       <div class="more-toggle-row">
-        <button id="moreToggle" class="small-btn">More ▼</button>
+        <button id="moreToggle" class="small-btn">More Options ▼</button>
       </div>
 
       <div id="moreOptions" style="display:none">
         <label for="partDays">Interval (days)</label>
         <input id="partDays" type="number" />
 
-        <label for="partLastTons">Last Tons</label>
+        <label for="partLastTons">Last Ton Reading</label>
         <input id="partLastTons" type="number" />
 
         <label for="partTonInterval">Ton Interval</label>
@@ -104,13 +102,27 @@
       </div>
 
       <div class="modal-actions">
-        <button id="savePartBtn" class="primary-btn">Save</button>
+        <button id="savePartBtn" class="primary-btn">Save Part</button>
         <button id="cancelPartBtn" class="secondary-btn">Cancel</button>
       </div>
     </div>
   </div>
 
-  <!-- SETTINGS -->
+  
+  <!-- Add Tons Modal -->
+  <div id="addTonsModal" class="modal">
+    <div class="modal-content small">
+      <h3>Add Tons</h3>
+      <label for="addTonsAmount">Amount to add</label>
+      <input id="addTonsAmount" type="number" inputmode="numeric" />
+      <div class="modal-actions">
+        <button id="confirmAddTonsBtn" class="primary-btn">Add</button>
+        <button id="cancelAddTonsBtn" class="secondary-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
   <div id="settingsModal" class="modal">
     <div class="modal-content small">
       <h3>Settings</h3>
@@ -121,8 +133,6 @@
     </div>
   </div>
 
-  <script src="data.js"></script>
   <script src="script.js"></script>
-
 </body>
 </html>
