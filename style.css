@@ -285,3 +285,14 @@ body{
   margin-top:10px;
   text-align:right;
 }
+
+#currentTonsInput,
+#addTonsInput {
+  width: 90px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 0;
+  background: #fff;
+  color: #000;
+  font-weight: 700;
+}
