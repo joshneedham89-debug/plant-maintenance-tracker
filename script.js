@@ -1,387 +1,287 @@
-// Offline Plant Maintenance Tracker with preloaded data
-
-const PARTS_KEY = 'pm_offline_parts';
-const CATS_KEY  = 'pm_offline_cats';
-const THEME_KEY = 'pm_offline_theme';
-
-let parts = [];
-let categories = [];
-let activeCategory = 'ALL';
-let editingIndex = null;
-
-// DOM refs
-const okCountEl = document.getElementById('okCount');
-const dueCountEl = document.getElementById('dueCount');
-const overCountEl = document.getElementById('overCount');
-const totalPartsEl = document.getElementById('totalParts');
-const totalCatsEl = document.getElementById('totalCats');
-const nextDueEl = document.getElementById('nextDue');
-
-const partsList = document.getElementById('partsList');
-const categoryFilter = document.getElementById('categoryFilter');
-const addCategoryBtn = document.getElementById('addCategoryBtn');
-
-const addPartBtn = document.getElementById('addPartBtn');
-const viewPartsBtn = document.getElementById('viewPartsBtn');
-const exportBtn = document.getElementById('exportBtn');
-const resetBtn = document.getElementById('resetBtn');
-
-const partModal = document.getElementById('partModal');
-const modalTitle = document.getElementById('modalTitle');
-const partCategory = document.getElementById('partCategory');
-const partName = document.getElementById('partName');
-const partSection = document.getElementById('partSection');
-const partDate = document.getElementById('partDate');
-const partDays = document.getElementById('partDays');
-const partLastTons = document.getElementById('partLastTons');
-const partTonInterval = document.getElementById('partTonInterval');
-const partNotes = document.getElementById('partNotes');
-const savePartBtn = document.getElementById('savePartBtn');
-const cancelPartBtn = document.getElementById('cancelPartBtn');
-const moreToggle = document.getElementById('moreToggle');
-const moreOptions = document.getElementById('moreOptions');
-
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsModal = document.getElementById('settingsModal');
-const themeToggle = document.getElementById('themeToggle');
-const closeSettingsBtn = document.getElementById('closeSettingsBtn');
-
-function loadState() {
-  try {
-    parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
-  } catch {
-    parts = [];
-  }
-  try {
-    categories = JSON.parse(localStorage.getItem(CATS_KEY)) || [];
-  } catch {
-    categories = [];
-  }
-
-  // Seed from preloaded data if empty
-  if ((!parts || parts.length === 0) && typeof PRELOADED_PARTS !== 'undefined') {
-    parts = PRELOADED_PARTS.slice();
-  }
-  if ((!categories || categories.length === 0) && typeof PRELOADED_CATEGORIES !== 'undefined') {
-    categories = PRELOADED_CATEGORIES.slice();
-  }
-
-  const theme = localStorage.getItem(THEME_KEY);
-  if (theme === 'light') {
-    document.body.classList.add('light-mode');
-    themeToggle.checked = true;
-  }
-
-  populateCategoryDropdowns();
-  renderAll();
+:root{
+  --bg:#0f1724;
+  --card:#0b1220;
+  --accent:#FFD700;
+  --muted:#94a3b8;
+  --white:#eef2ff;
 }
 
-function saveState() {
-  localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
-  localStorage.setItem(CATS_KEY, JSON.stringify(categories));
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:var(--bg);
+  color:var(--white);
 }
 
-function populateCategoryDropdowns() {
-  categoryFilter.innerHTML = '';
-  const allOpt = document.createElement('option');
-  allOpt.value = 'ALL';
-  allOpt.textContent = 'All';
-  categoryFilter.appendChild(allOpt);
-
-  categories.forEach(cat => {
-    const opt = document.createElement('option');
-    opt.value = cat;
-    opt.textContent = cat;
-    categoryFilter.appendChild(opt);
-  });
-
-  if (!activeCategory) activeCategory = 'ALL';
-  if (![...categoryFilter.options].some(o => o.value === activeCategory)) {
-    activeCategory = 'ALL';
-  }
-  categoryFilter.value = activeCategory;
-
-  // modal category
-  partCategory.innerHTML = '';
-  categories.forEach(cat => {
-    const opt = document.createElement('option');
-    opt.value = cat;
-    opt.textContent = cat;
-    partCategory.appendChild(opt);
-  });
+.app{
+  max-width:760px;
+  margin:0 auto;
+  padding:12px;
 }
 
-function daysSince(dateStr) {
-  if (!dateStr) return Infinity;
-  const d = new Date(dateStr + 'T00:00:00');
-  const now = new Date();
-  return Math.floor((now - d) / (1000 * 60 * 60 * 24));
+/* HEADER */
+.header .title-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
 }
 
-function calcStatus(part) {
-  const days = daysSince(part.date);
-  const intervalDays = Number(part.days) || 0;
-
-  const daysLeft = intervalDays ? intervalDays - days : Infinity;
-
-  let status = 'ok';
-  if (daysLeft < 0) {
-    status = 'overdue';
-  } else if (intervalDays) {
-    const thresh = Math.max(3, Math.round(intervalDays * 0.2));
-    if (daysLeft <= thresh) status = 'due';
-  }
-
-  return { status, days, daysLeft };
+.header h1{
+  margin:0;
+  font-size:22px;
+  color:var(--accent);
+  flex:1;
 }
 
-function renderParts() {
-  partsList.innerHTML = '';
-  let ok = 0, due = 0, over = 0;
-
-  const filtered = parts.filter(p => activeCategory === 'ALL' ? true : p.category === activeCategory);
-
-  filtered.forEach((p, index) => {
-    const st = calcStatus(p);
-    if (st.status === 'ok') ok++;
-    else if (st.status === 'due') due++;
-    else over++;
-
-    const card = document.createElement('div');
-    card.className = 'part-card';
-
-    const left = document.createElement('div');
-    left.className = 'part-left';
-
-    let nextText = 'n/a';
-    if (st.status === 'overdue') {
-      nextText = 'OVERDUE';
-    } else if (st.daysLeft !== Infinity) {
-      nextText = st.daysLeft + ' days left';
-    }
-
-    left.innerHTML =
-      '<div class="part-name">' + (p.name || '') + '</div>' +
-      '<div class="part-meta">' + (p.category || '') + ' · ' + (p.section || '') + '</div>' +
-      '<div class="part-meta">Last: ' + (p.date || '-') + ' (' + (isFinite(st.days) ? st.days : '-') + ' days ago)</div>' +
-      '<div class="part-meta">Next: ' + nextText + '</div>' +
-      '<div class="part-meta">' +
-        (p.partNumber ? ('Part#: ' + p.partNumber + ' · ') : '') +
-        (p.description ? ('Desc: ' + p.description + ' · ') : '') +
-        (p.location ? ('Loc: ' + p.location) : '') +
-      '</div>' +
-      '<div class="part-meta">' + (p.notes || '') + '</div>';
-
-    const actions = document.createElement('div');
-    actions.className = 'part-actions';
-    const editBtn = document.createElement('button');
-    editBtn.textContent = 'Edit';
-    editBtn.onclick = () => openEditPart(index);
-    const delBtn = document.createElement('button');
-    delBtn.textContent = 'Del';
-    delBtn.onclick = () => deletePart(index);
-    actions.appendChild(editBtn);
-    actions.appendChild(delBtn);
-
-    const strip = document.createElement('div');
-    if (st.status === 'ok') strip.style.borderLeft = '6px solid #00C853';
-    else if (st.status === 'due') strip.style.borderLeft = '6px solid #FFD600';
-    else strip.style.borderLeft = '6px solid #FF5252';
-    strip.style.paddingLeft = '10px';
-
-    card.appendChild(left);
-    card.appendChild(actions);
-    card.insertBefore(strip, left);
-
-    partsList.appendChild(card);
-  });
-
-  okCountEl.textContent = '🟢 OK: ' + ok;
-  dueCountEl.textContent = '🟡 Due: ' + due;
-  overCountEl.textContent = '🔴 Overdue: ' + over;
+.icon-btn{
+  background:transparent;
+  border:0;
+  color:var(--white);
+  font-size:20px;
+  cursor:pointer;
 }
 
-function computeNextDue() {
-  if (!parts.length) return null;
-  let best = null;
-  parts.forEach(p => {
-    const st = calcStatus(p);
-    let score = st.daysLeft;
-    if (!isFinite(score)) return;
-    if (best === null || score < best.score) {
-      best = { name: p.name, score };
-    }
-  });
-  return best;
+.subtitle{
+  margin:4px 0 12px;
+  font-size:12px;
+  color:var(--muted);
 }
 
-function renderSummary() {
-  totalPartsEl.textContent = parts.length;
-  totalCatsEl.textContent = categories.length;
-  const n = computeNextDue();
-  if (!n) nextDueEl.textContent = '—';
-  else if (n.score < 0) nextDueEl.textContent = n.name + ' (OVERDUE)';
-  else nextDueEl.textContent = n.name + ' (in ' + n.score + ' days)';
+/* SUMMARY BAR */
+.summary-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-bottom:12px;
 }
 
-function renderAll() {
-  renderParts();
-  renderSummary();
+.summary-item{
+  padding:8px 10px;
+  border-radius:8px;
+  background:#0b1220;
+  font-weight:700;
+  font-size:13px;
 }
 
-function openAddPart() {
-  editingIndex = null;
-  modalTitle.textContent = 'Add Part';
-  if (activeCategory !== 'ALL' && categories.includes(activeCategory)) {
-    partCategory.value = activeCategory;
-  } else if (categories.length) {
-    partCategory.value = categories[0];
-  } else {
-    partCategory.value = '';
-  }
-  partName.value = '';
-  partSection.value = '';
-  const today = new Date();
-  partDate.value = today.toISOString().slice(0, 10);
-  partDays.value = '30';
-  partLastTons.value = '';
-  partTonInterval.value = '';
-  partNotes.value = '';
-  moreOptions.style.display = 'none';
-  partModal.style.display = 'flex';
+.summary-item.green{background:#083b12;}
+.summary-item.yellow{background:#5a4309;}
+.summary-item.red{background:#4b1313;}
+
+/* TONS BOX */
+.tons-box{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:#0b1220;
+  padding:6px 10px;
+  border-radius:8px;
 }
 
-function openEditPart(index) {
-  editingIndex = index;
-  const p = parts[index];
-  modalTitle.textContent = 'Edit Part';
-  partCategory.value = p.category || (categories[0] || '');
-  partName.value = p.name || '';
-  partSection.value = p.section || '';
-  partDate.value = p.date || '';
-  partDays.value = p.days || '';
-  partLastTons.value = p.lastTons || '';
-  partTonInterval.value = p.tonInterval || '';
-  partNotes.value = p.notes || '';
-  moreOptions.style.display = 'block';
-  partModal.style.display = 'flex';
+.tons-label{
+  font-size:12px;
+  color:var(--muted);
 }
 
-function closePartModal() {
-  partModal.style.display = 'none';
+#currentTonsDisplay{
+  font-weight:700;
+  color:var(--accent);
 }
 
-function savePart() {
-  const part = {
-    category: partCategory.value || 'General',
-    name: (partName.value || '').trim(),
-    section: (partSection.value || '').trim(),
-    date: partDate.value || '',
-    days: Number(partDays.value) || 0,
-    lastTons: Number(partLastTons.value) || 0,
-    tonInterval: Number(partTonInterval.value) || 0,
-    notes: (partNotes.value || '').trim(),
-    description: '',
-    partNumber: '',
-    location: ''
-  };
-  if (!part.name) {
-    alert('Please enter a part name');
-    return;
-  }
-  if (editingIndex === null) {
-    parts.unshift(part);
-  } else {
-    parts[editingIndex] = part;
-  }
-  saveState();
-  closePartModal();
-  renderAll();
+.small-btn{
+  padding:6px 10px;
+  border-radius:8px;
+  background:var(--accent);
+  border:0;
+  color:#000;
+  font-weight:700;
+  cursor:pointer;
 }
 
-function deletePart(index) {
-  if (!confirm('Delete this part?')) return;
-  parts.splice(index, 1);
-  saveState();
-  renderAll();
+/* QUICK STATS */
+.quick-stats{
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
 }
 
-function addCategory() {
-  const name = prompt('New category name:');
-  if (!name) return;
-  const trimmed = name.trim();
-  if (!trimmed) return;
-  if (!categories.includes(trimmed)) {
-    categories.push(trimmed);
-    saveState();
-    populateCategoryDropdowns();
-    renderAll();
-  }
+.stat{
+  background:var(--card);
+  padding:12px;
+  border-radius:10px;
+  flex:1;
+  text-align:center;
 }
 
-function exportData() {
-  const data = { parts, categories };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'plant_maintenance_offline_export.json';
-  a.click();
-  URL.revokeObjectURL(url);
+.stat span{
+  display:block;
+  font-weight:700;
+  margin-top:6px;
+  font-size:16px;
+  color:var(--accent);
 }
 
-function resetAll() {
-  if (!confirm('Reset ALL data?')) return;
-  parts = (typeof PRELOADED_PARTS !== 'undefined') ? PRELOADED_PARTS.slice() : [];
-  categories = (typeof PRELOADED_CATEGORIES !== 'undefined') ? PRELOADED_CATEGORIES.slice() : [];
-  activeCategory = 'ALL';
-  saveState();
-  populateCategoryDropdowns();
-  renderAll();
+/* ACTION BUTTONS */
+.actions-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
 }
 
-// Settings / theme
-function openSettings() {
-  settingsModal.style.display = 'flex';
-}
-function closeSettings() {
-  settingsModal.style.display = 'none';
-}
-function toggleTheme(e) {
-  const checked = e.target.checked;
-  if (checked) {
-    document.body.classList.add('light-mode');
-    localStorage.setItem(THEME_KEY, 'light');
-  } else {
-    document.body.classList.remove('light-mode');
-    localStorage.setItem(THEME_KEY, 'dark');
-  }
+.primary-btn,.secondary-btn{
+  flex:1;
+  padding:12px;
+  border-radius:10px;
+  border:0;
+  font-weight:800;
+  font-size:16px;
+  cursor:pointer;
 }
 
-// Events
-addPartBtn.addEventListener('click', openAddPart);
-viewPartsBtn.addEventListener('click', renderAll);
-categoryFilter.addEventListener('change', (e) => {
-  activeCategory = e.target.value || 'ALL';
-  renderAll();
-});
-addCategoryBtn.addEventListener('click', addCategory);
-exportBtn.addEventListener('click', exportData);
-resetBtn.addEventListener('click', resetAll);
-savePartBtn.addEventListener('click', savePart);
-cancelPartBtn.addEventListener('click', closePartModal);
-moreToggle.addEventListener('click', () => {
-  moreOptions.style.display = (moreOptions.style.display === 'none' || !moreOptions.style.display)
-    ? 'block' : 'none';
-});
-settingsBtn.addEventListener('click', openSettings);
-closeSettingsBtn.addEventListener('click', closeSettings);
-themeToggle.addEventListener('change', toggleTheme);
+.primary-btn{
+  background:var(--accent);
+  color:#000;
+}
 
-window.addEventListener('click', (e) => {
-  if (e.target === partModal) closePartModal();
-  if (e.target === settingsModal) closeSettings();
-});
+.secondary-btn{
+  background:#ffffff10;
+  color:#fff;
+}
 
-// init
-loadState();
+/* FILTER BAR */
+.filter-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.filter-row select{
+  flex:1;
+  padding:8px;
+  border-radius:8px;
+  border:0;
+  background:#fff;
+  color:#000;
+  font-weight:600;
+}
+
+/* PARTS LIST */
+.parts-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding-bottom:100px;
+}
+
+.part-card{
+  background:var(--card);
+  padding:12px;
+  border-radius:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  border-left:6px solid #FFD70020;
+}
+
+.part-left{max-width:70%;}
+
+.part-name{
+  font-weight:800;
+  margin-bottom:6px;
+  font-size:16px;
+}
+
+.part-meta{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:4px;
+}
+
+.part-actions button{
+  margin-left:6px;
+  padding:8px 10px;
+  border-radius:8px;
+  border:0;
+  background:#fff;
+  color:#000;
+  cursor:pointer;
+}
+
+/* FOOTER */
+.footer{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  padding:10px;
+  background:#061023;
+  display:flex;
+  gap:12px;
+  justify-content:center;
+}
+
+.footer button{
+  padding:8px 14px;
+  border-radius:8px;
+  font-size:14px;
+  border:0;
+  cursor:pointer;
+}
+
+/* MODALS */
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  align-items:center;
+  justify-content:center;
+  padding:12px;
+}
+
+.modal-content{
+  background:#071425;
+  padding:14px;
+  border-radius:12px;
+  max-width:720px;
+  width:100%;
+}
+
+.modal-content.small{max-width:360px;}
+
+.modal label{
+  display:block;
+  margin-top:10px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.modal input,
+.modal select,
+.modal textarea{
+  width:100%;
+  padding:8px;
+  margin-top:4px;
+  border-radius:8px;
+  border:0;
+  background:#fff;
+  color:#000;
+}
+
+.modal textarea{min-height:80px;}
+
+.modal-actions{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  margin-top:12px;
+}
+
+.more-toggle-row{
+  margin-top:10px;
+  text-align:right;
+}
