@@ -1,6 +1,6 @@
 // ----------------------------
 //  OFFLINE PLANT MAINTENANCE TRACKER
-//  Fully Offline Version
+//  Fully Offline Version with fixes
 // ----------------------------
 
 const PARTS_KEY = "pm_parts";
@@ -67,6 +67,7 @@ function loadState() {
   }
 
   currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
+  currentTonsInput.value = currentTons;
 
   try {
     categories = JSON.parse(localStorage.getItem(CATS_KEY));
@@ -74,18 +75,15 @@ function loadState() {
     categories = [];
   }
 
-  if (!categories || categories.length === 0) {
+  if (!Array.isArray(categories) || categories.length === 0) {
     categories = ["General", "Electrical", "Motors", "Safety"];
   }
 
-  // load theme
   const theme = localStorage.getItem(THEME_KEY);
   if (theme === "light") {
     document.body.classList.add("light-mode");
     themeToggle.checked = true;
   }
-
-  currentTonsInput.value = currentTons || "";
 
   populateCategoryDropdowns();
   renderAll();
@@ -114,10 +112,12 @@ function populateCategoryDropdowns() {
     categoryFilter.appendChild(opt);
   });
 
-  if (!activeCategory) activeCategory = "ALL";
+  if (!activeCategory || !categories.includes(activeCategory)) {
+    activeCategory = "ALL";
+  }
   categoryFilter.value = activeCategory;
 
-  // modal
+  // modal category
   partCategory.innerHTML = "";
   categories.forEach(cat => {
     const opt = document.createElement("option");
@@ -187,6 +187,9 @@ function renderParts() {
     left.innerHTML = `
       <div class="part-name">${p.name}</div>
       <div class="part-meta">${p.category} — ${p.section}</div>
+      <div class="part-meta">Desc: ${p.description}</div>
+      <div class="part-meta">Part#: ${p.partNumber}</div>
+      <div class="part-meta">Loc: ${p.location}</div>
       <div class="part-meta">Last: ${p.date}</div>
       <div class="part-meta">Days since: ${st.days}</div>
       <div class="part-meta">Tons since: ${st.tonsSince}</div>
@@ -228,7 +231,6 @@ function computeNextDue() {
 
   parts.forEach(p => {
     const st = calcStatus(p);
-
     if (!isFinite(st.daysLeft)) return;
 
     if (soon === null || st.daysLeft < soon.daysLeft) {
@@ -248,11 +250,6 @@ function renderSummary() {
   else nextDueEl.textContent = `${next.name} (in ${next.daysLeft} days)`;
 }
 
-function renderAll() {
-  renderParts();
-  renderSummary();
-}
-
 // ----------------------------
 //  ADD/EDIT PART
 // ----------------------------
@@ -260,13 +257,13 @@ function openAddPart() {
   editingIndex = null;
   modalTitle.textContent = "Add Part";
 
-  partCategory.value = activeCategory !== "ALL" ? activeCategory : categories[0];
+  partCategory.value = categories.includes(activeCategory) ? activeCategory : categories[0];
   partName.value = "";
   partSection.value = "";
   partDate.value = new Date().toISOString().slice(0, 10);
   partDays.value = "30";
   partLastTons.value = currentTons;
-  partTonInterval.value = "10000";
+  partTonInterval.value = "0";
   partNotes.value = "";
 
   moreOptions.style.display = "none";
@@ -305,7 +302,8 @@ function savePart() {
     days: Number(partDays.value),
     lastTons: Number(partLastTons.value),
     tonInterval: Number(partTonInterval.value),
-    notes: partNotes.value.trim()
+    notes: partNotes.value.trim(),
+    description: ""
   };
 
   if (!newPart.name) {
@@ -324,9 +322,6 @@ function savePart() {
   renderAll();
 }
 
-// ----------------------------
-//  DELETE
-// ----------------------------
 function deletePart(i) {
   if (!confirm("Delete this part?")) return;
   parts.splice(i, 1);
@@ -353,7 +348,10 @@ function addCategory() {
 // ----------------------------
 function updateTons() {
   const v = Number(currentTonsInput.value);
-  if (isNaN(v)) return;
+  if (isNaN(v)) {
+    alert("Enter a valid tons number.");
+    return;
+  }
   currentTons = v;
   saveState();
   renderAll();
@@ -369,7 +367,7 @@ function exportData() {
 
   const a = document.createElement("a");
   a.href = url;
-  a.download = "plant_maintenance_export.json";
+  a.download = "pm_tracker_export.json";
   a.click();
 
   URL.revokeObjectURL(url);
@@ -385,7 +383,6 @@ function resetAll() {
   categories = ["General", "Electrical", "Motors", "Safety"];
   currentTons = 0;
   activeCategory = "ALL";
-
   currentTonsInput.value = "";
   saveState();
   populateCategoryDropdowns();
@@ -431,7 +428,6 @@ resetBtn.addEventListener("click", resetAll);
 
 savePartBtn.addEventListener("click", savePart);
 cancelPartBtn.addEventListener("click", closePartModal);
-
 moreToggle.addEventListener("click", () => {
   moreOptions.style.display = moreOptions.style.display === "none" ? "block" : "none";
 });
@@ -440,7 +436,7 @@ settingsBtn.addEventListener("click", openSettings);
 closeSettingsBtn.addEventListener("click", closeSettings);
 themeToggle.addEventListener("change", toggleTheme);
 
-window.addEventListener("click", (e) => {
+window.addEventListener("click", e => {
   if (e.target === partModal) closePartModal();
   if (e.target === settingsModal) closeSettings();
 });
