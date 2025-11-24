@@ -364,9 +364,21 @@ function addCategory() {
 // ---------------------------
 // TONS SYSTEM
 // ---------------------------
+const currentTonsInput = document.getElementById("currentTonsInput");
+const addTonsInput = document.getElementById("addTonsInput");
+
+currentTonsInput.value = currentTons;
+
+currentTonsInput.addEventListener("change", () => {
+    currentTons = Number(currentTonsInput.value) || 0;
+    saveState();
+    renderAll();
+});
+
 addTonsBtn.addEventListener("click", () => {
-    currentTons += 1000;
-    currentTonsDisplay.textContent = currentTons.toLocaleString();
+    const addValue = Number(addTonsInput.value) || 0;
+    currentTons += addValue;
+    currentTonsInput.value = currentTons;
     saveState();
     renderAll();
 });
