@@ -13,12 +13,11 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('service-worker.js').catch(console.error);
+        navigator.serviceWorker.register('service-worker.js');
       });
     }
   </script>
 </head>
-
 <body>
   <div class="app">
     <header class="header">
@@ -26,7 +25,7 @@
         <h1>Plant Maintenance Tracker</h1>
         <button id="settingsBtn" class="icon-btn">⚙️</button>
       </div>
-      <p class="subtitle">Maintenance • Inventory • Tons Tracker</p>
+      <p class="subtitle">Tons • Time • Parts — Offline</p>
     </header>
 
     <section class="summary-row">
@@ -34,15 +33,11 @@
       <div class="summary-item yellow" id="dueCount">🟡 Due: 0</div>
       <div class="summary-item red" id="overCount">🔴 Overdue: 0</div>
 
-      <div class="tons-box">
-  <label class="tons-label">Current Tons:</label>
-  <input id="currentTonsInput" type="number" value="0">
-
-  <label class="tons-label">Add Tons:</label>
-  <input id="addTonsInput" type="number" value="0">
-  <button id="addTonsBtn" class="small-btn">+</button>
-</div>
-
+      <div class="tons-input">
+        <label for="currentTons">Tons</label>
+        <input id="currentTons" type="number" />
+        <button id="updateTonsBtn">Update</button>
+      </div>
     </section>
 
     <section class="quick-stats">
@@ -53,24 +48,24 @@
 
     <section class="actions-row">
       <button id="addPartBtn" class="primary-btn">+ Add Part</button>
-      <button id="viewPartsBtn" class="secondary-btn">View All</button>
+      <button id="viewPartsBtn" class="secondary-btn">View All Parts</button>
     </section>
 
     <section class="filter-row">
       <label for="categoryFilter">Category:</label>
       <select id="categoryFilter"></select>
-      <button id="addCategoryBtn" class="small-btn">+ Add Cat</button>
+      <button id="addCategoryBtn" class="small-btn">+ Add</button>
     </section>
 
     <main id="partsList" class="parts-list"></main>
 
     <footer class="footer">
-      <button id="exportBtn">Export Data</button>
+      <button id="exportBtn">Export</button>
       <button id="resetBtn">Reset</button>
     </footer>
   </div>
 
-  <!-- Add / Edit Part Modal -->
+  <!-- PART MODAL -->
   <div id="partModal" class="modal">
     <div class="modal-content">
       <h2 id="modalTitle">Add Part</h2>
@@ -81,10 +76,10 @@
       <label for="partName">Part Name</label>
       <input id="partName" />
 
-      <label for="partSection">Section / Location</label>
+      <label for="partSection">Section</label>
       <input id="partSection" />
 
-      <label for="partDate">Last Maintenance Date</label>
+      <label for="partDate">Last Maintenance</label>
       <input id="partDate" type="date" />
 
       <div class="more-toggle-row">
@@ -95,7 +90,7 @@
         <label for="partDays">Interval (days)</label>
         <input id="partDays" type="number" />
 
-        <label for="partLastTons">Last Ton Reading</label>
+        <label for="partLastTons">Last Tons</label>
         <input id="partLastTons" type="number" />
 
         <label for="partTonInterval">Ton Interval</label>
@@ -103,9 +98,6 @@
 
         <label for="partNotes">Notes</label>
         <textarea id="partNotes"></textarea>
-
-        <label for="spareParts">Spare Parts List</label>
-        <textarea id="spareParts" placeholder="Example: 2x bearings, 1x chain…"></textarea>
       </div>
 
       <div class="modal-actions">
@@ -115,7 +107,7 @@
     </div>
   </div>
 
-  <!-- Settings Modal -->
+  <!-- SETTINGS MODAL -->
   <div id="settingsModal" class="modal">
     <div class="modal-content small">
       <h3>Settings</h3>
