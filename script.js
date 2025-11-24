@@ -1,6 +1,5 @@
 // ----------------------------
-//  OFFLINE PLANT MAINTENANCE TRACKER
-//  Fully Offline Version with fixes
+// OFFLINE PLANT MAINTENANCE TRACKER
 // ----------------------------
 
 const PARTS_KEY = "pm_parts";
@@ -14,7 +13,7 @@ let currentTons = 0;
 let activeCategory = "ALL";
 let editingIndex = null;
 
-// DOM elements
+// DOM refs
 const okCountEl = document.getElementById("okCount");
 const dueCountEl = document.getElementById("dueCount");
 const overCountEl = document.getElementById("overCount");
@@ -25,12 +24,12 @@ const tonsRunEl = document.getElementById("tonsRun");
 const currentTonsInput = document.getElementById("currentTons");
 const updateTonsBtn = document.getElementById("updateTonsBtn");
 
-const categoryFilter = document.getElementById("categoryFilter");
-const addCategoryBtn = document.getElementById("addCategoryBtn");
-
 const addPartBtn = document.getElementById("addPartBtn");
 const viewPartsBtn = document.getElementById("viewPartsBtn");
 const partsList = document.getElementById("partsList");
+
+const categoryFilter = document.getElementById("categoryFilter");
+const addCategoryBtn = document.getElementById("addCategoryBtn");
 
 const exportBtn = document.getElementById("exportBtn");
 const resetBtn = document.getElementById("resetBtn");
@@ -45,38 +44,33 @@ const partDays = document.getElementById("partDays");
 const partLastTons = document.getElementById("partLastTons");
 const partTonInterval = document.getElementById("partTonInterval");
 const partNotes = document.getElementById("partNotes");
+const moreOptions = document.getElementById("moreOptions");
+const moreToggle = document.getElementById("moreToggle");
 const savePartBtn = document.getElementById("savePartBtn");
 const cancelPartBtn = document.getElementById("cancelPartBtn");
-const moreToggle = document.getElementById("moreToggle");
-const moreOptions = document.getElementById("moreOptions");
 
-// Settings
 const settingsBtn = document.getElementById("settingsBtn");
 const settingsModal = document.getElementById("settingsModal");
 const themeToggle = document.getElementById("themeToggle");
 const closeSettingsBtn = document.getElementById("closeSettingsBtn");
 
 // ----------------------------
-//  LOAD SAVED DATA
+// LOAD STATE
 // ----------------------------
 function loadState() {
   try {
     parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
-  } catch {
-    parts = [];
-  }
+  } catch { parts = []; }
 
   currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
   currentTonsInput.value = currentTons;
 
   try {
     categories = JSON.parse(localStorage.getItem(CATS_KEY));
-  } catch {
-    categories = [];
-  }
+  } catch { categories = []; }
 
   if (!Array.isArray(categories) || categories.length === 0) {
-    categories = ["General", "Electrical", "Motors", "Safety"];
+    categories = ["General Plant", "Electrical", "Conveyor", "Motor", "Safety"];
   }
 
   const theme = localStorage.getItem(THEME_KEY);
@@ -96,17 +90,18 @@ function saveState() {
 }
 
 // ----------------------------
-//  DROPDOWN POPULATE
+// CATEGORY DROPDOWN
 // ----------------------------
 function populateCategoryDropdowns() {
   categoryFilter.innerHTML = "";
-  const allOpt = document.createElement("option");
-  allOpt.value = "ALL";
-  allOpt.textContent = "All";
-  categoryFilter.appendChild(allOpt);
+
+  let all = document.createElement("option");
+  all.value = "ALL";
+  all.textContent = "All";
+  categoryFilter.appendChild(all);
 
   categories.forEach(cat => {
-    const opt = document.createElement("option");
+    let opt = document.createElement("option");
     opt.value = cat;
     opt.textContent = cat;
     categoryFilter.appendChild(opt);
@@ -120,7 +115,7 @@ function populateCategoryDropdowns() {
   // modal category
   partCategory.innerHTML = "";
   categories.forEach(cat => {
-    const opt = document.createElement("option");
+    let opt = document.createElement("option");
     opt.value = cat;
     opt.textContent = cat;
     partCategory.appendChild(opt);
@@ -128,84 +123,80 @@ function populateCategoryDropdowns() {
 }
 
 // ----------------------------
-//  DATE & STATUS CALC
+// STATUS CALC
 // ----------------------------
 function daysSince(dateStr) {
   if (!dateStr) return Infinity;
   const d = new Date(dateStr + "T00:00:00");
-  const now = new Date();
-  return Math.floor((now - d) / (1000 * 60 * 60 * 24));
+  return Math.floor((Date.now() - d) / 86400000);
 }
 
 function calcStatus(part) {
   const days = daysSince(part.date);
-  const intervalDays = Number(part.days) || 0;
-  const tonsSince = currentTons - (Number(part.lastTons) || 0);
-  const tonInterval = Number(part.tonInterval) || 0;
+  const interval = Number(part.days) || 0;
 
-  const daysLeft = intervalDays ? intervalDays - days : Infinity;
-  const tonsLeft = tonInterval ? tonInterval - tonsSince : Infinity;
+  const tonsSince = currentTons - (Number(part.lastTons) || 0);
+  const tInt = Number(part.tonInterval) || 0;
+
+  const daysLeft = interval ? interval - days : Infinity;
+  const tonsLeft = tInt ? tInt - tonsSince : Infinity;
 
   let status = "ok";
+
   if (daysLeft < 0 || tonsLeft < 0) {
     status = "overdue";
   } else {
-    const thresholdDays = intervalDays ? Math.max(3, Math.round(intervalDays * 0.2)) : 0;
-    const thresholdTons = tonInterval ? Math.max(100, Math.round(tonInterval * 0.2)) : 0;
+    const dWarn = interval ? Math.max(3, Math.round(interval * 0.2)) : 0;
+    const tWarn = tInt ? Math.max(100, Math.round(tInt * 0.2)) : 0;
 
-    if ((intervalDays && daysLeft <= thresholdDays) ||
-        (tonInterval && tonsLeft <= thresholdTons)) {
+    if ((interval && daysLeft <= dWarn) || (tInt && tonsLeft <= tWarn)) {
       status = "due";
     }
   }
 
-  return { status, daysLeft, tonsLeft, days, tonsSince };
+  return { status, days, tonsSince, daysLeft };
 }
 
 // ----------------------------
-//  RENDER PARTS
+// RENDER PARTS
 // ----------------------------
 function renderParts() {
   partsList.innerHTML = "";
-
   let ok = 0, due = 0, over = 0;
 
-  const filtered = parts.filter(p => activeCategory === "ALL" ? true : p.category === activeCategory);
+  let filtered = parts.filter(p => activeCategory === "ALL" || p.category === activeCategory);
 
-  filtered.forEach((p, index) => {
+  filtered.forEach((p, i) => {
     const st = calcStatus(p);
+
     if (st.status === "ok") ok++;
     else if (st.status === "due") due++;
     else over++;
 
-    const card = document.createElement("div");
+    let card = document.createElement("div");
     card.className = "part-card";
 
-    const left = document.createElement("div");
+    let left = document.createElement("div");
     left.className = "part-left";
-
     left.innerHTML = `
       <div class="part-name">${p.name}</div>
       <div class="part-meta">${p.category} — ${p.section}</div>
-      <div class="part-meta">Desc: ${p.description}</div>
-      <div class="part-meta">Part#: ${p.partNumber}</div>
-      <div class="part-meta">Loc: ${p.location}</div>
       <div class="part-meta">Last: ${p.date}</div>
       <div class="part-meta">Days since: ${st.days}</div>
       <div class="part-meta">Tons since: ${st.tonsSince}</div>
       <div class="part-meta">${p.notes || ""}</div>
     `;
 
-    const actions = document.createElement("div");
+    let actions = document.createElement("div");
     actions.className = "part-actions";
 
-    const editBtn = document.createElement("button");
+    let editBtn = document.createElement("button");
     editBtn.textContent = "Edit";
-    editBtn.onclick = () => openEditPart(index);
+    editBtn.onclick = () => openEditPart(i);
 
-    const delBtn = document.createElement("button");
+    let delBtn = document.createElement("button");
     delBtn.textContent = "Del";
-    delBtn.onclick = () => deletePart(index);
+    delBtn.onclick = () => deletePart(i);
 
     actions.appendChild(editBtn);
     actions.appendChild(delBtn);
@@ -222,7 +213,7 @@ function renderParts() {
 }
 
 // ----------------------------
-//  SUMMARY
+// SUMMARY
 // ----------------------------
 function computeNextDue() {
   if (!parts.length) return null;
@@ -232,10 +223,7 @@ function computeNextDue() {
   parts.forEach(p => {
     const st = calcStatus(p);
     if (!isFinite(st.daysLeft)) return;
-
-    if (soon === null || st.daysLeft < soon.daysLeft) {
-      soon = { name: p.name, daysLeft: st.daysLeft };
-    }
+    if (soon == null || st.daysLeft < soon.daysLeft) soon = {name:p.name, daysLeft:st.daysLeft};
   });
 
   return soon;
@@ -245,13 +233,13 @@ function renderSummary() {
   totalPartsEl.textContent = parts.length;
   tonsRunEl.textContent = currentTons;
 
-  const next = computeNextDue();
+  let next = computeNextDue();
   if (!next) nextDueEl.textContent = "—";
   else nextDueEl.textContent = `${next.name} (in ${next.daysLeft} days)`;
 }
 
 // ----------------------------
-//  ADD/EDIT PART
+// PART MODAL
 // ----------------------------
 function openAddPart() {
   editingIndex = null;
@@ -260,10 +248,10 @@ function openAddPart() {
   partCategory.value = categories.includes(activeCategory) ? activeCategory : categories[0];
   partName.value = "";
   partSection.value = "";
-  partDate.value = new Date().toISOString().slice(0, 10);
+  partDate.value = new Date().toISOString().slice(0,10);
   partDays.value = "30";
   partLastTons.value = currentTons;
-  partTonInterval.value = "0";
+  partTonInterval.value = "10000";
   partNotes.value = "";
 
   moreOptions.style.display = "none";
@@ -302,20 +290,16 @@ function savePart() {
     days: Number(partDays.value),
     lastTons: Number(partLastTons.value),
     tonInterval: Number(partTonInterval.value),
-    notes: partNotes.value.trim(),
-    description: ""
+    notes: partNotes.value.trim()
   };
 
   if (!newPart.name) {
-    alert("Please enter a part name");
+    alert("Enter part name");
     return;
   }
 
-  if (editingIndex === null) {
-    parts.unshift(newPart);
-  } else {
-    parts[editingIndex] = newPart;
-  }
+  if (editingIndex === null) parts.unshift(newPart);
+  else parts[editingIndex] = newPart;
 
   saveState();
   closePartModal();
@@ -323,33 +307,33 @@ function savePart() {
 }
 
 function deletePart(i) {
-  if (!confirm("Delete this part?")) return;
-  parts.splice(i, 1);
+  if (!confirm("Delete?")) return;
+  parts.splice(i,1);
   saveState();
   renderAll();
 }
 
 // ----------------------------
-//  CATEGORY ADD
+// CATEGORY
 // ----------------------------
 function addCategory() {
-  const name = prompt("New category name:");
+  let name = prompt("New category:");
   if (!name) return;
-  const t = name.trim();
-  if (!categories.includes(t)) {
-    categories.push(t);
+  name = name.trim();
+  if (!categories.includes(name)) {
+    categories.push(name);
     saveState();
     populateCategoryDropdowns();
   }
 }
 
 // ----------------------------
-//  UPDATE TONS
+// TONS
 // ----------------------------
 function updateTons() {
-  const v = Number(currentTonsInput.value);
+  let v = Number(currentTonsInput.value);
   if (isNaN(v)) {
-    alert("Enter a valid tons number.");
+    alert("Enter valid tons");
     return;
   }
   currentTons = v;
@@ -358,30 +342,23 @@ function updateTons() {
 }
 
 // ----------------------------
-//  EXPORT
+// EXPORT / RESET
 // ----------------------------
 function exportData() {
-  const data = { parts, currentTons, categories };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
+  let blob = new Blob([JSON.stringify({parts,currentTons,categories},null,2)],{type:"application/json"});
+  let url = URL.createObjectURL(blob);
+  let a = document.createElement("a");
   a.href = url;
-  a.download = "pm_tracker_export.json";
+  a.download = "pm_export.json";
   a.click();
-
   URL.revokeObjectURL(url);
 }
 
-// ----------------------------
-//  RESET
-// ----------------------------
 function resetAll() {
   if (!confirm("Reset ALL data?")) return;
-
   parts = [];
-  categories = ["General", "Electrical", "Motors", "Safety"];
   currentTons = 0;
+  categories = ["General Plant","Electrical","Conveyor","Motor","Safety"];
   activeCategory = "ALL";
   currentTonsInput.value = "";
   saveState();
@@ -390,58 +367,49 @@ function resetAll() {
 }
 
 // ----------------------------
-//  SETTINGS
+// SETTINGS
 // ----------------------------
-function openSettings() {
-  settingsModal.style.display = "flex";
-}
+function openSettings(){ settingsModal.style.display="flex"; }
+function closeSettings(){ settingsModal.style.display="none"; }
 
-function closeSettings() {
-  settingsModal.style.display = "none";
-}
-
-function toggleTheme(e) {
-  if (e.target.checked) {
+function toggleTheme(e){
+  if (e.target.checked){
     document.body.classList.add("light-mode");
-    localStorage.setItem(THEME_KEY, "light");
+    localStorage.setItem(THEME_KEY,"light");
   } else {
     document.body.classList.remove("light-mode");
-    localStorage.setItem(THEME_KEY, "dark");
+    localStorage.setItem(THEME_KEY,"dark");
   }
 }
 
 // ----------------------------
-//  EVENTS
+// EVENTS
 // ----------------------------
 updateTonsBtn.addEventListener("click", updateTons);
 addPartBtn.addEventListener("click", openAddPart);
-viewPartsBtn.addEventListener("click", renderAll);
-
+viewPartsBtn.addEventListener("click", renderParts);
 categoryFilter.addEventListener("change", e => {
   activeCategory = e.target.value;
   renderAll();
 });
-
 addCategoryBtn.addEventListener("click", addCategory);
 exportBtn.addEventListener("click", exportData);
 resetBtn.addEventListener("click", resetAll);
-
 savePartBtn.addEventListener("click", savePart);
 cancelPartBtn.addEventListener("click", closePartModal);
-moreToggle.addEventListener("click", () => {
-  moreOptions.style.display = moreOptions.style.display === "none" ? "block" : "none";
+moreToggle.addEventListener("click", ()=>{
+  moreOptions.style.display = moreOptions.style.display==="none"?"block":"none";
 });
-
 settingsBtn.addEventListener("click", openSettings);
 closeSettingsBtn.addEventListener("click", closeSettings);
 themeToggle.addEventListener("change", toggleTheme);
 
-window.addEventListener("click", e => {
-  if (e.target === partModal) closePartModal();
-  if (e.target === settingsModal) closeSettings();
+window.addEventListener("click", e=>{
+  if (e.target===partModal) closePartModal();
+  if (e.target===settingsModal) closeSettings();
 });
 
 // ----------------------------
-//  INIT
+// INIT
 // ----------------------------
 loadState();
