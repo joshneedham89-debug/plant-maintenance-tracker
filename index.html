@@ -1,1 +1,118 @@
-<html><body><h1>Plant Maintenance Tracker</h1></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plant Maintenance Tracker</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f1724" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("service-worker.js").catch(console.error);
+      });
+    }
+  </script>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <img src="icons/icon-72.png" class="app-logo" alt="App Logo">
+    <h1>Plant Maintenance Tracker</h1>
+    <button id="themeToggleBtn" class="icon-btn">🌓</button>
+  </header>
+
+  <!-- MAIN NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
+    <button class="nav-btn" data-page="maintenance">🛠 Maintenance</button>
+    <button class="nav-btn" data-page="inventory">📦 Inventory</button>
+    <button class="nav-btn" data-page="settings">⚙️ Settings</button>
+  </nav>
+
+  <!-- PAGE CONTAINER -->
+  <main id="page-dashboard" class="page visible">
+
+    <div class="card-grid">
+
+      <div class="card">
+        <h2>Total Parts</h2>
+        <p id="dashTotalParts">0</p>
+      </div>
+
+      <div class="card">
+        <h2>Next Due</h2>
+        <p id="dashNextDue">—</p>
+      </div>
+
+      <div class="card">
+        <h2>Tons Run</h2>
+        <p id="dashTons">0</p>
+        <button id="addTonsBtn" class="small-btn">+ Add Tons</button>
+      </div>
+
+      <div class="card">
+        <h2>Inventory Items</h2>
+        <p id="dashInventory">0</p>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MAINTENANCE PAGE -->
+  <main id="page-maintenance" class="page">
+    <div class="page-header">
+      <h2>Maintenance Parts</h2>
+      <button id="addPartBtn" class="primary-btn">+ Add Part</button>
+    </div>
+
+    <div class="filter-row">
+      <label>Category:</label>
+      <select id="maintCategoryFilter"></select>
+    </div>
+
+    <div id="maintenanceList" class="list-container"></div>
+  </main>
+
+  <!-- INVENTORY PAGE -->
+  <main id="page-inventory" class="page">
+    <div class="page-header">
+      <h2>Inventory</h2>
+      <button id="addInventoryBtn" class="primary-btn">+ Add Item</button>
+    </div>
+
+    <div class="filter-row">
+      <label>Category:</label>
+      <select id="invCategoryFilter"></select>
+    </div>
+
+    <div id="inventoryList" class="list-container"></div>
+  </main>
+
+  <!-- SETTINGS PAGE -->
+  <main id="page-settings" class="page">
+    <h2>Settings</h2>
+
+    <div class="card setting-card">
+      <h3>Theme</h3>
+      <button id="toggleTheme" class="primary-btn">Toggle Dark/Light</button>
+    </div>
+
+    <div class="card setting-card">
+      <h3>Data</h3>
+      <button id="exportDataBtn" class="secondary-btn">Export Data</button>
+      <button id="resetDataBtn" class="danger-btn">Reset All Data</button>
+    </div>
+
+  </main>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
