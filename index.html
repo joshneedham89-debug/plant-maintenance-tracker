@@ -1,19 +1,151 @@
-<!doctype html><html><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<link rel="manifest" href="manifest.json"/>
-<title>Plant Maintenance Tracker</title>
-<link rel="icon" href="icon_192.png"/>
-</head><body>
-<header><img src="icon_128.png" style="width:32px;"> Plant Maintenance Tracker</header>
-<nav>
-<button onclick="showTab('dash')">Dashboard</button>
-<button onclick="showTab('maint')">Maintenance</button>
-<button onclick="showTab('inv')">Inventory</button>
-<button onclick="showTab('set')">Settings</button>
-</nav>
-<section id="dash">Dashboard placeholder</section>
-<section id="maint" style="display:none;">Maintenance placeholder</section>
-<section id="inv" style="display:none;">Inventory placeholder</section>
-<section id="set" style="display:none;">Settings + Theme toggle</section>
-<script src="script.js"></script>
-</body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Plant Maintenance Tracker</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f1724" />
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" sizes="16x16" href="icon_16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icon_32.png" />
+  <link rel="icon" type="image/png" sizes="128x128" href="icon_128.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon_192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icon_180.png" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <script>
+    // Register service worker for offline support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('service-worker.js').catch(console.error);
+      });
+    }
+  </script>
+</head>
+<body>
+  <div class="app">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="header-left">
+        <img src="icon_128.png" alt="Plant logo" class="app-logo" />
+        <div>
+          <h1 class="app-title">Plant Maintenance Tracker</h1>
+          <p class="app-subtitle">Tons, time & inventory — offline ready</p>
+        </div>
+      </div>
+      <button id="themeToggleBtn" class="icon-btn" title="Toggle light / dark">
+        🌙
+      </button>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="app-main">
+      <!-- DASHBOARD TAB -->
+      <section id="tab-dashboard" class="tab active">
+        <h2>Dashboard</h2>
+        <div class="card-grid">
+          <div class="card">
+            <h3>Tons Run</h3>
+            <p class="big-number" id="dashTonsRun">0</p>
+          </div>
+          <div class="card">
+            <h3>Maintenance Parts</h3>
+            <p class="big-number" id="dashPartsCount">0</p>
+          </div>
+          <div class="card">
+            <h3>Overdue Items</h3>
+            <p class="big-number red" id="dashOverdueCount">0</p>
+          </div>
+          <div class="card">
+            <h3>Inventory Items</h3>
+            <p class="big-number" id="dashInventoryCount">0</p>
+          </div>
+        </div>
+        <div class="card wide-card">
+          <h3>Next Due</h3>
+          <p id="dashNextDue">No maintenance items yet.</p>
+        </div>
+      </section>
+
+      <!-- MAINTENANCE TAB -->
+      <section id="tab-maintenance" class="tab">
+        <div class="tab-header-row">
+          <h2>Maintenance</h2>
+          <button id="addPartBtn" class="primary-btn">+ Add Part</button>
+        </div>
+        <p class="section-help">
+          This is where we’ll show plant parts that are being tracked by days and tons.
+        </p>
+        <div id="maintenanceList" class="list-placeholder">
+          <p>No maintenance parts yet. We’ll wire this up in the next step.</p>
+        </div>
+      </section>
+
+      <!-- INVENTORY TAB -->
+      <section id="tab-inventory" class="tab">
+        <div class="tab-header-row">
+          <h2>Inventory</h2>
+          <button id="addInventoryItemBtn" class="secondary-btn">+ Add Inventory Item</button>
+        </div>
+        <p class="section-help">
+          This will show all spare parts from your spreadsheet (Virgin, Drum, Baghouse, etc.).
+        </p>
+        <div id="inventoryList" class="list-placeholder">
+          <p>Inventory list coming in the next step.</p>
+        </div>
+      </section>
+
+      <!-- SETTINGS TAB -->
+      <section id="tab-settings" class="tab">
+        <h2>Settings</h2>
+
+        <div class="card">
+          <h3>Theme</h3>
+          <label class="toggle-row">
+            <span>Light mode</span>
+            <input type="checkbox" id="themeToggleCheckbox" />
+          </label>
+        </div>
+
+        <div class="card">
+          <h3>Data</h3>
+          <p>Export / import, reset, and other tools will go here.</p>
+        </div>
+
+        <div class="card">
+          <h3>About</h3>
+          <p>Plant Maintenance Tracker — offline-ready web app for asphalt plants.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-tab="dashboard">
+        <span>📊</span>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-btn" data-tab="maintenance">
+        <span>🛠️</span>
+        <span>Maintenance</span>
+      </button>
+      <button class="nav-btn" data-tab="inventory">
+        <span>📦</span>
+        <span>Inventory</span>
+      </button>
+      <button class="nav-btn" data-tab="settings">
+        <span>⚙️</span>
+        <span>Settings</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
