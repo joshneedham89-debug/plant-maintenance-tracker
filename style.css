@@ -234,3 +234,118 @@ body {
 /* --------------------------------------------------
    MODALS (You can add later if needed)
 -------------------------------------------------- */
+/* --------------------------------------------------
+   SUMMARY ROW
+-------------------------------------------------- */
+.summary-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------
+   MAINTENANCE & INVENTORY CARDS
+-------------------------------------------------- */
+.maint-card,
+.inv-card {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px #00000033;
+  border-left: 6px solid var(--green);
+  margin-bottom: 8px;
+}
+
+.maint-card.status-overdue {
+  border-left-color: var(--red);
+}
+
+.maint-card.status-due {
+  border-left-color: var(--yellow);
+}
+
+.maint-name,
+.inv-name {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.maint-meta,
+.inv-meta,
+.maint-sub,
+.inv-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 2px 0;
+}
+
+.maint-actions,
+.inv-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.btn.small {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------
+   MODALS
+-------------------------------------------------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 16px #00000066;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+}
+
+.modal-content label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px;
+  border-radius: 10px;
+  border: none;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
