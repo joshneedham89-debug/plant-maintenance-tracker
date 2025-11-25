@@ -1,16 +1,11 @@
-const CACHE_NAME = 'pm-shell-v1';
+
+const CACHE_NAME = 'pm-final-cache-v1';
 const ASSETS = [
   './',
   'index.html',
   'style.css',
   'script.js',
-  'manifest.json',
-  'icon_16.png',
-  'icon_32.png',
-  'icon_128.png',
-  'icon_180.png',
-  'icon_192.png',
-  'icon_512.png'
+  'manifest.json'
 ];
 
 self.addEventListener('install', event => {
@@ -33,4 +28,4 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(resp => resp || fetch(event.request))
   );
-});;
+});
