@@ -23,7 +23,8 @@
 
   <!-- HEADER -->
   <header class="app-header">
-    <img src="icons/icon-72.png" class="app-logo" alt="App Logo">
+    <!-- use 192 icon that exists -->
+    <img src="icons/icon-192.png" class="app-logo" alt="App Logo">
     <h1>Plant Maintenance Tracker</h1>
     <button id="themeToggleBtn" class="icon-btn">🌓</button>
   </header>
@@ -36,7 +37,7 @@
     <button class="nav-btn" data-page="settings">⚙️ Settings</button>
   </nav>
 
-  <!-- PAGE CONTAINER -->
+  <!-- DASHBOARD PAGE -->
   <main id="page-dashboard" class="page visible">
 
     <div class="card-grid">
@@ -69,7 +70,15 @@
   <main id="page-maintenance" class="page">
     <div class="page-header">
       <h2>Maintenance Parts</h2>
-      <button id="addPartBtn" class="primary-btn">+ Add Part</button>
+      <!-- ID NOW MATCHES JS: addMaintBtn -->
+      <button id="addMaintBtn" class="primary-btn">+ Add Part</button>
+    </div>
+
+    <!-- Status summary -->
+    <div class="summary-row">
+      <span>OK: <span id="maint-ok">0</span></span>
+      <span>Due: <span id="maint-due">0</span></span>
+      <span>Overdue: <span id="maint-over">0</span></span>
     </div>
 
     <div class="filter-row">
@@ -77,14 +86,16 @@
       <select id="maintCategoryFilter"></select>
     </div>
 
-    <div id="maintenanceList" class="list-container"></div>
+    <!-- ID NOW MATCHES JS: maintList -->
+    <div id="maintList" class="list-container"></div>
   </main>
 
   <!-- INVENTORY PAGE -->
   <main id="page-inventory" class="page">
     <div class="page-header">
       <h2>Inventory</h2>
-      <button id="addInventoryBtn" class="primary-btn">+ Add Item</button>
+      <!-- ID NOW MATCHES JS: addInvBtn -->
+      <button id="addInvBtn" class="primary-btn">+ Add Item</button>
     </div>
 
     <div class="filter-row">
@@ -106,11 +117,83 @@
 
     <div class="card setting-card">
       <h3>Data</h3>
-      <button id="exportDataBtn" class="secondary-btn">Export Data</button>
-      <button id="resetDataBtn" class="danger-btn">Reset All Data</button>
+      <!-- IDs NOW MATCH JS: exportBtn / resetBtn -->
+      <button id="exportBtn" class="secondary-btn">Export Data</button>
+      <button id="resetBtn" class="danger-btn">Reset All Data</button>
     </div>
-
   </main>
+
+  <!-- MAINTENANCE MODAL -->
+  <div id="maintModal" class="modal">
+    <div class="modal-content">
+      <h2>Maintenance Part</h2>
+
+      <label>Part Name
+        <input id="maintName" placeholder="e.g. Drag Chain" />
+      </label>
+
+      <label>Category
+        <select id="maintCategory"></select>
+      </label>
+
+      <label>Section / Location
+        <input id="maintSection" placeholder="e.g. Slat Conveyor" />
+      </label>
+
+      <label>Last Maintenance Date
+        <input id="maintLastDate" type="date" />
+      </label>
+
+      <label>Interval (days)
+        <input id="maintIntervalDays" type="number" />
+      </label>
+
+      <label>Last Tons Reading
+        <input id="maintLastTons" type="number" />
+      </label>
+
+      <label>Ton Interval
+        <input id="maintIntervalTons" type="number" />
+      </label>
+
+      <label>Notes
+        <textarea id="maintNotes"></textarea>
+      </label>
+
+      <div class="modal-actions">
+        <button id="saveMaintBtn" class="primary-btn">Save</button>
+        <button id="closeMaintBtn" class="secondary-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVENTORY MODAL -->
+  <div id="invModal" class="modal">
+    <div class="modal-content">
+      <h2>Inventory Item</h2>
+
+      <label>Item Name
+        <input id="invName" placeholder="e.g. Drag Chain Sprocket" />
+      </label>
+
+      <label>Category
+        <select id="invCategory"></select>
+      </label>
+
+      <label>Quantity
+        <input id="invQty" type="number" />
+      </label>
+
+      <label>Notes
+        <textarea id="invNotes"></textarea>
+      </label>
+
+      <div class="modal-actions">
+        <button id="saveInvBtn" class="primary-btn">Save</button>
+        <button id="closeInvBtn" class="secondary-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 
