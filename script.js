@@ -1,214 +1,326 @@
-/* -------------------------------------------
-   Plant Maintenance Tracker – ZIP v4
-   FULL WORKING SCRIPT.JS (PART 1)
---------------------------------------------*/
+/* ============================================================
+   STORAGE KEYS
+============================================================ */
+const PARTS_KEY = "pm_parts_list";
+const TONS_KEY = "pm_current_tons";
+const CATS_KEY = "pm_categories";
+const THEME_KEY = "pm_theme";
 
-/* Local Storage Keys */
-const KEY_TONS = "pm_tons";
-const KEY_MAINT = "pm_maintenance";
-const KEY_INVENT = "pm_inventory";
+/* ============================================================
+   APP STATE
+============================================================ */
+let parts = [];
+let categories = [];
+let currentTons = 0;
+let editingIndex = null;
+let activeScreen = "home";
 
-/* Global State */
-let tonsRun = Number(localStorage.getItem(KEY_TONS)) || 0;
-let maintenanceList = JSON.parse(localStorage.getItem(KEY_MAINT) || "[]");
-let inventoryList = JSON.parse(localStorage.getItem(KEY_INVENT) || "[]");
+/* ============================================================
+   DOM ELEMENTS
+============================================================ */
 
-/* DOM short-hands */
-const $ = (id) => document.getElementById(id);
+// Screens
+const screenHome = document.getElementById("screen-home");
+const screenMaintenance = document.getElementById("screen-maintenance");
+const screenInventory = document.getElementById("screen-inventory");
+const screenSettings = document.getElementById("screen-settings");
+const screenAbout = document.getElementById("screen-about");
 
-/* NAVIGATION */
-document.querySelectorAll(".nav-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
+// Bottom nav buttons
+const navHome = document.getElementById("nav-home");
+const navMaint = document.getElementById("nav-maint");
+const navInv = document.getElementById("nav-inventory");
+const navSet = document.getElementById("nav-settings");
+const navAbout = document.getElementById("nav-about");
 
-        const page = btn.dataset.page;
-        document.querySelectorAll(".page").forEach(pg => pg.classList.remove("active"));
-        $(page).classList.add("active");
+// Maintenance UI
+const partsList = document.getElementById("partsList");
+const categoryFilter = document.getElementById("categoryFilter");
+const addPartBtn = document.getElementById("addPartBtn");
 
-        renderAll();
-    });
+// Tons UI
+const currentTonsInput = document.getElementById("currentTonsInput");
+const updateTonsBtn = document.getElementById("updateTonsBtn");
+const resetTonsBtn = document.getElementById("resetTonsBtn");
+
+// Summary
+const totalPartsEl = document.getElementById("totalParts");
+const tonsRunEl = document.getElementById("tonsRun");
+
+// Modal
+const partModal = document.getElementById("partModal");
+const modalTitle = document.getElementById("modalTitle");
+
+const modalCategory = document.getElementById("modalCategory");
+const modalName = document.getElementById("modalName");
+const modalSection = document.getElementById("modalSection");
+const modalDate = document.getElementById("modalDate");
+const modalDays = document.getElementById("modalDays");
+const modalLastTons = document.getElementById("modalLastTons");
+const modalTonInterval = document.getElementById("modalTonInterval");
+const modalNotes = document.getElementById("modalNotes");
+
+const savePartBtn = document.getElementById("savePartBtn");
+const cancelPartBtn = document.getElementById("cancelPartBtn");
+
+// Settings
+const themeToggle = document.getElementById("themeToggle");
+
+/* ============================================================
+   LOAD & SAVE STATE
+============================================================ */
+function loadState() {
+  parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
+  categories = JSON.parse(localStorage.getItem(CATS_KEY)) || [
+    "General",
+    "Slat Conveyor",
+    "Dryer",
+    "Baghouse",
+    "Screens",
+    "Drum",
+    "Cold Feed",
+  ];
+
+  currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
+  currentTonsInput.value = currentTons;
+
+  // Theme
+  const theme = localStorage.getItem(THEME_KEY);
+  if (theme === "light") {
+    document.body.classList.add("light-mode");
+    themeToggle.checked = true;
+  }
+
+  populateCategoryDropdowns();
+  renderParts();
+  renderSummary();
+}
+
+function saveState() {
+  localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
+  localStorage.setItem(CATS_KEY, JSON.stringify(categories));
+  localStorage.setItem(TONS_KEY, String(currentTons));
+}
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+function showScreen(name) {
+  activeScreen = name;
+
+  // Hide all screens
+  screenHome.classList.remove("active");
+  screenMaintenance.classList.remove("active");
+  screenInventory.classList.remove("active");
+  screenSettings.classList.remove("active");
+  screenAbout.classList.remove("active");
+
+  // Remove active state on buttons
+  navHome.classList.remove("active");
+  navMaint.classList.remove("active");
+  navInv.classList.remove("active");
+  navSet.classList.remove("active");
+  navAbout.classList.remove("active");
+
+  // Show selected
+  if (name === "home") {
+    screenHome.classList.add("active");
+    navHome.classList.add("active");
+  }
+  if (name === "maintenance") {
+    screenMaintenance.classList.add("active");
+    navMaint.classList.add("active");
+  }
+  if (name === "inventory") {
+    screenInventory.classList.add("active");
+    navInv.classList.add("active");
+  }
+  if (name === "settings") {
+    screenSettings.classList.add("active");
+    navSet.classList.add("active");
+  }
+  if (name === "about") {
+    screenAbout.classList.add("active");
+    navAbout.classList.add("active");
+  }
+
+  renderSummary();
+}
+
+/* ============================================================
+   CATEGORY DROPDOWN
+============================================================ */
+function populateCategoryDropdowns() {
+  categoryFilter.innerHTML = `<option value="ALL">All Categories</option>`;
+
+  categories.forEach((cat) => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    categoryFilter.appendChild(opt);
+  });
+
+  modalCategory.innerHTML = "";
+  categories.forEach((cat) => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    modalCategory.appendChild(opt);
+  });
+}
+
+/* ============================================================
+   PARTS LIST
+============================================================ */
+function renderParts() {
+  partsList.innerHTML = "";
+  const filter = categoryFilter.value;
+
+  const filtered =
+    filter === "ALL" ? parts : parts.filter((p) => p.category === filter);
+
+  filtered.forEach((p, index) => {
+    const card = document.createElement("div");
+    card.className = "part-card";
+
+    card.innerHTML = `
+      <div class="part-name">${p.name}</div>
+      <div class="part-meta">${p.category} • ${p.section}</div>
+      <div class="part-meta">Last Service: ${p.date}</div>
+      <div class="part-meta">Tons Since: ${currentTons - p.lastTons}</div>
+      <div class="part-meta">${p.notes || ""}</div>
+      <br>
+      <button class="secondary-btn" onclick="openEditPart(${index})">Edit</button>
+      <button class="secondary-btn red" onclick="deletePart(${index})">Delete</button>
+    `;
+
+    partsList.appendChild(card);
+  });
+}
+
+/* ============================================================
+   SUMMARY AREA
+============================================================ */
+function renderSummary() {
+  totalPartsEl.textContent = parts.length;
+  tonsRunEl.textContent = currentTons;
+}
+
+/* ============================================================
+   TONS UPDATE
+============================================================ */
+updateTonsBtn.addEventListener("click", () => {
+  currentTons = Number(currentTonsInput.value || 0);
+  saveState();
+  renderSummary();
+  renderParts();
 });
 
-/* THEME SWITCH */
-const themeToggle = $("themeToggle");
-themeToggle.addEventListener("click", () => {
-    document.body.classList.toggle("light");
+resetTonsBtn.addEventListener("click", () => {
+  if (confirm("Reset tons to 0?")) {
+    currentTons = 0;
+    currentTonsInput.value = 0;
+    saveState();
+    renderSummary();
+    renderParts();
+  }
 });
 
-/* --------------------------
-   DASHBOARD RENDER FUNCTIONS
----------------------------*/
-function renderDashboard() {
-    $("tonsRun").textContent = tonsRun;
-    $("maintenanceCount").textContent = maintenanceList.length;
-    $("inventoryCount").textContent = inventoryList.length;
+/* ============================================================
+   PART MODAL
+============================================================ */
+function openAddPart() {
+  editingIndex = null;
+  modalTitle.textContent = "Add Part";
 
-    const overdue = maintenanceList.filter(m => checkOverdue(m)).length;
-    $("overdueCount").textContent = overdue;
+  modalCategory.value = categories[0];
+  modalName.value = "";
+  modalSection.value = "";
+  modalDate.value = new Date().toISOString().slice(0, 10);
+  modalDays.value = 30;
+  modalLastTons.value = currentTons;
+  modalTonInterval.value = 10000;
+  modalNotes.value = "";
 
-    const next = computeNextDue();
-    $("nextDue").textContent = next || "No maintenance items yet.";
+  partModal.style.display = "flex";
 }
 
-function checkOverdue(item) {
-    if (!item.lastDate || !item.intervalDays) return false;
-    const last = new Date(item.lastDate);
-    const now = new Date();
-    const diffDays = Math.floor((now - last) / (1000 * 60 * 60 * 24));
-    return diffDays > item.intervalDays;
+function openEditPart(i) {
+  editingIndex = i;
+  const p = parts[i];
+
+  modalTitle.textContent = "Edit Part";
+
+  modalCategory.value = p.category;
+  modalName.value = p.name;
+  modalSection.value = p.section;
+  modalDate.value = p.date;
+  modalDays.value = p.days;
+  modalLastTons.value = p.lastTons;
+  modalTonInterval.value = p.tonInterval;
+  modalNotes.value = p.notes;
+
+  partModal.style.display = "flex";
 }
 
-function computeNextDue() {
-    let soonest = null;
-    maintenanceList.forEach(item => {
-        if (!item.lastDate || !item.intervalDays) return;
-        const last = new Date(item.lastDate);
-        const now = new Date();
-        const diff = Math.floor((now - last) / (1000 * 60 * 60 * 24));
-        const remaining = item.intervalDays - diff;
-
-        if (remaining >= 0) {
-            if (soonest === null || remaining < soonest.days) {
-                soonest = { name: item.name, days: remaining };
-            }
-        }
-    });
-
-    return soonest ? `${soonest.name} (in ${soonest.days} days)` : null;
-}
-
-/* -------------------------------------------
-   MAINTENANCE FUNCTIONS
---------------------------------------------*/
-
-/* Render Maintenance List */
-function renderMaintenance() {
-    const listDiv = $("maintenanceList");
-    listDiv.innerHTML = "";
-
-    maintenanceList.forEach((item, index) => {
-        const card = document.createElement("div");
-        card.className = "item-card";
-
-        card.innerHTML = `
-            <p class="item-title">${item.name}</p>
-            <p class="item-sub">
-                Last: ${item.lastDate || "—"}<br>
-                Every: ${item.intervalDays || "—"} days
-            </p>
-            <button class="delete-btn" onclick="deleteMaintenance(${index})">Delete</button>
-        `;
-
-        listDiv.appendChild(card);
-    });
-}
-
-/* Add Maintenance */
-$("addMaintenanceBtn").addEventListener("click", () => {
-    const name = prompt("Part name:");
-    if (!name) return;
-
-    const interval = prompt("Interval days:");
-    const days = Number(interval) || 0;
-
-    const today = new Date().toISOString().slice(0, 10);
-
-    maintenanceList.push({
-        name,
-        lastDate: today,
-        intervalDays: days
-    });
-
-    saveAll();
-    renderAll();
+cancelPartBtn.addEventListener("click", () => {
+  partModal.style.display = "none";
 });
 
-/* Delete Maintenance */
-function deleteMaintenance(i) {
-    maintenanceList.splice(i, 1);
-    saveAll();
-    renderAll();
-}
+/* ============================================================
+   SAVE PART
+============================================================ */
+savePartBtn.addEventListener("click", () => {
+  const item = {
+    category: modalCategory.value,
+    name: modalName.value.trim(),
+    section: modalSection.value.trim(),
+    date: modalDate.value,
+    days: Number(modalDays.value),
+    lastTons: Number(modalLastTons.value),
+    tonInterval: Number(modalTonInterval.value),
+    notes: modalNotes.value.trim(),
+  };
 
-/* -------------------------------------------
-   INVENTORY FUNCTIONS
---------------------------------------------*/
+  if (!item.name) {
+    alert("Part name required.");
+    return;
+  }
 
-function renderInventory() {
-    const list = $("inventoryList");
-    list.innerHTML = "";
+  if (editingIndex === null) parts.unshift(item);
+  else parts[editingIndex] = item;
 
-    inventoryList.forEach((item, index) => {
-        const card = document.createElement("div");
-        card.className = "item-card";
-
-        card.innerHTML = `
-            <p class="item-title">${item.name}</p>
-            <p class="item-sub">Qty: ${item.qty}</p>
-            <button class="delete-btn" onclick="deleteInventory(${index})">Delete</button>
-        `;
-
-        list.appendChild(card);
-    });
-}
-
-$("addInventoryBtn").addEventListener("click", () => {
-    const name = prompt("Item name:");
-    if (!name) return;
-
-    const qty = Number(prompt("Quantity:")) || 0;
-
-    inventoryList.push({
-        name,
-        qty
-    });
-
-    saveAll();
-    renderInventory();
+  saveState();
+  partModal.style.display = "none";
+  renderParts();
 });
 
-function deleteInventory(i) {
-    inventoryList.splice(i, 1);
-    saveAll();
-    renderInventory();
+/* ============================================================
+   DELETE PART
+============================================================ */
+function deletePart(i) {
+  if (confirm("Delete this part?")) {
+    parts.splice(i, 1);
+    saveState();
+    renderParts();
+  }
 }
 
-/* -------------------------------------------
-   TONS SYSTEM
---------------------------------------------*/
-
-$("resetTonsBtn").addEventListener("click", () => {
-    if (confirm("Reset tons to 0?")) {
-        tonsRun = 0;
-        saveAll();
-        renderAll();
-    }
+/* ============================================================
+   THEME
+============================================================ */
+themeToggle.addEventListener("change", () => {
+  if (themeToggle.checked) {
+    document.body.classList.add("light-mode");
+    localStorage.setItem(THEME_KEY, "light");
+  } else {
+    document.body.classList.remove("light-mode");
+    localStorage.setItem(THEME_KEY, "dark");
+  }
 });
 
-$("applyTonsBtn").addEventListener("click", () => {
-    const v = Number($("setTonsValue").value);
-    if (!isNaN(v)) {
-        tonsRun = v;
-        saveAll();
-        renderAll();
-    }
-});
-
-/* -------------------------------------------
-   SAVE + RENDER ALL
---------------------------------------------*/
-
-function saveAll() {
-    localStorage.setItem(KEY_TONS, tonsRun);
-    localStorage.setItem(KEY_MAINT, JSON.stringify(maintenanceList));
-    localStorage.setItem(KEY_INVENT, JSON.stringify(inventoryList));
-}
-
-function renderAll() {
-    renderDashboard();
-    renderMaintenance();
-    renderInventory();
-}
-
-renderAll();
+/* ============================================================
+   INIT
+============================================================ */
+loadState();
+showScreen("home");
