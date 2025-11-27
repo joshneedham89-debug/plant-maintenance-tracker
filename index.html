@@ -19,9 +19,9 @@
   <!-- Service Worker -->
   <script>
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("service-worker.js");
-      });
+      window.addEventListener("load", () =>
+        navigator.serviceWorker.register("service-worker.js")
+      );
     }
   </script>
 </head>
@@ -31,11 +31,11 @@
 
     <!-- HEADER -->
     <header class="top-header">
-      <img src="icons/icon-192.png" class="app-logo" alt="Logo"/>
+      <img src="icons/icon-192.png" class="app-logo" alt="App Logo" />
       <h1>Plant Maintenance Tracker</h1>
     </header>
 
-    <!-- SCREENS -->
+    <!-- MAIN SCREENS -->
     <main>
 
       <!-- HOME SCREEN -->
@@ -49,7 +49,7 @@
 
         <div class="tons-box">
           <label>Current Tons:</label>
-          <input id="currentTons" type="number" inputmode="numeric"/>
+          <input id="currentTons" type="number" inputmode="numeric" />
           <button id="updateTonsBtn">Update</button>
         </div>
 
@@ -59,13 +59,11 @@
           <div class="stat">Next Due<br><span id="nextDue">—</span></div>
         </div>
 
-        <div class="home-actions">
-          <button id="openAddPartModal" class="primary-btn">+ Add Part</button>
+        <button id="openAddPartModal" class="primary-btn full">+ Add Part</button>
 
-          <div class="filter-row">
-            <select id="categoryFilter"></select>
-            <button id="addCategoryBtn" class="small-btn">+ Category</button>
-          </div>
+        <div class="filter-row">
+          <select id="categoryFilter"></select>
+          <button id="addCategoryBtn" class="small-btn">+ Category</button>
         </div>
 
         <div id="partsList" class="parts-list"></div>
@@ -75,8 +73,7 @@
       <!-- INVENTORY SCREEN -->
       <section id="screen-inventory" class="screen">
         <h2>Inventory</h2>
-        <p class="inv-sub">Reference parts from your plant inventory.</p>
-
+        <p class="inv-sub">Reference inventory parts.</p>
         <div id="inventoryList" class="inventory-list"></div>
       </section>
 
@@ -84,7 +81,7 @@
       <!-- ADD PART SCREEN -->
       <section id="screen-add" class="screen">
         <h2>Add Part</h2>
-        <button id="openAddPartModal2" class="primary-btn full">Add New Maintenance Part</button>
+        <button id="openAddPartModal2" class="primary-btn full">+ Add New Part</button>
       </section>
 
 
@@ -112,7 +109,7 @@
         <h2>About</h2>
         <p>Plant Maintenance Tracker</p>
         <p>Version 5.0</p>
-        <p>Designed for offline + mobile use.</p>
+        <p>Designed for offline use.</p>
       </section>
 
     </main>
@@ -131,31 +128,32 @@
   <!-- PART MODAL -->
   <div id="partModal" class="modal">
     <div class="modal-content">
+
       <h2 id="modalTitle">Add Part</h2>
 
       <label>Category</label>
       <select id="partCategory"></select>
 
       <label>Part Name</label>
-      <input id="partName"/>
+      <input id="partName" />
 
       <label>Section</label>
-      <input id="partSection"/>
+      <input id="partSection" />
 
       <label>Last Maintenance Date</label>
-      <input id="partDate" type="date"/>
+      <input id="partDate" type="date" />
 
       <button id="moreToggle" class="small-btn">More ▼</button>
 
       <div id="moreOptions" style="display:none">
         <label>Interval (days)</label>
-        <input id="partDays" type="number"/>
+        <input id="partDays" type="number" />
 
         <label>Last Tons</label>
-        <input id="partLastTons" type="number"/>
+        <input id="partLastTons" type="number" />
 
         <label>Ton Interval</label>
-        <input id="partTonInterval" type="number"/>
+        <input id="partTonInterval" type="number" />
 
         <label>Notes</label>
         <textarea id="partNotes"></textarea>
@@ -165,164 +163,12 @@
         <button id="savePartBtn" class="primary-btn">Save</button>
         <button id="cancelPartBtn" class="secondary-btn">Cancel</button>
       </div>
+
     </div>
   </div>
 
   <!-- SCRIPTS -->
   <script src="inventory.js"></script>
-  <script src="script.js"></script>
-
-</body>
-</html>
-        <!-- DASHBOARD PAGE -->
-        <section id="dashboard" class="page active">
-            <h2>Dashboard</h2>
-
-            <div class="grid-2">
-                <div class="card">
-                    <h3>Tons Run</h3>
-                    <p id="tonsRun">0</p>
-                </div>
-
-                <div class="card">
-                    <h3>Maintenance Parts</h3>
-                    <p id="maintenanceCount">0</p>
-                </div>
-
-                <div class="card">
-                    <h3>Overdue Items</h3>
-                    <p id="overdueCount">0</p>
-                </div>
-
-                <div class="card">
-                    <h3>Inventory Items</h3>
-                    <p id="inventoryCount">0</p>
-                </div>
-            </div>
-
-            <div class="card wide">
-                <h3>Next Due</h3>
-                <p id="nextDue">No maintenance items yet.</p>
-            </div>
-        </section>
-
-        <!-- MAINTENANCE PAGE -->
-        <section id="maintenance" class="page">
-            <h2>Maintenance</h2>
-
-            <button id="addMaintenanceBtn" class="yellow-btn">+ Add Part</button>
-
-            <div id="maintenanceList"></div>
-        </section>
-
-        <!-- INVENTORY PAGE -->
-        <section id="inventory" class="page">
-            <h2>Inventory</h2>
-
-            <button id="addInventoryBtn" class="yellow-btn">+ Add Inventory Item</button>
-
-            <div id="inventoryList"></div>
-        </section>
-
-        <!-- SETTINGS PAGE -->
-        <section id="settings" class="page">
-            <h2>Settings</h2>
-
-            <div class="settings-card">
-                <h3>Reset Tons</h3>
-                <button id="resetTonsBtn" class="red-btn">Reset Tons</button>
-            </div>
-
-            <div class="settings-card">
-                <h3>Set Custom Tons Value</h3>
-                <input id="setTonsValue" type="number" placeholder="Enter tons value">
-                <button id="applyTonsBtn" class="yellow-btn">Apply</button>
-            </div>
-        </section>
-
-    </main>
-
-    <script src="script.js"></script>
-
-</body>
-</html>  </nav>
-
-  <!-- PAGE CONTAINER -->
-  <main id="page-dashboard" class="page visible">
-
-    <div class="card-grid">
-
-      <div class="card">
-        <h2>Total Parts</h2>
-        <p id="dashTotalParts">0</p>
-      </div>
-
-      <div class="card">
-        <h2>Next Due</h2>
-        <p id="dashNextDue">—</p>
-      </div>
-
-      <div class="card">
-        <h2>Tons Run</h2>
-        <p id="dashTons">0</p>
-        <button id="addTonsBtn" class="small-btn">+ Add Tons</button>
-      </div>
-
-      <div class="card">
-        <h2>Inventory Items</h2>
-        <p id="dashInventory">0</p>
-      </div>
-
-    </div>
-  </main>
-
-  <!-- MAINTENANCE PAGE -->
-  <main id="page-maintenance" class="page">
-    <div class="page-header">
-      <h2>Maintenance Parts</h2>
-      <button id="addPartBtn" class="primary-btn">+ Add Part</button>
-    </div>
-
-    <div class="filter-row">
-      <label>Category:</label>
-      <select id="maintCategoryFilter"></select>
-    </div>
-
-    <div id="maintenanceList" class="list-container"></div>
-  </main>
-
-  <!-- INVENTORY PAGE -->
-  <main id="page-inventory" class="page">
-    <div class="page-header">
-      <h2>Inventory</h2>
-      <button id="addInventoryBtn" class="primary-btn">+ Add Item</button>
-    </div>
-
-    <div class="filter-row">
-      <label>Category:</label>
-      <select id="invCategoryFilter"></select>
-    </div>
-
-    <div id="inventoryList" class="list-container"></div>
-  </main>
-
-  <!-- SETTINGS PAGE -->
-  <main id="page-settings" class="page">
-    <h2>Settings</h2>
-
-    <div class="card setting-card">
-      <h3>Theme</h3>
-      <button id="toggleTheme" class="primary-btn">Toggle Dark/Light</button>
-    </div>
-
-    <div class="card setting-card">
-      <h3>Data</h3>
-      <button id="exportDataBtn" class="secondary-btn">Export Data</button>
-      <button id="resetDataBtn" class="danger-btn">Reset All Data</button>
-    </div>
-
-  </main>
-
   <script src="script.js"></script>
 
 </body>
