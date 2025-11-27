@@ -1,1 +1,138 @@
-<!-- index placeholder -->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Plant Maintenance Tracker</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f1724" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('service-worker.js').catch(console.error);
+      });
+    }
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="title-row">
+        <h1>Plant Maintenance Tracker</h1>
+        <button id="settingsBtn" class="icon-btn">⚙️</button>
+      </div>
+      <p class="subtitle">Ton &amp; Time tracker — offline</p>
+    </header>
+
+    <section class="summary-row">
+      <div class="summary-item green" id="okCount">🟢 OK: 0</div>
+      <div class="summary-item yellow" id="dueCount">🟡 Due: 0</div>
+      <div class="summary-item red" id="overCount">🔴 Overdue: 0</div>
+      <div class="tons-input">
+        <label for="currentTons">Current Tons</label>
+        <input id="currentTons" type="number" inputmode="numeric" />
+        <button id="updateTonsBtn">Update</button>
+        <button id="addTonsBtn" class="small-btn">+ Add Tons</button>
+      </div>
+    </section>
+
+    <section class="quick-stats">
+      <div class="stat">Total Parts<br><span id="totalParts">0</span></div>
+      <div class="stat">Next Due<br><span id="nextDue">—</span></div>
+      <div class="stat">Tons Run<br><span id="tonsRun">0</span></div>
+    </section>
+
+    <section class="actions-row">
+      <button id="addPartBtn" class="primary-btn">+ Add Part</button>
+      <button id="viewPartsBtn" class="secondary-btn">View All Parts</button>
+    </section>
+
+    <section class="filter-row">
+      <label for="categoryFilter">Category:</label>
+      <select id="categoryFilter"></select>
+      <button id="addCategoryBtn" class="small-btn">+ Add Category</button>
+    </section>
+
+    <main id="partsList" class="parts-list"></main>
+
+    <footer class="footer">
+      <button id="exportBtn">Export JSON</button>
+      <button id="resetBtn">Reset</button>
+    </footer>
+  </div>
+
+  <!-- Add / Edit Part Modal -->
+  <div id="partModal" class="modal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Add Part</h2>
+
+      <label for="partCategory">Category</label>
+      <select id="partCategory"></select>
+
+      <label for="partName">Part Name</label>
+      <input id="partName" placeholder="e.g., Drag Chain" />
+
+      <label for="partSection">Section / Location</label>
+      <input id="partSection" placeholder="e.g., Slat Conveyor" />
+
+      <label for="partDate">Last Maintenance Date</label>
+      <input id="partDate" type="date" />
+
+      <div class="more-toggle-row">
+        <button id="moreToggle" class="small-btn">More Options ▼</button>
+      </div>
+
+      <div id="moreOptions" style="display:none">
+        <label for="partDays">Interval (days)</label>
+        <input id="partDays" type="number" />
+
+        <label for="partLastTons">Last Ton Reading</label>
+        <input id="partLastTons" type="number" />
+
+        <label for="partTonInterval">Ton Interval</label>
+        <input id="partTonInterval" type="number" />
+
+        <label for="partNotes">Notes</label>
+        <textarea id="partNotes"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button id="savePartBtn" class="primary-btn">Save Part</button>
+        <button id="cancelPartBtn" class="secondary-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- Add Tons Modal -->
+  <div id="addTonsModal" class="modal">
+    <div class="modal-content small">
+      <h3>Add Tons</h3>
+      <label for="addTonsAmount">Amount to add</label>
+      <input id="addTonsAmount" type="number" inputmode="numeric" />
+      <div class="modal-actions">
+        <button id="confirmAddTonsBtn" class="primary-btn">Add</button>
+        <button id="cancelAddTonsBtn" class="secondary-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content small">
+      <h3>Settings</h3>
+      <label><input type="checkbox" id="themeToggle" /> Light Mode</label>
+      <div class="modal-actions">
+        <button id="closeSettingsBtn" class="primary-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
