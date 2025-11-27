@@ -1,40 +1,112 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Plant Maintenance Tracker</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plant Maintenance Tracker</title>
 
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0f1724" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
 
-  <link rel="stylesheet" href="style.css" />
-
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function () {
-        navigator.serviceWorker.register("service-worker.js").catch(console.error);
-      });
-    }
-  </script>
+    <link rel="icon" type="image/png" href="icon-192.png" />
 </head>
 
 <body>
 
-  <!-- HEADER -->
-  <header class="app-header">
-    <img src="icons/icon-72.png" class="app-logo" alt="App Logo">
-    <h1>Plant Maintenance Tracker</h1>
-    <button id="themeToggleBtn" class="icon-btn">🌓</button>
-  </header>
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+        <img src="logo.png" class="app-logo" alt="App Logo">
+        <div class="app-title-block">
+            <h1>Plant Maintenance Tracker</h1>
+            <p class="subtitle">Tons, Time & Inventory — Offline Ready</p>
+        </div>
 
-  <!-- MAIN NAV -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
-    <button class="nav-btn" data-page="maintenance">🛠 Maintenance</button>
-    <button class="nav-btn" data-page="inventory">📦 Inventory</button>
-    <button class="nav-btn" data-page="settings">⚙️ Settings</button>
-  </nav>
+        <button id="themeToggle" class="theme-btn">🌙</button>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="nav-bar">
+        <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
+        <button class="nav-btn" data-page="maintenance">🛠 Maintenance</button>
+        <button class="nav-btn" data-page="inventory">📦 Inventory</button>
+        <button class="nav-btn" data-page="settings">⚙️ Settings</button>
+    </nav>
+
+    <!-- MAIN APP CONTENT -->
+    <main id="appPages">
+
+        <!-- DASHBOARD PAGE -->
+        <section id="dashboard" class="page active">
+            <h2>Dashboard</h2>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Tons Run</h3>
+                    <p id="tonsRun">0</p>
+                </div>
+
+                <div class="card">
+                    <h3>Maintenance Parts</h3>
+                    <p id="maintenanceCount">0</p>
+                </div>
+
+                <div class="card">
+                    <h3>Overdue Items</h3>
+                    <p id="overdueCount">0</p>
+                </div>
+
+                <div class="card">
+                    <h3>Inventory Items</h3>
+                    <p id="inventoryCount">0</p>
+                </div>
+            </div>
+
+            <div class="card wide">
+                <h3>Next Due</h3>
+                <p id="nextDue">No maintenance items yet.</p>
+            </div>
+        </section>
+
+        <!-- MAINTENANCE PAGE -->
+        <section id="maintenance" class="page">
+            <h2>Maintenance</h2>
+
+            <button id="addMaintenanceBtn" class="yellow-btn">+ Add Part</button>
+
+            <div id="maintenanceList"></div>
+        </section>
+
+        <!-- INVENTORY PAGE -->
+        <section id="inventory" class="page">
+            <h2>Inventory</h2>
+
+            <button id="addInventoryBtn" class="yellow-btn">+ Add Inventory Item</button>
+
+            <div id="inventoryList"></div>
+        </section>
+
+        <!-- SETTINGS PAGE -->
+        <section id="settings" class="page">
+            <h2>Settings</h2>
+
+            <div class="settings-card">
+                <h3>Reset Tons</h3>
+                <button id="resetTonsBtn" class="red-btn">Reset Tons</button>
+            </div>
+
+            <div class="settings-card">
+                <h3>Set Custom Tons Value</h3>
+                <input id="setTonsValue" type="number" placeholder="Enter tons value">
+                <button id="applyTonsBtn" class="yellow-btn">Apply</button>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+
+</body>
+</html>  </nav>
 
   <!-- PAGE CONTAINER -->
   <main id="page-dashboard" class="page visible">
