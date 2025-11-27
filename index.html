@@ -1,40 +1,179 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Plant Maintenance Tracker</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Plant Maintenance Tracker</title>
 
-    <link rel="stylesheet" href="style.css" />
-    <link rel="manifest" href="manifest.json" />
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f1724" />
 
-    <link rel="icon" type="image/png" href="icon-192.png" />
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Icons -->
+  <link rel="icon" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="icon" sizes="512x512" href="icons/icon-512.png" />
+
+  <!-- Service Worker -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("service-worker.js");
+      });
+    }
+  </script>
 </head>
 
 <body>
+  <div id="app">
 
-    <!-- Top Navigation Header -->
-    <header class="app-header">
-        <img src="logo.png" class="app-logo" alt="App Logo">
-        <div class="app-title-block">
-            <h1>Plant Maintenance Tracker</h1>
-            <p class="subtitle">Tons, Time & Inventory — Offline Ready</p>
-        </div>
-
-        <button id="themeToggle" class="theme-btn">🌙</button>
+    <!-- HEADER -->
+    <header class="top-header">
+      <img src="icons/icon-192.png" class="app-logo" alt="Logo"/>
+      <h1>Plant Maintenance Tracker</h1>
     </header>
 
-    <!-- NAVIGATION TABS -->
-    <nav class="nav-bar">
-        <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
-        <button class="nav-btn" data-page="maintenance">🛠 Maintenance</button>
-        <button class="nav-btn" data-page="inventory">📦 Inventory</button>
-        <button class="nav-btn" data-page="settings">⚙️ Settings</button>
+    <!-- SCREENS -->
+    <main>
+
+      <!-- HOME SCREEN -->
+      <section id="screen-home" class="screen active">
+
+        <div class="summary-box">
+          <div class="summary-item" id="okCount">🟢 OK: 0</div>
+          <div class="summary-item" id="dueCount">🟡 Due: 0</div>
+          <div class="summary-item" id="overCount">🔴 Overdue: 0</div>
+        </div>
+
+        <div class="tons-box">
+          <label>Current Tons:</label>
+          <input id="currentTons" type="number" inputmode="numeric"/>
+          <button id="updateTonsBtn">Update</button>
+        </div>
+
+        <div class="quick-stats">
+          <div class="stat">Total Parts<br><span id="totalParts">0</span></div>
+          <div class="stat">Tons Run<br><span id="tonsRun">0</span></div>
+          <div class="stat">Next Due<br><span id="nextDue">—</span></div>
+        </div>
+
+        <div class="home-actions">
+          <button id="openAddPartModal" class="primary-btn">+ Add Part</button>
+
+          <div class="filter-row">
+            <select id="categoryFilter"></select>
+            <button id="addCategoryBtn" class="small-btn">+ Category</button>
+          </div>
+        </div>
+
+        <div id="partsList" class="parts-list"></div>
+      </section>
+
+
+      <!-- INVENTORY SCREEN -->
+      <section id="screen-inventory" class="screen">
+        <h2>Inventory</h2>
+        <p class="inv-sub">Reference parts from your plant inventory.</p>
+
+        <div id="inventoryList" class="inventory-list"></div>
+      </section>
+
+
+      <!-- ADD PART SCREEN -->
+      <section id="screen-add" class="screen">
+        <h2>Add Part</h2>
+        <button id="openAddPartModal2" class="primary-btn full">Add New Maintenance Part</button>
+      </section>
+
+
+      <!-- SETTINGS SCREEN -->
+      <section id="screen-settings" class="screen">
+        <h2>Settings</h2>
+
+        <label class="toggle-row">
+          <input type="checkbox" id="themeToggle" />
+          <span>Light Mode</span>
+        </label>
+
+        <h3>Tons Controls</h3>
+        <button id="setTonsBtn" class="secondary-btn">Set Tons Value</button>
+        <button id="resetTonsBtn" class="secondary-btn red">Reset Tons</button>
+
+        <h3>Data</h3>
+        <button id="exportBtn" class="secondary-btn">Export Backup</button>
+        <button id="resetBtn" class="secondary-btn red">Reset ALL Data</button>
+      </section>
+
+
+      <!-- ABOUT SCREEN -->
+      <section id="screen-about" class="screen">
+        <h2>About</h2>
+        <p>Plant Maintenance Tracker</p>
+        <p>Version 5.0</p>
+        <p>Designed for offline + mobile use.</p>
+      </section>
+
+    </main>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+      <button data-screen="home"><span class="nav-icon">🏠</span></button>
+      <button data-screen="inventory"><span class="nav-icon">📦</span></button>
+      <button data-screen="add"><span class="nav-icon">➕</span></button>
+      <button data-screen="settings"><span class="nav-icon">⚙️</span></button>
+      <button data-screen="about"><span class="nav-icon">❓</span></button>
     </nav>
+  </div>
 
-    <!-- MAIN APP CONTENT -->
-    <main id="appPages">
 
+  <!-- PART MODAL -->
+  <div id="partModal" class="modal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Add Part</h2>
+
+      <label>Category</label>
+      <select id="partCategory"></select>
+
+      <label>Part Name</label>
+      <input id="partName"/>
+
+      <label>Section</label>
+      <input id="partSection"/>
+
+      <label>Last Maintenance Date</label>
+      <input id="partDate" type="date"/>
+
+      <button id="moreToggle" class="small-btn">More ▼</button>
+
+      <div id="moreOptions" style="display:none">
+        <label>Interval (days)</label>
+        <input id="partDays" type="number"/>
+
+        <label>Last Tons</label>
+        <input id="partLastTons" type="number"/>
+
+        <label>Ton Interval</label>
+        <input id="partTonInterval" type="number"/>
+
+        <label>Notes</label>
+        <textarea id="partNotes"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button id="savePartBtn" class="primary-btn">Save</button>
+        <button id="cancelPartBtn" class="secondary-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="inventory.js"></script>
+  <script src="script.js"></script>
+
+</body>
+</html>
         <!-- DASHBOARD PAGE -->
         <section id="dashboard" class="page active">
             <h2>Dashboard</h2>
