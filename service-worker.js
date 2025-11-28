@@ -1,1 +1,1 @@
-self.addEventListener('install',e=>{self.skipWaiting();});
+// sw placeholder
