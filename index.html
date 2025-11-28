@@ -1,118 +1,223 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Plant Maintenance Tracker</title>
 
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0f1724" />
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#0f1724"/>
 
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 
   <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function () {
-        navigator.serviceWorker.register("service-worker.js").catch(console.error);
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
       });
     }
   </script>
 </head>
-
 <body>
 
-  <!-- HEADER -->
-  <header class="app-header">
-    <img src="icons/icon-72.png" class="app-logo" alt="App Logo">
-    <h1>Plant Maintenance Tracker</h1>
-    <button id="themeToggleBtn" class="icon-btn">🌓</button>
-  </header>
+<!-- ░░░ FIXED HEADER ░░░ -->
+<header class="header">
+  <div class="header-left">
+    <img src="icons/icon-192.png" class="app-logo" alt="logo"/>
+    <div class="header-title">
+      <div class="title-main">Plant Maintenance Tracker</div>
+      <div class="title-sub">Tons · Parts · Inventory</div>
+    </div>
+  </div>
+  <button id="settingsBtn" class="settings-btn">⚙️</button>
+</header>
 
-  <!-- MAIN NAV -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" data-page="dashboard">📊 Dashboard</button>
-    <button class="nav-btn" data-page="maintenance">🛠 Maintenance</button>
-    <button class="nav-btn" data-page="inventory">📦 Inventory</button>
-    <button class="nav-btn" data-page="settings">⚙️ Settings</button>
-  </nav>
+<main id="main">
 
-  <!-- PAGE CONTAINER -->
-  <main id="page-dashboard" class="page visible">
+  <!-- ░░░ PAGE: DASHBOARD ░░░ -->
+  <section id="page-dashboard" class="page active">
 
     <div class="card-grid">
 
-      <div class="card">
-        <h2>Total Parts</h2>
-        <p id="dashTotalParts">0</p>
+      <div class="card stat-card">
+        <label>Total Parts</label>
+        <span id="statTotalParts">0</span>
       </div>
 
-      <div class="card">
-        <h2>Next Due</h2>
-        <p id="dashNextDue">—</p>
-      </div>
-
-      <div class="card">
-        <h2>Tons Run</h2>
-        <p id="dashTons">0</p>
-        <button id="addTonsBtn" class="small-btn">+ Add Tons</button>
-      </div>
-
-      <div class="card">
-        <h2>Inventory Items</h2>
-        <p id="dashInventory">0</p>
+      <div class="card stat-card">
+        <label>Overdue</label>
+        <span id="statOverdue">0</span>
       </div>
 
     </div>
-  </main>
 
-  <!-- MAINTENANCE PAGE -->
-  <main id="page-maintenance" class="page">
-    <div class="page-header">
-      <h2>Maintenance Parts</h2>
-      <button id="addPartBtn" class="primary-btn">+ Add Part</button>
+    <div class="card-grid">
+
+      <div class="card stat-card">
+        <label>Tons Run</label>
+        <span id="statTons">0</span>
+      </div>
+
+      <div class="card stat-card">
+        <label>Next Due</label>
+        <span id="statNextDue">—</span>
+      </div>
+
+    </div>
+
+    <!-- Tons Panel -->
+    <div class="card tons-card">
+      <h3>Update Tons</h3>
+      <div class="tons-row">
+        <input id="inputTons" type="number" placeholder="Enter current tons…"/>
+        <button id="btnUpdateTons">Update</button>
+      </div>
+
+      <div class="tons-chips">
+        <button class="chip" id="btnAdd100">+100</button>
+        <button class="chip" id="btnAdd500">+500</button>
+        <button class="chip" id="btnAdd1000">+1000</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Quick Actions</h3>
+      <div class="qa-row">
+        <button id="dashAddPart" class="primary-btn">+ Add Part</button>
+        <button id="dashInventory" class="primary-btn">Inventory</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Next Maintenance</h3>
+      <p id="dashboardNextText" class="muted">Add parts to see next due maintenance.</p>
+    </div>
+
+  </section>
+
+  <!-- ░░░ PAGE: PARTS ░░░ -->
+  <section id="page-parts" class="page">
+
+    <div class="page-top">
+      <h2>Parts</h2>
+      <button id="btnAddPart" class="primary-btn">+ Add Part</button>
     </div>
 
     <div class="filter-row">
-      <label>Category:</label>
-      <select id="maintCategoryFilter"></select>
+      <select id="partsCategoryFilter"></select>
     </div>
 
-    <div id="maintenanceList" class="list-container"></div>
-  </main>
-
-  <!-- INVENTORY PAGE -->
-  <main id="page-inventory" class="page">
-    <div class="page-header">
-      <h2>Inventory</h2>
-      <button id="addInventoryBtn" class="primary-btn">+ Add Item</button>
+    <div class="summary-row">
+      <span id="sumOk">🟢 OK: 0</span>
+      <span id="sumDue">🟡 Due: 0</span>
+      <span id="sumOver">🔴 Overdue: 0</span>
     </div>
+
+    <div id="partsList" class="parts-list"></div>
+
+  </section>
+
+  <!-- ░░░ PAGE: INVENTORY (B Layout) ░░░ -->
+  <section id="page-inventory" class="page">
+
+    <h2>Inventory</h2>
 
     <div class="filter-row">
-      <label>Category:</label>
-      <select id="invCategoryFilter"></select>
+      <input type="text" id="inventorySearch" placeholder="Search inventory…"/>
     </div>
 
-    <div id="inventoryList" class="list-container"></div>
-  </main>
+    <div id="inventoryList" class="inventory-list"></div>
 
-  <!-- SETTINGS PAGE -->
-  <main id="page-settings" class="page">
+  </section>
+
+  <!-- ░░░ PAGE: SETTINGS ░░░ -->
+  <section id="page-settings" class="page">
+
     <h2>Settings</h2>
 
-    <div class="card setting-card">
+    <div class="card">
+      <h3>Tons</h3>
+      <button id="btnResetTons" class="secondary-btn full">Reset Tons</button>
+    </div>
+
+    <div class="card">
       <h3>Theme</h3>
-      <button id="toggleTheme" class="primary-btn">Toggle Dark/Light</button>
+      <label class="switch-row">
+        <span>Light Mode</span>
+        <input id="toggleTheme" type="checkbox"/>
+      </label>
     </div>
 
-    <div class="card setting-card">
+    <div class="card">
       <h3>Data</h3>
-      <button id="exportDataBtn" class="secondary-btn">Export Data</button>
-      <button id="resetDataBtn" class="danger-btn">Reset All Data</button>
+      <button id="btnExportData" class="secondary-btn full">Export Parts JSON</button>
+      <button id="btnResetAll" class="danger-btn full">Reset ALL Data</button>
     </div>
 
-  </main>
+    <div class="card">
+      <h3>About</h3>
+      <p class="muted">PM Tracker v7 Final Build</p>
+    </div>
 
-  <script src="script.js"></script>
+  </section>
+
+</main>
+
+<!-- ░░░ ADD / EDIT PART MODAL ░░░ -->
+<div id="partModal" class="modal hidden">
+  <div class="modal-bg"></div>
+  <div class="modal-box">
+
+    <h3 id="modalTitle">Add Part</h3>
+
+    <label>Category</label>
+    <select id="partCategory"></select>
+
+    <label>Part Name</label>
+    <input id="partName" type="text"/>
+
+    <label>Section / Location</label>
+    <input id="partSection" type="text"/>
+
+    <label>Last Maintenance Date</label>
+    <input id="partDate" type="date"/>
+
+    <button id="modalMoreBtn" class="small-link">More Options ▼</button>
+
+    <div id="moreFields" class="hidden">
+
+      <label>Days Interval</label>
+      <input id="partDays" type="number"/>
+
+      <label>Last Ton Reading</label>
+      <input id="partLastTons" type="number"/>
+
+      <label>Ton Interval</label>
+      <input id="partTonInterval" type="number"/>
+
+      <label>Notes</label>
+      <textarea id="partNotes"></textarea>
+
+    </div>
+
+    <div class="modal-actions">
+      <button id="btnSavePart" class="primary-btn">Save</button>
+      <button id="btnCancelPart" class="secondary-btn">Cancel</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ░░░ BOTTOM NAV (Rounded) ░░░ -->
+<nav class="bottom-nav">
+  <button class="nav-pill active" data-page="page-dashboard">Dashboard</button>
+  <button class="nav-pill" data-page="page-parts">Parts</button>
+  <button class="nav-pill" data-page="page-inventory">Inventory</button>
+  <button class="nav-pill" data-page="page-settings">Settings</button>
+</nav>
+
+<script src="inventory.js"></script>
+<script src="script.js"></script>
 
 </body>
 </html>
