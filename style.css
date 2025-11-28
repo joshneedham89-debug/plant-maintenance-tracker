@@ -1,236 +1,411 @@
-/* --------------------------------------------------
-   GLOBAL THEME
--------------------------------------------------- */
+/* =========================================================
+   Plant Maintenance Tracker v7 – FULL STYLE
+   Modern dark UI with gold accents and rounded nav pills
+   ========================================================= */
+
 :root {
   --bg: #0f1724;
-  --card: #162236;
-  --text: #ffffff;
+  --card: #141c2b;
+  --card-alt: #1b2537;
+  --accent: #f5c53d;
+  --white: #f8fafc;
   --muted: #94a3b8;
-  --accent: #FFD700;
-  --red: #ff5252;
-  --yellow: #FFD54F;
-  --green: #4CAF50;
+  --danger: #dc2626;
+  --good: #22c55e;
+  --due: #eab308;
+  --over: #ef4444;
 }
 
+/* Light mode ----------------------------------------------------- */
 body.light {
-  --bg: #f3f3f3;
+  --bg: #f4f4f5;
   --card: #ffffff;
-  --text: #111111;
-  --muted: #555555;
-  --accent: #d4a700;
+  --card-alt: #e5e7eb;
+  --white: #020617;
+  --muted: #475569;
 }
 
-/* --------------------------------------------------
-   BASE STYLING
--------------------------------------------------- */
 body {
   margin: 0;
-  padding: 0;
   background: var(--bg);
+  color: var(--white);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  color: var(--text);
 }
 
-.page {
-  display: none;
-  padding: 16px;
-}
-
-.page.visible {
-  display: block;
-}
-
-/* --------------------------------------------------
-   HEADER
--------------------------------------------------- */
-.app-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+/* ---------------------------------------------------------------
+   FIXED HEADER
+---------------------------------------------------------------- */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   background: var(--card);
-  border-bottom: 2px solid #00000033;
-}
-
-.app-header h1 {
-  margin: 0;
-  flex: 1;
-  font-size: 20px;
-  color: var(--accent);
-}
-
-.app-logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-}
-
-/* --------------------------------------------------
-   BUTTONS
--------------------------------------------------- */
-.primary-btn {
-  background: var(--accent);
-  color: #000;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.secondary-btn {
-  background: #ffffff22;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  color: var(--text);
-}
-
-.danger-btn {
-  background: var(--red);
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  color: #fff;
-}
-
-.small-btn {
-  padding: 6px 10px;
-  background: var(--accent);
-  border: none;
-  border-radius: 8px;
-  color: #000;
-  font-weight: bold;
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
-  color: var(--text);
-}
-
-/* --------------------------------------------------
-   DASHBOARD CARDS
--------------------------------------------------- */
-.card-grid {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-}
-
-.card {
-  background: var(--card);
-  padding: 16px;
-  border-radius: 14px;
-  box-shadow: 0 2px 6px #00000033;
-}
-
-.card h2 {
-  margin: 0 0 6px 0;
-}
-
-.card p {
-  font-size: 22px;
-  font-weight: bold;
-  color: var(--accent);
-  margin: 0 0 10px 0;
-}
-
-/* --------------------------------------------------
-   PAGE HEADERS
--------------------------------------------------- */
-.page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #1f2937;
+  z-index: 50;
 }
 
-.filter-row {
-  margin-bottom: 12px;
+.header-left {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.filter-row select {
+.app-logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+}
+
+.header-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.title-main {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.title-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.settings-btn {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: var(--white);
+}
+
+/* ---------------------------------------------------------------
+   MAIN CONTENT AREA
+---------------------------------------------------------------- */
+#main {
+  margin-top: 72px;
+  margin-bottom: 80px;
+  padding: 12px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Pages ---------------------------------------------------------- */
+.page {
+  display: none;
+}
+.page.active {
+  display: block;
+}
+
+/* ---------------------------------------------------------------
+   CARD STYLES
+---------------------------------------------------------------- */
+.card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+  margin-bottom: 14px;
+}
+
+.card-grid {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stat-card label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stat-card span {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--accent);
+  margin-top: 6px;
+  display: block;
+}
+
+/* Tons Card ------------------------------------------------------ */
+.tons-card h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.tons-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tons-row input {
   flex: 1;
   padding: 10px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: none;
 }
 
-/* --------------------------------------------------
-   LISTS (Maintenance + Inventory)
--------------------------------------------------- */
-.list-container {
+.tons-row button {
+  background: var(--accent);
+  border: none;
+  padding: 10px 12px;
+  font-weight: 800;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #111;
+}
+
+.tons-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  background: var(--card-alt);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+}
+
+/* Quick Actions ------------------------------------------------- */
+.qa-row {
+  display: flex;
+  gap: 8px;
+}
+
+.primary-btn,
+.secondary-btn,
+.danger-btn {
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  font-size: 14px;
+  width: auto;
+}
+
+.primary-btn {
+  background: var(--accent);
+  color: #111;
+}
+
+.secondary-btn {
+  background: var(--card-alt);
+}
+
+.danger-btn {
+  background: var(--danger);
+  color: #fff;
+}
+
+.full {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* ---------------------------------------------------------------
+   PARTS PAGE
+---------------------------------------------------------------- */
+.page-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.filter-row input,
+.filter-row select {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+.summary-row {
+  display: flex;
+  gap: 14px;
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.parts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.part-card {
+  background: var(--card-alt);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.part-info {
+  max-width: 70%;
+}
+
+.part-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  color: var(--accent);
+}
+
+.part-meta {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+
+.part-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.part-actions button {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------
+   INVENTORY PAGE (B LAYOUT)
+---------------------------------------------------------------- */
+.inventory-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.list-card {
-  background: var(--card);
-  padding: 16px;
-  border-radius: 14px;
-  box-shadow: 0 2px 6px #00000033;
-  border-left: 6px solid var(--green);
+.inv-category {
+  font-size: 16px;
+  font-weight: 800;
+  margin-top: 4px;
+  color: var(--accent);
 }
 
-.list-card.overdue {
-  border-left: 6px solid var(--red);
+.inv-item {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--card-alt);
+  margin-top: 4px;
+  font-size: 14px;
 }
 
-.list-card.due {
-  border-left: 6px solid var(--yellow);
-}
-
-.list-card h3 {
-  margin: 0 0 4px 0;
-}
-
-.list-meta {
-  font-size: 13px;
-  color: var(--muted);
-  margin: 2px 0;
-}
-
-.list-actions {
-  margin-top: 10px;
+/* ---------------------------------------------------------------
+   SETTINGS
+---------------------------------------------------------------- */
+.switch-row {
   display: flex;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* --------------------------------------------------
-   BOTTOM NAVIGATION
--------------------------------------------------- */
-.bottom-nav {
+/* ---------------------------------------------------------------
+   MODALS
+---------------------------------------------------------------- */
+.modal.hidden {
+  display: none;
+}
+
+.modal {
   position: fixed;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modal-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+}
+
+.modal-box {
+  position: relative;
+  background: var(--card);
+  padding: 18px;
+  border-radius: 14px;
+  width: 92%;
+  max-width: 420px;
+  z-index: 210;
+}
+
+.small-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* ---------------------------------------------------------------
+   BOTTOM NAV
+---------------------------------------------------------------- */
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: var(--card);
   padding: 10px;
   display: flex;
   justify-content: space-around;
-  border-top: 2px solid #00000022;
+  gap: 10px;
+  z-index: 40;
 }
 
-.nav-btn {
-  flex: 1;
-  background: none;
+.nav-pill {
+  padding: 10px 16px;
+  border-radius: 999px;
   border: none;
-  color: var(--text);
-  font-size: 14px;
+  background: var(--card-alt);
+  color: var(--white);
+  font-weight: 700;
+  cursor: pointer;
 }
 
-.nav-btn.active {
-  color: var(--accent);
-  font-weight: bold;
+.nav-pill.active {
+  background: var(--accent);
+  color: #111;
 }
 
-/* --------------------------------------------------
-   MODALS (You can add later if needed)
--------------------------------------------------- */
+/* ---------------------------------------------------------------
+   EXTRA UTILITY
+---------------------------------------------------------------- */
+.muted {
+  color: var(--muted);
+}
+.hidden {
+  display: none !important;
+}
