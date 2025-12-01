@@ -1,221 +1,263 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="utf-8" />
   <title>Plant Maintenance Tracker</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0f1724" />
 
-  <link rel="manifest" href="manifest.json"/>
-  <meta name="theme-color" content="#0f1724"/>
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json" />
 
-  <link rel="stylesheet" href="style.css"/>
+  <!-- Main stylesheet -->
+  <link rel="stylesheet" href="style.css" />
 
   <script>
+    // Register Service Worker for PWA + offline
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js');
+        navigator.serviceWorker.register('service-worker.js').catch(console.error);
       });
     }
   </script>
 </head>
 <body>
+<div class="app">
 
-<!-- ░░░ FIXED HEADER ░░░ -->
-<header class="header">
-  <div class="header-left">
-    <img src="icons/icon-192.png" class="app-logo" alt="logo"/>
-    <div class="header-title">
-      <div class="title-main">Plant Maintenance Tracker</div>
-      <div class="title-sub">Tons · Parts · Inventory</div>
+  <!-- ░░░ HEADER ░░░ -->
+  <header class="header">
+    <div class="header-left">
+      <!-- App logo (you provide icons/icon-192.png) -->
+      <img src="icons/icon-192.png" alt="Plant logo" class="app-logo" />
+      <div class="header-text">
+        <div class="header-title">Plant Maintenance Tracker</div>
+        <div class="header-subtitle">Tons • Parts • Inventory</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ░░░ MAIN CONTENT ░░░ -->
+  <main id="main">
+
+    <!-- ░░ PAGE: DASHBOARD ░░ -->
+    <section id="page-dashboard" class="page active">
+      <h2 class="page-title">Dashboard</h2>
+
+      <div class="card-grid">
+        <div class="card stat-card">
+          <label>Total Parts</label>
+          <span id="dashTotalParts">0</span>
+        </div>
+        <div class="card stat-card">
+          <label>Tons Run</label>
+          <span id="dashTons">0</span>
+        </div>
+        <div class="card stat-card">
+          <label>Overdue</label>
+          <span id="dashOverdue">0</span>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card stat-card">
+          <label>OK</label>
+          <span id="dashOk">0</span>
+        </div>
+        <div class="card stat-card">
+          <label>Due Soon</label>
+          <span id="dashDue">0</span>
+        </div>
+        <div class="card stat-card">
+          <label>Next Due</label>
+          <span id="dashNextDue">—</span>
+        </div>
+      </div>
+
+      <!-- Tons panel -->
+      <div class="card">
+        <h3>Tons Control</h3>
+        <div class="tons-row">
+          <input id="tonsInput" type="number" inputmode="numeric" placeholder="Set current tons…" />
+          <button id="btnSetTons" class="primary-btn">Set</button>
+        </div>
+        <div class="tons-chips">
+          <button class="chip" data-addtons="100">+100</button>
+          <button class="chip" data-addtons="500">+500</button>
+          <button class="chip" data-addtons="1000">+1000</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Quick Actions</h3>
+        <div class="quick-row">
+          <button id="dashAddPart" class="primary-btn">+ Add Part</button>
+          <button id="dashOpenInventory" class="secondary-btn">Inventory</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░ PAGE: PARTS ░░ -->
+    <section id="page-parts" class="page">
+      <div class="page-header-row">
+        <h2 class="page-title">Parts</h2>
+        <button id="btnOpenAddPart" class="primary-btn">+ Add Part</button>
+      </div>
+
+      <div class="filter-row">
+        <select id="partsCategoryFilter"></select>
+        <input id="partsSearch" type="text" placeholder="Search parts…" />
+      </div>
+
+      <div class="summary-row">
+        <span id="partsOkSummary">🟢 OK: 0</span>
+        <span id="partsDueSummary">🟡 Due: 0</span>
+        <span id="partsOverSummary">🔴 Over: 0</span>
+      </div>
+
+      <div id="partsList" class="parts-list"></div>
+    </section>
+
+    <!-- ░░ PAGE: INVENTORY ░░ -->
+    <section id="page-inventory" class="page">
+      <div class="page-header-row">
+        <h2 class="page-title">Inventory</h2>
+        <button id="btnOpenAddInventory" class="primary-btn">+ Add Item</button>
+      </div>
+
+      <div class="filter-row">
+        <select id="inventoryCategoryFilter"></select>
+        <input id="inventorySearch" type="text" placeholder="Search inventory…" />
+      </div>
+
+      <div id="inventoryList" class="inventory-list"></div>
+    </section>
+
+    <!-- ░░ PAGE: SETTINGS ░░ -->
+    <section id="page-settings" class="page">
+      <h2 class="page-title">Settings</h2>
+
+      <div class="card">
+        <h3>Tons</h3>
+        <p class="muted">Current tons: <span id="settingsTons">0</span></p>
+        <div class="settings-row">
+          <input id="settingsTonsInput" type="number" inputmode="numeric" placeholder="Set tons…" />
+          <button id="btnSettingsSetTons" class="primary-btn small">Set</button>
+        </div>
+        <button id="btnResetTons" class="secondary-btn full">Reset Tons to 0</button>
+      </div>
+
+      <div class="card">
+        <h3>Theme</h3>
+        <label class="switch-row">
+          <span>Light Mode</span>
+          <input id="themeToggle" type="checkbox" />
+        </label>
+      </div>
+
+      <div class="card">
+        <h3>Data</h3>
+        <button id="btnExportData" class="secondary-btn full">Export Data (JSON)</button>
+        <button id="btnResetAll" class="danger-btn full">Reset ALL Data</button>
+      </div>
+
+      <div class="card">
+        <h3>About</h3>
+        <p class="muted">Plant Maintenance Tracker v9 – Local, offline PWA for asphalt plant maintenance & inventory tracking.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ░░ MODAL: ADD / EDIT PART ░░ -->
+  <div id="partModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3 id="partModalTitle">Add Part</h3>
+
+      <label for="partCategory">Category</label>
+      <select id="partCategory"></select>
+
+      <label for="partName">Part Name</label>
+      <input id="partName" type="text" placeholder="e.g., Drag Chain" />
+
+      <label for="partSection">Section / Location</label>
+      <input id="partSection" type="text" placeholder="e.g., Slat Conveyor" />
+
+      <label for="partDate">Last Maintenance Date</label>
+      <input id="partDate" type="date" />
+
+      <button id="partMoreToggle" class="small-link" type="button">
+        More Options ▼
+      </button>
+
+      <div id="partMoreFields" class="more-fields hidden">
+        <label for="partDays">Interval (days)</label>
+        <input id="partDays" type="number" inputmode="numeric" placeholder="e.g., 30" />
+
+        <label for="partLastTons">Last Ton Reading</label>
+        <input id="partLastTons" type="number" inputmode="numeric" placeholder="e.g., 100000" />
+
+        <label for="partTonInterval">Ton Interval</label>
+        <input id="partTonInterval" type="number" inputmode="numeric" placeholder="e.g., 10000" />
+
+        <label for="partNotes">Notes</label>
+        <textarea id="partNotes" placeholder="Optional notes…"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btnSavePart" class="primary-btn">Save</button>
+        <button id="btnCancelPart" class="secondary-btn">Cancel</button>
+      </div>
     </div>
   </div>
-  <button id="settingsBtn" class="settings-btn">⚙️</button>
-</header>
 
-<main id="main">
+  <!-- ░░ MODAL: ADD / EDIT INVENTORY ░░ -->
+  <div id="inventoryModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3 id="inventoryModalTitle">Add Inventory Item</h3>
 
-  <!-- ░░░ PAGE: DASHBOARD ░░░ -->
-  <section id="page-dashboard" class="page active">
+      <label for="invCategory">Category</label>
+      <select id="invCategory"></select>
 
-    <div class="card-grid">
+      <label for="invName">Item Name</label>
+      <input id="invName" type="text" placeholder="e.g., Screen Cloth" />
 
-      <div class="card stat-card">
-        <label>Total Parts</label>
-        <span id="statTotalParts">0</span>
-      </div>
+      <label for="invPartNumber">Part # (optional)</label>
+      <input id="invPartNumber" type="text" placeholder="e.g., SC-1234" />
 
-      <div class="card stat-card">
-        <label>Overdue</label>
-        <span id="statOverdue">0</span>
-      </div>
+      <label for="invQty">Quantity</label>
+      <input id="invQty" type="number" inputmode="numeric" placeholder="e.g., 2" />
 
-    </div>
+      <label for="invNotes">Notes</label>
+      <textarea id="invNotes" placeholder="Optional notes…"></textarea>
 
-    <div class="card-grid">
-
-      <div class="card stat-card">
-        <label>Tons Run</label>
-        <span id="statTons">0</span>
-      </div>
-
-      <div class="card stat-card">
-        <label>Next Due</label>
-        <span id="statNextDue">—</span>
-      </div>
-
-    </div>
-
-    <!-- Tons Panel -->
-    <div class="card tons-card">
-      <h3>Update Tons</h3>
-      <div class="tons-row">
-        <input id="inputTons" type="number" placeholder="Enter current tons…"/>
-        <button id="btnUpdateTons">Update</button>
-      </div>
-
-      <div class="tons-chips">
-        <button class="chip" id="btnAdd100">+100</button>
-        <button class="chip" id="btnAdd500">+500</button>
-        <button class="chip" id="btnAdd1000">+1000</button>
+      <div class="modal-actions">
+        <button id="btnSaveInventory" class="primary-btn">Save</button>
+        <button id="btnCancelInventory" class="secondary-btn">Cancel</button>
       </div>
     </div>
-
-    <div class="card">
-      <h3>Quick Actions</h3>
-      <div class="qa-row">
-        <button id="dashAddPart" class="primary-btn">+ Add Part</button>
-        <button id="dashInventory" class="primary-btn">Inventory</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Next Maintenance</h3>
-      <p id="dashboardNextText" class="muted">Add parts to see next due maintenance.</p>
-    </div>
-
-  </section>
-
-  <!-- ░░░ PAGE: PARTS ░░░ -->
-  <section id="page-parts" class="page">
-
-    <div class="page-top">
-      <h2>Parts</h2>
-      <button id="btnAddPart" class="primary-btn">+ Add Part</button>
-    </div>
-
-    <div class="filter-row">
-      <select id="partsCategoryFilter"></select>
-    </div>
-
-    <div class="summary-row">
-      <span id="sumOk">🟢 OK: 0</span>
-      <span id="sumDue">🟡 Due: 0</span>
-      <span id="sumOver">🔴 Overdue: 0</span>
-    </div>
-
-    <div id="partsList" class="parts-list"></div>
-
-  </section>
-
-  <!-- ░░░ PAGE: INVENTORY (B Layout) ░░░ -->
-  <section id="page-inventory" class="page">
-
-    <h2>Inventory</h2>
-
-    <div class="filter-row">
-      <input type="text" id="inventorySearch" placeholder="Search inventory…"/>
-    </div>
-
-    <div id="inventoryList" class="inventory-list"></div>
-
-  </section>
-
-  <!-- ░░░ PAGE: SETTINGS ░░░ -->
-  <section id="page-settings" class="page">
-
-    <h2>Settings</h2>
-
-    <div class="card">
-      <h3>Tons</h3>
-      <button id="btnResetTons" class="secondary-btn full">Reset Tons</button>
-    </div>
-
-    <div class="card">
-      <h3>Theme</h3>
-      <label class="switch-row">
-        <span>Light Mode</span>
-        <input id="toggleTheme" type="checkbox"/>
-      </label>
-    </div>
-
-    <div class="card">
-      <h3>Data</h3>
-      <button id="btnExportData" class="secondary-btn full">Export Parts JSON</button>
-      <button id="btnResetAll" class="danger-btn full">Reset ALL Data</button>
-    </div>
-
-    <div class="card">
-      <h3>About</h3>
-      <p class="muted">PM Tracker v7 Final Build</p>
-    </div>
-
-  </section>
-
-</main>
-
-<!-- ░░░ ADD / EDIT PART MODAL ░░░ -->
-<div id="partModal" class="modal hidden">
-  <div class="modal-bg"></div>
-  <div class="modal-box">
-
-    <h3 id="modalTitle">Add Part</h3>
-
-    <label>Category</label>
-    <select id="partCategory"></select>
-
-    <label>Part Name</label>
-    <input id="partName" type="text"/>
-
-    <label>Section / Location</label>
-    <input id="partSection" type="text"/>
-
-    <label>Last Maintenance Date</label>
-    <input id="partDate" type="date"/>
-
-    <button id="modalMoreBtn" class="small-link">More Options ▼</button>
-
-    <div id="moreFields" class="hidden">
-
-      <label>Days Interval</label>
-      <input id="partDays" type="number"/>
-
-      <label>Last Ton Reading</label>
-      <input id="partLastTons" type="number"/>
-
-      <label>Ton Interval</label>
-      <input id="partTonInterval" type="number"/>
-
-      <label>Notes</label>
-      <textarea id="partNotes"></textarea>
-
-    </div>
-
-    <div class="modal-actions">
-      <button id="btnSavePart" class="primary-btn">Save</button>
-      <button id="btnCancelPart" class="secondary-btn">Cancel</button>
-    </div>
-
   </div>
-</div>
 
-<!-- ░░░ BOTTOM NAV (Rounded) ░░░ -->
-<nav class="bottom-nav">
-  <button class="nav-pill active" data-page="page-dashboard">Dashboard</button>
-  <button class="nav-pill" data-page="page-parts">Parts</button>
-  <button class="nav-pill" data-page="page-inventory">Inventory</button>
-  <button class="nav-pill" data-page="page-settings">Settings</button>
-</nav>
+  <!-- ░░ BOTTOM NAVIGATION ░░ -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="dashboard">
+      <span>Dashboard</span>
+    </button>
+    <button class="nav-btn" data-page="parts">
+      <span>Parts</span>
+    </button>
+    <button class="nav-btn" data-page="inventory">
+      <span>Inventory</span>
+    </button>
+    <button class="nav-btn" data-page="settings">
+      <span>Settings</span>
+    </button>
+  </nav>
 
+</div> <!-- .app -->
+
+<!-- Inventory data + logic scripts -->
 <script src="inventory.js"></script>
 <script src="script.js"></script>
 
