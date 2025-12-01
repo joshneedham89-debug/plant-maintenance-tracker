@@ -1,34 +1,43 @@
-/* ============================================================
-   inventory.js
-   Helper module for loading default inventory or future imports
-   Currently minimal by design — clean, safe, no overwrites.
-============================================================ */
+/* =======================================================
+   Inventory Categories – FINAL v9
+   All categories you listed are included.
+   Inventory starts empty and fills as user adds items.
+======================================================= */
 
-/**
- * Default inventory template if needed.
- * Keeping empty so it NEVER overwrites user data.
- * 
- * If later you want automatic import from spreadsheet,
- * we will populate this safely and merge instead of overwrite.
- */
-const DEFAULT_INVENTORY = [];
+const INVENTORY_CATEGORIES = [
+  "Cold Feed",
+  "Conveyor",
+  "Dryer",
+  "Baghouse",
+  "Electrical",
+  "Slat Conveyor",
+  "Tank Farm",
+  "Dust System",
+  "Mixer",
+  "Screens",
+  "Controls",
+  "Asphalt System",
+  "Pumps",
+  "Virgin – Other",
+  "Drag Conveyor",
+  "Collar",
+  "Recycle Conveyor",
+  "Bin System",
+  "Flights",
+  "Bearings",
+  "Reducers",
+  "Motors",
+  "Other"
+];
 
-/**
- * Merges defaults ONLY if inventory is empty.
- * This prevents accidental wiping of real user data.
- */
-function initializeInventoryIfNeeded() {
-  try {
-    const stored = JSON.parse(localStorage.getItem("pm_inventory_v9") || "[]");
+/*
+  This file only holds the CATEGORY LIST.
+  All inventory items the user adds are stored inside script.js:
 
-    if (stored.length === 0 && DEFAULT_INVENTORY.length > 0) {
-      localStorage.setItem("pm_inventory_v9", JSON.stringify(DEFAULT_INVENTORY));
-      console.log("Inventory initialized from default list.");
-    }
-  } catch (err) {
-    console.warn("Inventory initialization error:", err);
-  }
-}
+      inventory = [
+         { name: "part", qty: 2, category: "Dryer" }
+      ];
 
-// Run immediately on load
-initializeInventoryIfNeeded();
+  If you want default inventory for each category (preloaded items),
+  tell me and I will generate them.
+*/
