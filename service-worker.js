@@ -1,57 +1,52 @@
-const CACHE_NAME = "pmtracker-v8";  
-const ASSETS = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./script.js",
-  "./inventory.js",
-  "./manifest.json",
+/* =======================================================
+   SERVICE WORKER – Plant Maintenance v9
+   Offline caching + auto update
+======================================================= */
 
-  // icons  
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/icon-1024.png"
+const CACHE_NAME = "pm_v9_cache";
+const APP_FILES = [
+  "./",
+  "index.html",
+  "style.css",
+  "script.js",
+  "inventory.js",
+  "manifest.json",
+  "icons/icon-192.png",
+  "icons/icon-512.png"
 ];
 
-// Install SW + cache everything
+/* Install – cache all essential files */
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES))
   );
-  self.skipWaiting(); // activate immediately
+  self.skipWaiting();
 });
 
-// Activate SW + delete old caches
+/* Activate – clean old caches */
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
+        keys.map(key => {
+          if (key !== CACHE_NAME) return caches.delete(key);
+        })
       )
     )
   );
-  self.clients.claim(); // start controlling pages
+  self.clients.claim();
 });
 
-// Fetch handler — network first, fallback to cache
+/* Fetch – network first, fallback to cache */
 self.addEventListener("fetch", event => {
-  const req = event.request;
-
-  // Only GET requests (avoid issues with forms or posts)
-  if (req.method !== "GET") return;
-
   event.respondWith(
-    fetch(req)
-      .then(res => {
-        // Clone and store in cache
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
-        return res;
+    fetch(event.request)
+      .then(response => {
+        // Update cache with latest file
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return response;
       })
-      .catch(() => caches.match(req))
+      .catch(() => caches.match(event.request))
   );
 });
