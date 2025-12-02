@@ -1,390 +1,364 @@
 /* ============================================================
-   GLOBAL STORAGE KEYS
+   Plant Maintenance Tracker - PRO Edition (pm_v9)
+   Main Application Logic
 ============================================================ */
+
+/* ---------- LOCAL STORAGE KEYS ---------- */
 const PARTS_KEY = "pm_parts";
 const TONS_KEY = "pm_tons";
-const START_TONS_KEY = "pm_start_tons";
 const THEME_KEY = "pm_theme";
+const CATEGORIES_KEY = "pm_categories";
 
-/* ============================================================
-   GLOBAL STATE
-============================================================ */
+/* ---------- DATA ---------- */
 let parts = [];
 let currentTons = 0;
-let startingTons = 0;
-
+let categories = [];
 let editingIndex = null;
 
-/* ============================================================
-   DOM ELEMENTS
-============================================================ */
-const screens = document.querySelectorAll(".screen");
-const navButtons = document.querySelectorAll(".nav-btn");
+/* ---------- DOM ELEMENTS ---------- */
 
+// Screens
+const screens = {
+  dashboard: document.getElementById("screen-dashboard"),
+  maintenance: document.getElementById("screen-maintenance"),
+  inventory: document.getElementById("screen-inventory"),
+  ac: document.getElementById("screen-ac"),
+  settings: document.getElementById("screen-settings"),
+};
+
+// Navigation
+const navButtons = document.querySelectorAll(".bottom-nav button");
+
+// Dashboard fields
 const okCountEl = document.getElementById("okCount");
 const dueCountEl = document.getElementById("dueCount");
 const overCountEl = document.getElementById("overCount");
 const totalPartsEl = document.getElementById("totalParts");
+const tonsRunEl = document.getElementById("tonsRun");
 const nextDueEl = document.getElementById("nextDue");
 
-const currentTonsInput = document.getElementById("currentTonsInput");
-const updateTonsBtn = document.getElementById("updateTonsBtn");
-
+// Maintenance
 const partsList = document.getElementById("partsList");
+const addPartBtn = document.getElementById("addPartBtn");
 const categoryFilter = document.getElementById("categoryFilter");
 
-const addPartBtn = document.getElementById("addPartBtn");
+// Inventory
+const inventoryFilter = document.getElementById("inventoryFilter");
 
-const inventorySearch = document.getElementById("inventorySearch");
-const inventoryCategoryFilter = document.getElementById("inventoryCategoryFilter");
-const inventoryList = document.getElementById("inventoryList");
-
-const acPercent = document.getElementById("acPercent");
-const acTons = document.getElementById("acTons");
-const acCalcBtn = document.getElementById("acCalcBtn");
-const acResult = document.getElementById("acResult");
-
-const settingsButton = document.getElementById("settingsButton");
+// Settings
+const themeToggle = document.getElementById("themeToggle");
+const resetAppBtn = document.getElementById("resetAppBtn");
 const resetTonsBtn = document.getElementById("resetTonsBtn");
-const setStartingTons = document.getElementById("setStartingTons");
-const applyStartingTons = document.getElementById("applyStartingTons");
-const themeSelector = document.getElementById("themeSelector");
 
-/* Modal Elements */
-const partModal = document.getElementById("partModal");
-const modalTitle = document.getElementById("modalTitle");
-const partCategory = document.getElementById("partCategory");
-const partName = document.getElementById("partName");
-const partSection = document.getElementById("partSection");
-const partDate = document.getElementById("partDate");
-const partDays = document.getElementById("partDays");
-const partLastTons = document.getElementById("partLastTons");
-const partTonInterval = document.getElementById("partTonInterval");
-const partNotes = document.getElementById("partNotes");
-const savePartBtn = document.getElementById("savePartBtn");
-const cancelPartBtn = document.getElementById("cancelPartBtn");
+// Modal
+const partModal = document.createElement("div");
+partModal.classList.add("modal");
+document.body.appendChild(partModal);
 
 /* ============================================================
-   LOAD STATE
+   LOAD INITIAL STATE
 ============================================================ */
 function loadState() {
-    parts = JSON.parse(localStorage.getItem(PARTS_KEY) || "[]");
-    currentTons = Number(localStorage.getItem(TONS_KEY) || 0);
-    startingTons = Number(localStorage.getItem(START_TONS_KEY) || 0);
+  parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
+  currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
+  categories = JSON.parse(localStorage.getItem(CATEGORIES_KEY)) || [
+    "Cold Feed",
+    "Conveyor",
+    "Dryer",
+    "Baghouse",
+    "Slat Conveyor",
+    "Tank Farm",
+    "Dust System",
+    "Mixer",
+    "Screens",
+    "Controls",
+    "Asphalt System",
+    "Pumps",
+    "Virgin – Other"
+  ];
 
-    const theme = localStorage.getItem(THEME_KEY) || "dark";
-    if (theme === "light") document.body.classList.add("light");
-    themeSelector.value = theme;
+  if (localStorage.getItem(THEME_KEY) === "light") {
+    document.body.classList.add("light");
+    themeToggle.checked = true;
+  }
 
-    currentTonsInput.value = currentTons;
+  populateCategoryDropdowns();
+  renderAll();
 }
-loadState();
 
 /* ============================================================
    SAVE STATE
 ============================================================ */
 function saveState() {
-    localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
-    localStorage.setItem(TONS_KEY, currentTons);
-    localStorage.setItem(START_TONS_KEY, startingTons);
+  localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
+  localStorage.setItem(TONS_KEY, currentTons);
+  localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+}
+
+/* ============================================================
+   CATEGORY DROPDOWNS
+============================================================ */
+function populateCategoryDropdowns() {
+  categoryFilter.innerHTML = `<option value="ALL">All Categories</option>`;
+  inventoryFilter.innerHTML = `<option value="ALL">All Categories</option>`;
+
+  categories.forEach(cat => {
+    categoryFilter.innerHTML += `<option value="${cat}">${cat}</option>`;
+    inventoryFilter.innerHTML += `<option value="${cat}">${cat}</option>`;
+  });
+}
+
+/* ============================================================
+   STATUS CALCULATION
+============================================================ */
+function daysSince(dateStr) {
+  if (!dateStr) return Infinity;
+  const d = new Date(dateStr + "T00:00:00");
+  const now = new Date();
+  return Math.floor((now - d) / 86400000);
+}
+
+function calcStatus(part) {
+  const days = daysSince(part.date);
+  const tonsSince = currentTons - Number(part.lastTons || 0);
+
+  const daysLeft = part.days ? part.days - days : Infinity;
+  const tonsLeft = part.tonInterval ? part.tonInterval - tonsSince : Infinity;
+
+  let status = "ok";
+
+  if (daysLeft < 0 || tonsLeft < 0) {
+    status = "over";
+  } else {
+    const daysWarn = part.days ? Math.ceil(part.days * 0.2) : 0;
+    const tonsWarn = part.tonInterval ? Math.ceil(part.tonInterval * 0.2) : 0;
+
+    if ((part.days && daysLeft <= daysWarn) ||
+        (part.tonInterval && tonsLeft <= tonsWarn)) {
+      status = "due";
+    }
+  }
+
+  return { status, days, daysLeft, tonsSince, tonsLeft };
+}
+
+/* ============================================================
+   RENDER MAINTENANCE PARTS LIST
+============================================================ */
+function renderParts() {
+  partsList.innerHTML = "";
+  let ok = 0, due = 0, over = 0;
+
+  let filtered = categoryFilter.value === "ALL"
+    ? parts
+    : parts.filter(p => p.category === categoryFilter.value);
+
+  filtered.forEach((p, index) => {
+    const st = calcStatus(p);
+
+    if (st.status === "ok") ok++;
+    if (st.status === "due") due++;
+    if (st.status === "over") over++;
+
+    const card = document.createElement("div");
+    card.className = `part-card part-${st.status}`;
+
+    card.innerHTML = `
+      <div class="part-header">
+        <div class="part-title">${p.name}</div>
+        <div class="part-category">${p.category}</div>
+      </div>
+
+      <div class="part-meta">Section: ${p.section || "-"}</div>
+      <div class="part-meta">Last Maint: ${p.date} (${st.days} days ago)</div>
+      <div class="part-meta">Next: ${
+        st.status === "over" ? "OVERDUE" :
+        st.daysLeft !== Infinity ? `${st.daysLeft} days` : "N/A"
+      }</div>
+      <div class="part-meta">Tons since: ${st.tonsSince} / ${p.tonInterval}</div>
+      <div class="part-meta">${p.notes || ""}</div>
+
+      <div class="part-actions">
+        <button onclick="openEditPart(${index})">Edit</button>
+        <button onclick="deletePart(${index})">Delete</button>
+      </div>
+    `;
+
+    partsList.appendChild(card);
+  });
+
+  okCountEl.textContent = ok;
+  dueCountEl.textContent = due;
+  overCountEl.textContent = over;
+}
+
+/* ============================================================
+   RENDER DASHBOARD
+============================================================ */
+function computeNextDue() {
+  let soonest = null;
+
+  parts.forEach(p => {
+    const st = calcStatus(p);
+    if (st.daysLeft < Infinity && st.daysLeft >= 0) {
+      if (!soonest || st.daysLeft < soonest.daysLeft) {
+        soonest = { name: p.name, daysLeft: st.daysLeft };
+      }
+    }
+  });
+
+  return soonest;
+}
+
+function renderDashboard() {
+  totalPartsEl.textContent = parts.length;
+  tonsRunEl.textContent = currentTons;
+
+  const nd = computeNextDue();
+  nextDueEl.textContent = nd ? `${nd.name} (${nd.daysLeft} days)` : "—";
+}
+
+/* ============================================================
+   RENDER ALL
+============================================================ */
+function renderAll() {
+  renderParts();
+  renderDashboard();
+}
+
+/* ============================================================
+   MODAL: ADD / EDIT PART
+============================================================ */
+function openPartModal(edit = false, index = null) {
+  editingIndex = edit ? index : null;
+
+  let p = edit ? parts[index] : {
+    name: "",
+    category: categories[0],
+    section: "",
+    date: new Date().toISOString().slice(0, 10),
+    days: 30,
+    lastTons: currentTons,
+    tonInterval: 10000,
+    notes: ""
+  };
+
+  partModal.innerHTML = `
+    <div class="modal-content">
+      <h2>${edit ? "Edit Part" : "Add Part"}</h2>
+
+      <select id="pm_cat">
+        ${categories.map(c => `<option ${c === p.category ? "selected" : ""}>${c}</option>`).join("")}
+      </select>
+
+      <input id="pm_name" placeholder="Part Name" value="${p.name}">
+      <input id="pm_section" placeholder="Section" value="${p.section}">
+      <input id="pm_date" type="date" value="${p.date}">
+      <input id="pm_days" type="number" placeholder="Interval (days)" value="${p.days}">
+      <input id="pm_tons" type="number" placeholder="Last Tons" value="${p.lastTons}">
+      <input id="pm_tonInt" type="number" placeholder="Ton Interval" value="${p.tonInterval}">
+      <textarea id="pm_notes" placeholder="Notes">${p.notes}</textarea>
+
+      <div class="modal-buttons">
+        <button class="secondary-btn" onclick="closeModal()">Cancel</button>
+        <button class="primary-btn" onclick="savePart()">Save</button>
+      </div>
+    </div>
+  `;
+
+  partModal.classList.add("active");
+}
+
+function closeModal() {
+  partModal.classList.remove("active");
+}
+
+function openEditPart(index) {
+  openPartModal(true, index);
+}
+
+/* ============================================================
+   SAVE PART
+============================================================ */
+function savePart() {
+  const updated = {
+    name: document.getElementById("pm_name").value,
+    category: document.getElementById("pm_cat").value,
+    section: document.getElementById("pm_section").value,
+    date: document.getElementById("pm_date").value,
+    days: Number(document.getElementById("pm_days").value),
+    lastTons: Number(document.getElementById("pm_tons").value),
+    tonInterval: Number(document.getElementById("pm_tonInt").value),
+    notes: document.getElementById("pm_notes").value
+  };
+
+  if (editingIndex !== null) parts[editingIndex] = updated;
+  else parts.push(updated);
+
+  saveState();
+  closeModal();
+  renderAll();
+}
+
+/* ============================================================
+   DELETE PART
+============================================================ */
+function deletePart(index) {
+  if (!confirm("Delete this part?")) return;
+  parts.splice(index, 1);
+  saveState();
+  renderAll();
 }
 
 /* ============================================================
    NAVIGATION
 ============================================================ */
 navButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-        const screen = btn.dataset.screen;
+  btn.addEventListener("click", () => {
+    const tab = btn.getAttribute("data-tab");
 
-        screens.forEach(s => s.classList.remove("active"));
-        document.getElementById(screen).classList.add("active");
+    navButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
 
-        navButtons.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-    });
-});
-
-/* ============================================================
-   DASHBOARD STATUS
-============================================================ */
-function daysSince(dateStr) {
-    if (!dateStr) return Infinity;
-    const d = new Date(dateStr + "T00:00:00");
-    const now = new Date();
-    return Math.floor((now - d) / (1000 * 60 * 60 * 24));
-}
-
-function partStatus(part) {
-    const d = daysSince(part.date);
-    const t = currentTons - part.lastTons;
-
-    const daysLeft = (part.days || Infinity) - d;
-    const tonsLeft = (part.tonInterval || Infinity) - t;
-
-    let status = "ok";
-    if (daysLeft <= 0 || tonsLeft <= 0) status = "overdue";
-    else if (daysLeft <= 5 || tonsLeft <= 1000) status = "due";
-
-    return { status, daysLeft, tonsLeft, days: d, tonsSince: t };
-}
-
-/* ============================================================
-   RENDER PARTS
-============================================================ */
-function renderParts() {
-    const filterVal = categoryFilter.value;
-
-    partsList.innerHTML = "";
-
-    let ok = 0, due = 0, over = 0;
-
-    const filtered = parts.filter(p =>
-        filterVal === "ALL" ? true : p.category === filterVal
-    );
-
-    filtered.forEach((p, index) => {
-        const st = partStatus(p);
-
-        if (st.status === "ok") ok++;
-        else if (st.status === "due") due++;
-        else over++;
-
-        const card = document.createElement("div");
-        card.className = "part-card";
-
-        card.innerHTML = `
-            <div class="part-header">
-                <span>${p.name}</span>
-                <span class="status-dot">${
-                    st.status === "ok" ? "🟢" :
-                    st.status === "due" ? "🟡" :
-                    "🔴"
-                }</span>
-            </div>
-            <p><strong>${p.category}</strong> — ${p.section}</p>
-            <p>Last: ${p.date} (${st.days} days ago)</p>
-            <p>Tons: ${st.tonsSince} / ${p.tonInterval}</p>
-            <button onclick="editPart(${index})" class="primary-btn">Edit</button>
-            <button onclick="deletePart(${index})" class="secondary-btn">Delete</button>
-        `;
-
-        partsList.appendChild(card);
-    });
-
-    okCountEl.textContent = ok;
-    dueCountEl.textContent = due;
-    overCountEl.textContent = over;
-    totalPartsEl.textContent = parts.length;
-
-    // Next due
-    let soonest = null;
-    parts.forEach(p => {
-        const st = partStatus(p);
-        if (!isFinite(st.daysLeft)) return;
-        if (soonest === null || st.daysLeft < soonest.daysLeft) {
-            soonest = { name: p.name, daysLeft: st.daysLeft };
-        }
-    });
-    nextDueEl.textContent = soonest ? `${soonest.name} (${soonest.daysLeft} days)` : "—";
-}
-
-/* ============================================================
-   ADD / EDIT PARTS
-============================================================ */
-addPartBtn.addEventListener("click", () => openPartModal(null));
-
-function openPartModal(index) {
-    editingIndex = index;
-
-    if (index === null) {
-        modalTitle.textContent = "Add Part";
-        partCategory.value = "";
-        partName.value = "";
-        partSection.value = "";
-        partDate.value = "";
-        partDays.value = "";
-        partLastTons.value = currentTons;
-        partTonInterval.value = "";
-        partNotes.value = "";
-    } else {
-        modalTitle.textContent = "Edit Part";
-        const p = parts[index];
-        partCategory.value = p.category;
-        partName.value = p.name;
-        partSection.value = p.section;
-        partDate.value = p.date;
-        partDays.value = p.days;
-        partLastTons.value = p.lastTons;
-        partTonInterval.value = p.tonInterval;
-        partNotes.value = p.notes;
-    }
-
-    partModal.style.display = "flex";
-}
-
-cancelPartBtn.addEventListener("click", () => {
-    partModal.style.display = "none";
-});
-
-savePartBtn.addEventListener("click", () => {
-    const obj = {
-        category: partCategory.value,
-        name: partName.value,
-        section: partSection.value,
-        date: partDate.value,
-        days: Number(partDays.value || 0),
-        lastTons: Number(partLastTons.value || 0),
-        tonInterval: Number(partTonInterval.value || 0),
-        notes: partNotes.value || ""
-    };
-
-    if (editingIndex === null) parts.push(obj);
-    else parts[editingIndex] = obj;
-
-    saveState();
-    partModal.style.display = "none";
-    renderParts();
-});
-
-function editPart(index) {
-    openPartModal(index);
-}
-
-function deletePart(index) {
-    if (!confirm("Delete this part?")) return;
-    parts.splice(index, 1);
-    saveState();
-    renderParts();
-}
-
-/* ============================================================
-   INVENTORY
-============================================================ */
-function renderInventory() {
-    const search = inventorySearch.value.toLowerCase();
-    const cat = inventoryCategoryFilter.value;
-
-    inventoryList.innerHTML = "";
-
-    INVENTORY_DATA.forEach(item => {
-        const matchSearch =
-            item.name.toLowerCase().includes(search) ||
-            item.category.toLowerCase().includes(search);
-
-        const matchCat =
-            cat === "ALL" ? true : item.category === cat;
-
-        if (!matchSearch || !matchCat) return;
-
-        const div = document.createElement("div");
-        div.className = "inventory-item";
-
-        div.innerHTML = `
-            <strong>${item.name}</strong><br>
-            <small>${item.category}</small><br>
-            <button class="primary-btn" onclick="addInventoryToMaintenance('${item.category}','${item.name}')">
-                Add to Maintenance
-            </button>
-        `;
-
-        inventoryList.appendChild(div);
-    });
-}
-
-function addInventoryToMaintenance(cat, name) {
-    openPartModal(null);
-    partCategory.value = cat;
-    partName.value = name;
-}
-
-/* ============================================================
-   AC CALCULATOR
-============================================================ */
-acCalcBtn.addEventListener("click", () => {
-    const pct = Number(acPercent.value);
-    const tons = Number(acTons.value);
-
-    if (!pct || !tons) {
-        acResult.innerHTML = "<p>Please enter valid values.</p>";
-        return;
-    }
-
-    const gallons = (pct / 100) * tons * 2;
-    acResult.innerHTML = `<h3>${gallons.toFixed(2)} gallons needed</h3>`;
+    Object.keys(screens).forEach(s => screens[s].classList.remove("active"));
+    screens[tab].classList.add("active");
+  });
 });
 
 /* ============================================================
    SETTINGS
 ============================================================ */
+themeToggle.addEventListener("change", () => {
+  if (themeToggle.checked) {
+    document.body.classList.add("light");
+    localStorage.setItem(THEME_KEY, "light");
+  } else {
+    document.body.classList.remove("light");
+    localStorage.setItem(THEME_KEY, "dark");
+  }
+});
+
 resetTonsBtn.addEventListener("click", () => {
-    if (!confirm("Reset tons to 0?")) return;
-    currentTons = 0;
-    startingTons = 0;
-    saveState();
-    currentTonsInput.value = 0;
-    renderParts();
+  if (!confirm("Reset tons to 0?")) return;
+  currentTons = 0;
+  saveState();
+  renderDashboard();
 });
 
-applyStartingTons.addEventListener("click", () => {
-    startingTons = Number(setStartingTons.value || 0);
-    currentTons = startingTons;
-    saveState();
-    currentTonsInput.value = currentTons;
-    renderParts();
-});
-
-themeSelector.addEventListener("change", () => {
-    const v = themeSelector.value;
-    if (v === "dark") document.body.classList.remove("light");
-    else document.body.classList.add("light");
-    localStorage.setItem(THEME_KEY, v);
+resetAppBtn.addEventListener("click", () => {
+  if (!confirm("Reset ALL data?")) return;
+  localStorage.clear();
+  location.reload();
 });
 
 /* ============================================================
-   TONS UPDATE
+   EVENT LISTENERS
 ============================================================ */
-updateTonsBtn.addEventListener("click", () => {
-    currentTons = Number(currentTonsInput.value || 0);
-    saveState();
-    renderParts();
-});
+addPartBtn.addEventListener("click", () => openPartModal());
+categoryFilter.addEventListener("change", renderParts);
+inventoryFilter.addEventListener("change", () => loadInventory(inventoryFilter.value));
 
 /* ============================================================
-   INITIALIZE DROPDOWNS
+   INIT
 ============================================================ */
-function populateCategoryDropdowns() {
-    const catSet = new Set();
-    INVENTORY_DATA.forEach(i => catSet.add(i.category));
-
-    categoryFilter.innerHTML = `<option value="ALL">All</option>`;
-    partCategory.innerHTML = "";
-    inventoryCategoryFilter.innerHTML = `<option value="ALL">All</option>`;
-
-    catSet.forEach(c => {
-        categoryFilter.innerHTML += `<option value="${c}">${c}</option>`;
-        partCategory.innerHTML += `<option value="${c}">${c}</option>`;
-        inventoryCategoryFilter.innerHTML += `<option value="${c}">${c}</option>`;
-    });
-}
-populateCategoryDropdowns();
-
-/* ============================================================
-   INVENTORY LISTENERS
-============================================================ */
-inventorySearch.addEventListener("input", renderInventory);
-inventoryCategoryFilter.addEventListener("change", renderInventory);
-
-/* ============================================================
-   CLOSE MODAL ON BACKGROUND CLICK
-============================================================ */
-window.addEventListener("click", e => {
-    if (e.target === partModal) {
-        partModal.style.display = "none";
-    }
-});
-
-/* ============================================================
-   INITIAL RENDER
-============================================================ */
-renderParts();
-renderInventory();
+loadState();
