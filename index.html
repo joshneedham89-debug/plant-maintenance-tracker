@@ -1,162 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plant Maintenance Tracker</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plant Maintenance Tracker</title>
 
-<!-- Manifest & App Icons -->
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+  <!-- PWA manifest & icon -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
 
-<!-- Stylesheet -->
-<link rel="stylesheet" href="style.css">
-
+  <!-- Main styles -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- Top Header -->
-<header class="app-header">
-    <img src="icons/icon-192.png" class="app-logo" alt="Logo">
+  <!-- HEADER -->
+  <header class="top-header">
     <h1>Plant Maintenance</h1>
-</header>
+    <button id="settingsButton" class="icon-btn">⚙️</button>
+  </header>
 
-<!-- MAIN TAB SCREENS -->
-<main>
+  <!-- MAIN SCREENS -->
+  <main>
 
-    <!-- DASHBOARD TAB -->
-    <section id="tab-dashboard" class="tab-screen active">
-        <h2>Dashboard</h2>
+    <!-- DASHBOARD SCREEN -->
+    <section id="dashboardScreen" class="screen active">
+      <h2>Dashboard</h2>
 
-        <div class="card-grid">
-
-            <div class="dash-card">
-                <h3>Total Parts</h3>
-                <p id="dashTotalParts">0</p>
-            </div>
-
-            <div class="dash-card dash-ok">
-                <h3>OK</h3>
-                <p id="dashOK">0</p>
-            </div>
-
-            <div class="dash-card dash-due">
-                <h3>Due Soon</h3>
-                <p id="dashDue">0</p>
-            </div>
-
-            <div class="dash-card dash-over">
-                <h3>Overdue</h3>
-                <p id="dashOver">0</p>
-            </div>
-
-            <div class="dash-card">
-                <h3>Tons Run</h3>
-                <p id="dashTons">0</p>
-            </div>
-
-            <div class="dash-card">
-                <h3>Next Due</h3>
-                <p id="dashNextDue">—</p>
-            </div>
-
+      <div class="stat-grid">
+        <div class="stat-card green">
+          <h3>OK</h3>
+          <p id="okCount">0</p>
         </div>
+        <div class="stat-card yellow">
+          <h3>Due Soon</h3>
+          <p id="dueCount">0</p>
+        </div>
+        <div class="stat-card red">
+          <h3>Overdue</h3>
+          <p id="overCount">0</p>
+        </div>
+        <div class="stat-card blue">
+          <h3>Total Parts</h3>
+          <p id="totalParts">0</p>
+        </div>
+      </div>
+
+      <div class="tons-box">
+        <label for="currentTonsInput">Current Tons</label>
+        <input id="currentTonsInput" type="number" placeholder="Enter tons…" />
+        <button id="updateTonsBtn">Update Tons</button>
+      </div>
+
+      <div class="next-due-box">
+        <strong>Next Due:</strong>
+        <span id="nextDue">—</span>
+      </div>
     </section>
 
-    <!-- PARTS TAB -->
-    <section id="tab-parts" class="tab-screen">
-        <h2>Parts</h2>
+    <!-- MAINTENANCE SCREEN -->
+    <section id="maintenanceScreen" class="screen">
+      <h2>Maintenance</h2>
 
-        <!-- Category Filter -->
-        <select id="partsCategoryFilter" class="dropdown"></select>
+      <select id="categoryFilter" class="wide-select"></select>
 
-        <!-- Parts List -->
-        <div id="partsList"></div>
+      <div id="partsList" class="parts-list"></div>
 
-        <!-- Add Part Button -->
-        <button id="openAddPart" class="primary-btn">Add Part</button>
+      <button id="addPartBtn" class="primary-btn">+ Add Part</button>
     </section>
 
-    <!-- INVENTORY TAB -->
-    <section id="tab-inventory" class="tab-screen">
-        <h2>Inventory</h2>
-        <select id="inventoryCategoryFilter" class="dropdown"></select>
-        <div id="inventoryList"></div>
+    <!-- INVENTORY SCREEN -->
+    <section id="inventoryScreen" class="screen">
+      <h2>Inventory</h2>
+
+      <input
+        id="inventorySearch"
+        class="search-box"
+        type="text"
+        placeholder="Search parts…"
+      />
+
+      <select id="inventoryCategoryFilter" class="inv-filter"></select>
+
+      <div id="inventoryList" class="inventory-list"></div>
     </section>
 
-    <!-- SETTINGS TAB -->
-    <section id="tab-settings" class="tab-screen">
-        <h2>Settings</h2>
+    <!-- AC CALCULATOR SCREEN -->
+    <section id="acScreen" class="screen">
+      <h2>AC Calculator</h2>
 
-        <div class="settings-block">
-            <label>Set Current Tons</label>
-            <input id="setTonsInput" type="number" placeholder="Enter tons">
-            <button id="saveTonsBtn" class="primary-btn">Save Tons</button>
-        </div>
+      <label for="acPercent">AC % in mix</label>
+      <input id="acPercent" type="number" step="0.1" />
 
-        <div class="settings-block">
-            <button id="resetTonsBtn" class="danger-btn">Reset Tons</button>
-        </div>
+      <label for="acTons">Total tons</label>
+      <input id="acTons" type="number" />
 
-        <div class="settings-block">
-            <h3>Dark Mode</h3>
-            <label class="switch">
-                <input type="checkbox" id="darkModeToggle">
-                <span class="slider"></span>
-            </label>
-        </div>
+      <button id="acCalcBtn" class="primary-btn">Calculate</button>
+
+      <div id="acResult" class="result-box"></div>
     </section>
 
-</main>
+    <!-- SETTINGS SCREEN -->
+    <section id="settingsScreen" class="screen">
+      <h2>Settings</h2>
 
-<!-- ADD PART MODAL -->
-<div id="addPartModal" class="modal">
+      <div class="settings-block">
+        <h3>Tons</h3>
+        <label for="setStartingTons">Set Starting Tons</label>
+        <input id="setStartingTons" type="number" />
+        <button id="applyStartingTons" class="primary-btn">Apply Starting Tons</button>
+        <button id="resetTonsBtn" class="danger-btn">Reset Tons to 0</button>
+      </div>
+
+      <div class="settings-block">
+        <h3>Theme</h3>
+        <select id="themeSelector">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ADD / EDIT PART MODAL -->
+  <div id="partModal" class="modal">
     <div class="modal-content">
-        <h2 id="modalTitle">Add Part</h2>
+      <h2 id="modalTitle">Add Part</h2>
 
-        <label>Category</label>
-        <select id="partCategory"></select>
+      <label for="partCategory">Category</label>
+      <select id="partCategory"></select>
 
-        <label>Part Name</label>
-        <input id="partName" placeholder="Part Name">
+      <label for="partName">Part Name</label>
+      <input id="partName" />
 
-        <label>Section</label>
-        <input id="partSection" placeholder="Optional">
+      <label for="partSection">Section / Location</label>
+      <input id="partSection" />
 
-        <label>Last Service Date</label>
-        <input id="partDate" type="date">
+      <label for="partDate">Last Maintenance Date</label>
+      <input id="partDate" type="date" />
 
-        <label>Day Interval</label>
-        <input id="partDays" type="number" placeholder="Days">
+      <label for="partDays">Days Interval</label>
+      <input id="partDays" type="number" />
 
-        <label>Last Tons</label>
-        <input id="partLastTons" type="number">
+      <label for="partLastTons">Last Tons Reading</label>
+      <input id="partLastTons" type="number" />
 
-        <label>Ton Interval</label>
-        <input id="partTonInterval" type="number">
+      <label for="partTonInterval">Ton Interval</label>
+      <input id="partTonInterval" type="number" />
 
-        <label>Notes</label>
-        <textarea id="partNotes"></textarea>
+      <label for="partNotes">Notes</label>
+      <textarea id="partNotes"></textarea>
 
-        <div class="modal-buttons">
-            <button id="savePartBtn" class="primary-btn">Save</button>
-            <button id="cancelPartBtn" class="secondary-btn">Cancel</button>
-        </div>
+      <div class="modal-actions">
+        <button id="savePartBtn" class="primary-btn">Save</button>
+        <button id="cancelPartBtn" class="secondary-btn">Cancel</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- BOTTOM NAVIGATION -->
-<nav class="bottom-nav">
-    <button data-tab="tab-dashboard">Dashboard</button>
-    <button data-tab="tab-parts">Parts</button>
-    <button data-tab="tab-inventory">Inventory</button>
-    <button data-tab="tab-settings">Settings</button>
-</nav>
+  <!-- BOTTOM NAVIGATION -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-screen="dashboardScreen">
+      📈
+      <span>Dashboard</span>
+    </button>
+    <button class="nav-btn" data-screen="maintenanceScreen">
+      🛠️
+      <span>Maintenance</span>
+    </button>
+    <button class="nav-btn" data-screen="inventoryScreen">
+      📦
+      <span>Inventory</span>
+    </button>
+    <button class="nav-btn" data-screen="acScreen">
+      🧮
+      <span>AC Calc</span>
+    </button>
+    <button class="nav-btn" data-screen="settingsScreen">
+      ⚙️
+      <span>Settings</span>
+    </button>
+  </nav>
 
-<!-- SCRIPTS -->
-<script src="inventory.js"></script>
-<script src="script.js"></script>
-
+  <!-- SCRIPTS -->
+  <script src="inventory.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
