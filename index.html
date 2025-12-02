@@ -1,157 +1,202 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
 <title>Plant Maintenance Tracker</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="stylesheet" href="style.css" />
 
-<link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="style.css">
+<!-- App Icon -->
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
 
-<!-- Thin-line Pro Icon Set -->
-<link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet" />
-
-<script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js");
-  }
-</script>
 </head>
-
 <body>
 
-<!-- HEADER -->
-<header class="app-header">
-    <img src="icons/icon-192.png" class="app-logo" />
+<div id="app">
+
+  <!-- ============================================================
+       TOP HEADER
+  ============================================================= -->
+  <header class="app-header">
+    <img src="icons/icon-192.png" class="app-logo" alt="App Logo">
     <h1>Plant Maintenance</h1>
-</header>
+  </header>
 
-<!-- MAIN SCREENS -->
-<main>
 
-<!------------------------------------------
- DASHBOARD SCREEN
-------------------------------------------->
-<section id="screen-dashboard" class="tab-screen active">
-  <h2>Dashboard</h2>
 
-  <div class="card-grid">
-    <div class="dash-card dash-ok">
-      OK
-      <p id="okCount">0</p>
+  <!-- ============================================================
+       DASHBOARD SCREEN
+  ============================================================= -->
+  <section id="screen-dashboard" class="screen active">
+
+    <h2 class="section-title">Dashboard</h2>
+
+    <div class="stats-grid">
+      <div class="stat-card green">
+        <span id="statOK">0</span>
+        <label>OK</label>
+      </div>
+
+      <div class="stat-card yellow">
+        <span id="statDue">0</span>
+        <label>Due Soon</label>
+      </div>
+
+      <div class="stat-card red">
+        <span id="statOverdue">0</span>
+        <label>Overdue</label>
+      </div>
     </div>
 
-    <div class="dash-card dash-due">
-      Due Soon
-      <p id="dueCount">0</p>
+    <div class="dashboard-box">
+      <h3>Tons Run</h3>
+      <div class="tons-row">
+        <span id="tonsValue">0</span>
+        <button id="addTonBtn">+ Add Ton</button>
+      </div>
     </div>
 
-    <div class="dash-card dash-over">
-      Overdue
-      <p id="overCount">0</p>
+  </section>
+
+
+
+  <!-- ============================================================
+       PARTS SCREEN
+  ============================================================= -->
+  <section id="screen-parts" class="screen">
+
+    <h2 class="section-title">Tracked Parts</h2>
+
+    <div class="parts-controls">
+
+      <select id="categoryFilter" class="input-select"></select>
+
+      <button id="addPartBtn" class="btn-primary">+ Add Part</button>
     </div>
 
-    <div class="dash-card">
-      Total Parts
-      <p id="totalParts">0</p>
+    <div id="partsList" class="list-area"></div>
+
+  </section>
+
+
+
+  <!-- ============================================================
+       INVENTORY SCREEN
+       Loads from spreadsheet / inventory-data.js
+  ============================================================= -->
+  <section id="screen-inventory" class="screen">
+
+    <h2 class="section-title">Inventory</h2>
+
+    <div id="inventoryList" class="list-area"></div>
+
+  </section>
+
+
+
+  <!-- ============================================================
+       AC / CONDITION SCREEN
+  ============================================================= -->
+  <section id="screen-ac" class="screen">
+
+    <h2 class="section-title">AC / Condition</h2>
+
+    <p class="placeholder-text">
+      AC scoring module coming soon...
+    </p>
+
+  </section>
+
+
+
+  <!-- ============================================================
+       SETTINGS SCREEN
+  ============================================================= -->
+  <section id="screen-settings" class="screen">
+
+    <h2 class="section-title">Settings</h2>
+
+    <div class="settings-box">
+
+      <label>Reset Tons</label>
+      <button id="resetTonsBtn" class="btn-warning">Reset Tons</button>
+
+      <label>Theme</label>
+      <button id="toggleThemeBtn" class="btn-primary">Toggle Dark/Light</button>
+
     </div>
 
-    <div class="dash-card">
-      Tons Run
-      <p id="tonsRun">0</p>
-    </div>
+  </section>
 
-    <div class="dash-card">
-      Next Due
-      <p id="nextDue">—</p>
+
+
+  <!-- ============================================================
+       ADD PART MODAL
+  ============================================================= -->
+  <div id="partModal" class="modal">
+    <div class="modal-content">
+
+      <h3 id="modalTitle">Add Part</h3>
+
+      <label>Category</label>
+      <select id="partCategory" class="input-select"></select>
+
+      <label>Name</label>
+      <input id="partName" type="text" class="input-text" />
+
+      <label>Section</label>
+      <input id="partSection" type="text" class="input-text" />
+
+      <label>Last Date</label>
+      <input id="partDate" type="date" class="input-text" />
+
+      <label>Day Interval</label>
+      <input id="partDays" type="number" class="input-text" />
+
+      <label>Last Tons</label>
+      <input id="partLastTons" type="number" class="input-text" />
+
+      <label>Ton Interval</label>
+      <input id="partTonInterval" type="number" class="input-text" />
+
+      <label>Notes</label>
+      <textarea id="partNotes" class="input-text"></textarea>
+
+      <div class="modal-actions">
+        <button id="savePartBtn" class="btn-primary">Save</button>
+        <button id="cancelPartBtn" class="btn-secondary">Cancel</button>
+      </div>
+
     </div>
   </div>
 
-  <button id="resetTonsBtn" class="secondary-btn">Reset Tons</button>
-</section>
 
-<!------------------------------------------
- MAINTENANCE SCREEN
-------------------------------------------->
-<section id="screen-maintenance" class="tab-screen">
-  <h2>Maintenance</h2>
 
-  <select id="categoryFilter" class="dropdown"></select>
-  <button id="addPartBtn" class="primary-btn">+ Add Part</button>
+  <!-- ============================================================
+       BOTTOM NAVIGATION
+  ============================================================= -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-screen="dashboard">Dashboard</button>
+    <button class="nav-item" data-screen="parts">Parts</button>
+    <button class="nav-item" data-screen="inventory">Inventory</button>
+    <button class="nav-item" data-screen="ac">AC</button>
+    <button class="nav-item" data-screen="settings">Settings</button>
+  </nav>
 
-  <div id="partsList"></div>
-</section>
+</div>
 
-<!------------------------------------------
- INVENTORY SCREEN
-------------------------------------------->
-<section id="screen-inventory" class="tab-screen">
-  <h2>Inventory</h2>
 
-  <select id="inventoryFilter" class="dropdown"></select>
 
-  <div id="inventoryList"></div>
-</section>
 
-<!------------------------------------------
- AC CALCULATOR SCREEN
-------------------------------------------->
-<section id="screen-ac" class="tab-screen">
-  <h2>AC Calculator</h2>
-
-  <div id="acCalcContainer"></div>
-</section>
-
-<!------------------------------------------
- SETTINGS SCREEN
-------------------------------------------->
-<section id="screen-settings" class="tab-screen">
-  <h2>Settings</h2>
-
-  <div class="settings-block">
-    <label>Dark Mode</label>
-    <label class="switch">
-      <input type="checkbox" id="themeToggle" />
-      <span class="slider"></span>
-    </label>
-  </div>
-
-  <div class="settings-block">
-    <button id="resetAppBtn" class="danger-btn">Reset All Data</button>
-  </div>
-</section>
-
-</main>
-
-<!------------------------------------------
- BOTTOM NAVIGATION (5 tabs)
-------------------------------------------->
-<nav class="bottom-nav">
-  <button data-tab="dashboard" class="active">
-    <i class="lucide lucide-layout-dashboard"></i><br>Dashboard
-  </button>
-
-  <button data-tab="maintenance">
-    <i class="lucide lucide-wrench"></i><br>Maintenance
-  </button>
-
-  <button data-tab="inventory">
-    <i class="lucide lucide-box"></i><br>Inventory
-  </button>
-
-  <button data-tab="ac">
-    <i class="lucide lucide-calculator"></i><br>AC Calc
-  </button>
-
-  <button data-tab="settings">
-    <i class="lucide lucide-settings"></i><br>Settings
-  </button>
-</nav>
-
-<!-- SCRIPT FILES -->
-<script src="script.js"></script>
+<!-- ============================================================
+     SCRIPTS
+============================================================ -->
+<script src="inventory-data.js"></script>
 <script src="inventory.js"></script>
-<script src="ac.js"></script>
+<script src="script.js"></script>
 
 </body>
 </html>
