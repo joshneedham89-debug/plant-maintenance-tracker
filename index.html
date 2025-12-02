@@ -1,202 +1,152 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Plant Maintenance Tracker</title>
-<link rel="manifest" href="manifest.json" />
+
 <link rel="stylesheet" href="style.css" />
+<link rel="manifest" href="manifest.json" />
 
-<!-- App Icon -->
-<link rel="icon" type="image/png" href="icons/icon-192.png" />
-
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js");
+  });
+}
+</script>
 </head>
-<body>
 
+<body>
 <div id="app">
 
-  <!-- ============================================================
-       TOP HEADER
-  ============================================================= -->
+  <!-- ======================================================
+       HEADER
+  ====================================================== -->
   <header class="app-header">
-    <img src="icons/icon-192.png" class="app-logo" alt="App Logo">
+    <img src="icons/icon-192.png" class="app-logo" alt="Logo" />
     <h1>Plant Maintenance</h1>
   </header>
 
 
-
-  <!-- ============================================================
+  <!-- ======================================================
        DASHBOARD SCREEN
-  ============================================================= -->
+  ====================================================== -->
   <section id="screen-dashboard" class="screen active">
-
     <h2 class="section-title">Dashboard</h2>
 
     <div class="stats-grid">
       <div class="stat-card green">
         <span id="statOK">0</span>
-        <label>OK</label>
+        OK
       </div>
 
       <div class="stat-card yellow">
         <span id="statDue">0</span>
-        <label>Due Soon</label>
+        Due Soon
       </div>
 
       <div class="stat-card red">
-        <span id="statOverdue">0</span>
-        <label>Overdue</label>
+        <span id="statOver">0</span>
+        Overdue
       </div>
     </div>
 
     <div class="dashboard-box">
-      <h3>Tons Run</h3>
       <div class="tons-row">
-        <span id="tonsValue">0</span>
+        <div>
+          <div class="list-sub">Tons Run</div>
+          <span id="tonsValue">0</span>
+        </div>
+
         <button id="addTonBtn">+ Add Ton</button>
       </div>
-    </div>
 
+      <button id="resetTonsBtn" class="btn-warning">Reset Tons</button>
+    </div>
   </section>
 
 
-
-  <!-- ============================================================
+  <!-- ======================================================
        PARTS SCREEN
-  ============================================================= -->
+  ====================================================== -->
   <section id="screen-parts" class="screen">
+    <h2 class="section-title">Parts</h2>
 
-    <h2 class="section-title">Tracked Parts</h2>
-
-    <div class="parts-controls">
-
-      <select id="categoryFilter" class="input-select"></select>
-
-      <button id="addPartBtn" class="btn-primary">+ Add Part</button>
-    </div>
+    <button class="btn-primary" id="openAddPartBtn">+ Add Part</button>
 
     <div id="partsList" class="list-area"></div>
-
   </section>
 
 
-
-  <!-- ============================================================
+  <!-- ======================================================
        INVENTORY SCREEN
-       Loads from spreadsheet / inventory-data.js
-  ============================================================= -->
+  ====================================================== -->
   <section id="screen-inventory" class="screen">
-
     <h2 class="section-title">Inventory</h2>
 
     <div id="inventoryList" class="list-area"></div>
-
   </section>
 
 
-
-  <!-- ============================================================
-       AC / CONDITION SCREEN
-  ============================================================= -->
-  <section id="screen-ac" class="screen">
-
-    <h2 class="section-title">AC / Condition</h2>
-
-    <p class="placeholder-text">
-      AC scoring module coming soon...
-    </p>
-
-  </section>
-
-
-
-  <!-- ============================================================
+  <!-- ======================================================
        SETTINGS SCREEN
-  ============================================================= -->
+  ====================================================== -->
   <section id="screen-settings" class="screen">
-
     <h2 class="section-title">Settings</h2>
 
-    <div class="settings-box">
+    <button id="toggleTheme" class="btn-secondary">Toggle Light / Dark</button>
+    <button id="resetTonsBtn" class="btn-warning">Reset Tons</button>
 
-      <label>Reset Tons</label>
-      <button id="resetTonsBtn" class="btn-warning">Reset Tons</button>
-
-      <label>Theme</label>
-      <button id="toggleThemeBtn" class="btn-primary">Toggle Dark/Light</button>
-
-    </div>
-
+    <p class="placeholder-text">More settings coming soon...</p>
   </section>
 
 
+  <!-- ======================================================
+       BOTTOM NAVIGATION
+  ====================================================== -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="dashboard">Dashboard</button>
+    <button class="nav-item" data-tab="parts">Parts</button>
+    <button class="nav-item" data-tab="inventory">Inventory</button>
+    <button class="nav-item" data-tab="settings">Settings</button>
+  </nav>
 
-  <!-- ============================================================
+
+  <!-- ======================================================
        ADD PART MODAL
-  ============================================================= -->
-  <div id="partModal" class="modal">
+  ====================================================== -->
+  <div class="modal" id="partModal">
     <div class="modal-content">
+      <h3>Add / Edit Part</h3>
 
-      <h3 id="modalTitle">Add Part</h3>
+      <input id="partName" class="input-text" placeholder="Part Name" />
 
-      <label>Category</label>
-      <select id="partCategory" class="input-select"></select>
+      <input id="partCat" class="input-text" placeholder="Category" />
 
-      <label>Name</label>
-      <input id="partName" type="text" class="input-text" />
+      <input id="partLoc" class="input-text" placeholder="Location / Section" />
 
-      <label>Section</label>
-      <input id="partSection" type="text" class="input-text" />
-
-      <label>Last Date</label>
+      <label class="list-sub">Last Maintenance Date</label>
       <input id="partDate" type="date" class="input-text" />
 
-      <label>Day Interval</label>
-      <input id="partDays" type="number" class="input-text" />
+      <input id="partInterval" type="number" class="input-text" placeholder="Interval (days or tons)" />
 
-      <label>Last Tons</label>
-      <input id="partLastTons" type="number" class="input-text" />
+      <input id="partLastTons" type="number" class="input-text" placeholder="Last Tons Value" />
 
-      <label>Ton Interval</label>
-      <input id="partTonInterval" type="number" class="input-text" />
-
-      <label>Notes</label>
-      <textarea id="partNotes" class="input-text"></textarea>
+      <textarea id="partNotes" placeholder="Notes (optional)"></textarea>
 
       <div class="modal-actions">
         <button id="savePartBtn" class="btn-primary">Save</button>
-        <button id="cancelPartBtn" class="btn-secondary">Cancel</button>
+        <button id="closePartModal" class="btn-secondary">Cancel</button>
       </div>
-
     </div>
   </div>
 
 
+</div> <!-- end app -->
 
-  <!-- ============================================================
-       BOTTOM NAVIGATION
-  ============================================================= -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" data-screen="dashboard">Dashboard</button>
-    <button class="nav-item" data-screen="parts">Parts</button>
-    <button class="nav-item" data-screen="inventory">Inventory</button>
-    <button class="nav-item" data-screen="ac">AC</button>
-    <button class="nav-item" data-screen="settings">Settings</button>
-  </nav>
-
-</div>
-
-
-
-
-<!-- ============================================================
-     SCRIPTS
-============================================================ -->
-<script src="inventory-data.js"></script>
-<script src="inventory.js"></script>
 <script src="script.js"></script>
+<script src="inventory.js"></script>
 
 </body>
 </html>
