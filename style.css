@@ -1,343 +1,285 @@
 /* ============================================================
-   CLEAN INDUSTRIAL PRO THEME
-   Used for Plant Maintenance Tracker (A1 + B1 UI)
+   ROOT THEME COLORS
 ============================================================ */
-
-/* -------- ROOT VARIABLES -------- */
 :root {
-  --bg: #0f1724;
-  --card: #1b2535;
-  --card-light: #233044;
-  --text: #eef2ff;
+  --bg: #0f172a;
+  --bg-light: #ffffff;
+  --card: #1e293b;
+  --card-light: #f1f5f9;
+  --accent: #fbbf24;
+  --accent-dark: #d97706;
+  --text: #e2e8f0;
+  --text-dark: #0f172a;
   --muted: #94a3b8;
-  --accent: #FFD700;
-  --accent-dark: #c7a400;
-
-  --ok: #00c853;
-  --due: #ffb300;
-  --over: #ff5252;
+  --red: #ef4444;
+  --yellow: #facc15;
+  --green: #22c55e;
 }
 
+/* Light mode class */
 body.light {
-  --bg: #f4f4f8;
-  --card: #ffffff;
-  --text: #1e293b;
-  --muted: #6b7280;
+  --bg: var(--bg-light);
+  --card: var(--card-light);
+  --text: var(--text-dark);
 }
 
-/* -------- GLOBAL -------- */
+
+/* ============================================================
+   BASE LAYOUT
+============================================================ */
 body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
   background: var(--bg);
   color: var(--text);
-  margin: 0;
-  font-family: system-ui, Arial, sans-serif;
 }
 
-h1, h2, h3 {
-  margin: 0 0 12px;
-  font-weight: 700;
+#app {
+  padding-bottom: 80px; /* space for bottom nav */
 }
 
-/* -------- HEADER -------- */
-.app-header {
-  background: var(--card);
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-bottom: 2px solid #ffffff15;
-}
-
-.app-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-}
-
-/* -------- TAB SCREENS -------- */
-.tab-screen {
+.screen {
   display: none;
-  padding: 18px;
+  padding: 20px;
 }
 
-.tab-screen.active {
+.screen.active {
   display: block;
 }
 
-/* -------- DASHBOARD CARDS -------- */
-.card-grid {
-  display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(2, 1fr);
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 12px;
 }
 
-.dash-card {
+
+/* ============================================================
+   HEADER
+============================================================ */
+.app-header {
   background: var(--card);
   padding: 16px;
-  border-radius: 12px;
-  border-left: 6px solid var(--accent);
-  text-align: center;
-  font-size: 14px;
-}
-
-.dash-card p {
-  font-size: 26px;
-  margin-top: 6px;
-  font-weight: 800;
-}
-
-.dash-ok { border-color: var(--ok); }
-.dash-due { border-color: var(--due); }
-.dash-over { border-color: var(--over); }
-
-/* -------- BUTTONS -------- */
-.primary-btn {
-  background: var(--accent);
-  color: #000;
-  padding: 14px;
-  width: 100%;
-  border: none;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: 800;
-  margin-top: 14px;
-}
-
-.secondary-btn {
-  background: #ffffff20;
-  color: var(--text);
-  padding: 12px;
-  width: 100%;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  margin-top: 10px;
-}
-
-.danger-btn {
-  background: #ff4444;
-  padding: 14px;
-  width: 100%;
-  border-radius: 10px;
-  border: none;
-  color: white;
-  font-size: 16px;
-  font-weight: 800;
-}
-
-/* -------- DROPDOWNS -------- */
-.dropdown {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  background: var(--card-light);
-  border: 2px solid #ffffff20;
-  color: var(--text);
-  font-size: 16px;
-  margin-bottom: 16px;
-}
-
-/* -------- PART CARDS (A1 Style) -------- */
-#partsList {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 2px solid var(--accent);
 }
 
-.part-card {
+.app-header h1 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--accent);
+}
+
+.app-logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+}
+
+
+/* ============================================================
+   DASHBOARD CARDS
+============================================================ */
+.stats-grid {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  flex: 1;
   background: var(--card);
-  border-left: 6px solid var(--accent);
+  padding: 16px;
+  text-align: center;
+  border-radius: 12px;
+}
+
+.stat-card span {
+  font-size: 26px;
+  font-weight: 800;
+  display: block;
+}
+
+.stat-card.green span { color: var(--green); }
+.stat-card.yellow span { color: var(--yellow); }
+.stat-card.red span { color: var(--red); }
+
+
+.dashboard-box {
+  background: var(--card);
   padding: 16px;
   border-radius: 12px;
 }
 
-.part-header {
+.tons-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.part-title {
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.part-category {
-  background: var(--card-light);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  color: var(--accent);
-  border: 1px solid #ffffff20;
-}
-
-.part-meta {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-.part-actions {
-  margin-top: 12px;
-  display: flex;
-  gap: 10px;
-}
-
-.part-actions button {
-  flex: 1;
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-  background: var(--accent);
-  color: #000;
+.tons-row span {
+  font-size: 26px;
   font-weight: 700;
 }
 
-/* STATUS COLORS */
-.part-ok { border-left-color: var(--ok); }
-.part-due { border-left-color: var(--due); }
-.part-over { border-left-color: var(--over); }
-
-/* -------- INVENTORY CARDS -------- */
-#inventoryList {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+#addTonBtn {
+  background: var(--accent);
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
 }
 
-.inventory-card {
+
+/* ============================================================
+   PARTS LIST / INVENTORY LIST
+============================================================ */
+.list-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-card {
   background: var(--card);
   padding: 16px;
   border-radius: 12px;
-  border-left: 6px solid var(--accent);
+  border-left: 8px solid var(--accent-dark);
 }
 
-.inventory-title {
-  font-size: 18px;
+.list-title {
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.list-sub {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.list-notes {
+  font-size: 13px;
+  color: var(--text);
+  opacity: .8;
+}
+
+
+/* Overdue colors */
+.list-card.ok     { border-left-color: var(--green); }
+.list-card.due    { border-left-color: var(--yellow); }
+.list-card.overdue{ border-left-color: var(--red); }
+
+
+/* ============================================================
+   INPUTS & BUTTONS
+============================================================ */
+.input-text,
+.input-select,
+textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 0;
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border: none;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.btn-secondary {
+  background: #475569;
+  border: none;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.btn-warning {
+  background: var(--red);
+  width: 100%;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  color: white;
+  margin-top: 6px;
+}
+
+
+/* ============================================================
+   BOTTOM NAVIGATION
+============================================================ */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card);
+  display: flex;
+  justify-content: space-around;
+  border-top: 2px solid var(--accent);
+  padding: 8px 0;
+}
+
+.nav-item {
+  flex: 1;
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.nav-item.active {
+  color: var(--accent);
   font-weight: 800;
 }
 
-.inventory-meta {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 4px;
-}
 
-/* -------- MODAL (slide-up sheet) -------- */
+/* ============================================================
+   MODAL
+============================================================ */
 .modal {
+  display: none;
   position: fixed;
   inset: 0;
-  background: #00000080;
-  display: none;
-  justify-content: flex-end;
-}
-
-.modal.active {
-  display: flex;
-  animation: fadeIn .2s ease;
-}
-
-@keyframes fadeIn {
-  from {background:#00000000;}
-  to   {background:#00000080;}
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
 }
 
 .modal-content {
   background: var(--card);
   padding: 20px;
+  border-radius: 14px;
   width: 100%;
-  border-radius: 18px 18px 0 0;
-  animation: slideUp .25s ease;
+  max-width: 420px;
 }
 
-@keyframes slideUp {
-  from {transform: translateY(100%);}
-  to   {transform: translateY(0);}
-}
-
-.modal-content input,
-.modal-content select,
-.modal-content textarea {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  margin-bottom: 14px;
-  background: var(--card-light);
-  border: 2px solid #ffffff20;
-  color: var(--text);
-}
-
-/* -------- SETTINGS -------- */
-.settings-block {
-  background: var(--card);
-  padding: 18px;
-  border-radius: 12px;
-  margin-bottom: 16px;
-}
-
-/* Toggle Switch */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 52px;
-  height: 28px;
-  margin-left: 12px;
-}
-
-.switch input { display: none; }
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background: #888;
-  border-radius: 30px;
-}
-
-.slider:before {
-  content: "";
-  position: absolute;
-  height: 22px;
-  width: 22px;
-  left: 3px;
-  top: 3px;
-  background: white;
-  border-radius: 50%;
-  transition: .3s;
-}
-
-input:checked + .slider {
-  background: var(--accent);
-}
-
-input:checked + .slider:before {
-  transform: translateX(24px);
-}
-
-/* -------- BOTTOM NAVIGATION -------- */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  background: var(--card);
+.modal-actions {
   display: flex;
-  border-top: 2px solid #ffffff20;
+  gap: 12px;
+  margin-top: 14px;
 }
 
-.bottom-nav button {
-  flex: 1;
-  padding: 10px 6px;
-  color: var(--text);
-  font-size: 12px;
-  border: none;
-  background: transparent;
-}
 
-.bottom-nav i {
-  font-size: 22px;
-}
-
-.bottom-nav button.active {
-  color: var(--accent);
-  font-weight: 800;
+/* Placeholder text */
+.placeholder-text {
+  text-align: center;
+  opacity: 0.7;
+  margin-top: 20px;
 }
