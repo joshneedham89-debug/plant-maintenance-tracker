@@ -1,291 +1,388 @@
-/* -------------------------------------
-   ROOT THEME COLORS
--------------------------------------- */
+/* =====================================
+   GLOBAL THEME
+===================================== */
 :root {
   --bg: #0f1724;
   --bg-light: #ffffff;
-  --card: #1a2433;
-  --text: #f8fafc;
-  --text-dark: #1e293b;
-  --accent: #FFD700;
-  --ok: #00c853;
-  --due: #ffb300;
-  --over: #ff5252;
+  --text: #eef2ff;
+  --text-dark: #111827;
+  --card: #1f2937;
+  --card-light: #f1f5f9;
+  --accent: #ffd700;
+  --green: #00c853;
+  --yellow: #ffeb3b;
+  --red: #ff5252;
+  --blue: #4fc3f7;
 }
 
-/* LIGHT MODE OVERRIDE */
-body.light {
-  --bg: #f0f4f9;
-  --card: #ffffff;
-  --text: #1e293b;
-}
-
-/* -------------------------------------
-   GLOBAL STYLES
--------------------------------------- */
+/* Light mode is toggled by adding .light on body */
 body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text);
-  margin: 0;
-  font-family: system-ui, Arial, sans-serif;
 }
 
-h1, h2, h3 {
-  margin: 0 0 10px;
+body.light {
+  background: var(--bg-light);
+  color: var(--text-dark);
 }
 
-/* -------------------------------------
+/* =====================================
    HEADER
--------------------------------------- */
-.app-header {
+===================================== */
+.top-header {
   display: flex;
   align-items: center;
-  padding: 12px;
+  justify-content: space-between;
+  padding: 12px 16px;
   background: var(--card);
-  border-bottom: 2px solid #ffffff20;
+  border-bottom: 2px solid var(--accent);
 }
 
-.app-logo {
-  width: 36px;
-  height: 36px;
-  margin-right: 10px;
-  border-radius: 6px;
-}
-
-.app-header h1 {
-  font-size: 20px;
+.top-header h1 {
+  margin: 0;
+  font-size: 18px;
   color: var(--accent);
 }
 
-/* -------------------------------------
-   MAIN SCREENS
--------------------------------------- */
-.tab-screen {
-  display: none;
-  padding: 16px;
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text);
+  cursor: pointer;
 }
 
-.tab-screen.active {
+/* Light header */
+body.light .top-header {
+  background: var(--card-light);
+}
+body.light .icon-btn {
+  color: var(--text-dark);
+}
+
+/* =====================================
+   SCREENS
+===================================== */
+.screen {
+  display: none;
+  padding: 16px;
+  padding-bottom: 80px; /* keep space above bottom nav */
+}
+
+.screen.active {
   display: block;
 }
 
-/* -------------------------------------
-   DASHBOARD CARDS
--------------------------------------- */
-.card-grid {
+/* =====================================
+   DASHBOARD
+===================================== */
+.stat-grid {
   display: grid;
-  gap: 12px;
   grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.dash-card {
+.stat-card {
   background: var(--card);
-  padding: 15px;
   border-radius: 10px;
+  padding: 12px;
   text-align: center;
-  border-left: 6px solid var(--accent);
+  color: #000;
 }
 
-.dash-card p {
-  font-size: 22px;
+.stat-card h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.stat-card p {
   margin: 6px 0 0;
-  font-weight: bold;
+  font-size: 20px;
+  font-weight: 700;
 }
 
-.dash-ok { border-color: var(--ok); }
-.dash-due { border-color: var(--due); }
-.dash-over { border-color: var(--over); }
+.stat-card.green  { background: var(--green); }
+.stat-card.yellow { background: var(--yellow); }
+.stat-card.red    { background: var(--red); }
+.stat-card.blue   { background: var(--blue); }
 
-/* -------------------------------------
-   DROPDOWNS & BUTTONS
--------------------------------------- */
-.dropdown {
+/* Tons + next due */
+.tons-box,
+.next-due-box {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.tons-box label {
+  font-size: 14px;
+}
+
+.tons-box input {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  box-sizing: border-box;
+}
+
+.tons-box button {
+  margin-top: 8px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Light mode cards */
+body.light .stat-card,
+body.light .tons-box,
+body.light .next-due-box {
+  background: var(--card-light);
+}
+
+/* =====================================
+   MAINTENANCE LIST
+===================================== */
+.wide-select {
   width: 100%;
   padding: 10px;
   border-radius: 10px;
-  margin-bottom: 14px;
   border: none;
-  background: #ffffff;
-  color: #000;
-  font-size: 16px;
+  margin-bottom: 12px;
 }
 
+.parts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.part-card {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+body.light .part-card {
+  background: var(--card-light);
+}
+
+.part-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.part-header span {
+  font-weight: 600;
+}
+
+.status-dot {
+  font-size: 18px;
+}
+
+.part-card p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+/* Part action buttons */
+.part-card .primary-btn,
+.part-card .secondary-btn {
+  margin-top: 6px;
+}
+
+/* =====================================
+   INVENTORY
+===================================== */
+.search-box {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.inv-filter {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.inventory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inventory-item {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+body.light .inventory-item {
+  background: var(--card-light);
+}
+
+/* =====================================
+   AC RESULT
+===================================== */
+.result-box {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--card);
+}
+
+body.light .result-box {
+  background: var(--card-light);
+}
+
+/* =====================================
+   BUTTONS
+===================================== */
 .primary-btn {
   background: var(--accent);
   color: #000;
-  padding: 12px;
-  width: 100%;
-  font-size: 18px;
-  border: none;
   border-radius: 10px;
-  margin-top: 14px;
-  font-weight: bold;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  font-weight: 700;
 }
 
 .secondary-btn {
   background: #ffffff20;
-  padding: 12px;
-  width: 100%;
+  color: #fff;
   border-radius: 10px;
-  color: var(--text);
-  margin-top: 10px;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
 }
 
 .danger-btn {
-  background: #ff5252;
-  color: #fff;
-  padding: 12px;
-  width: 100%;
+  background: var(--red);
+  color: #000;
   border-radius: 10px;
   border: none;
+  padding: 10px;
+  cursor: pointer;
 }
 
-/* -------------------------------------
-   PARTS LIST CARDS
--------------------------------------- */
-#partsList, #inventoryList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.part-card, .inventory-card {
-  background: var(--card);
-  padding: 14px;
-  border-radius: 10px;
-  border-left: 6px solid var(--accent);
-}
-
-.part-title {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.part-meta {
-  font-size: 13px;
-  opacity: 0.8;
-}
-
-.part-actions {
-  margin-top: 8px;
-  display: flex;
-  gap: 8px;
-}
-
-.part-actions button {
-  flex: 1;
-  padding: 8px;
-  border-radius: 8px;
-  border: none;
-  font-weight: bold;
-}
-
-/* -------------------------------------
+/* =====================================
    MODAL
--------------------------------------- */
+===================================== */
 .modal {
-  display: none;
   position: fixed;
   inset: 0;
-  background: #00000080;
+  background: rgba(0,0,0,0.6);
+  display: none;
   justify-content: center;
   align-items: center;
 }
 
 .modal-content {
   background: var(--card);
+  border-radius: 12px;
   padding: 16px;
   width: 90%;
-  max-width: 400px;
-  border-radius: 12px;
+  max-width: 420px;
+}
+
+body.light .modal-content {
+  background: var(--card-light);
+}
+
+.modal-content label {
+  font-size: 13px;
 }
 
 .modal-content input,
 .modal-content select,
 .modal-content textarea {
   width: 100%;
-  padding: 10px;
-  border-radius: 10px;
-  margin: 6px 0 14px;
+  padding: 8px;
+  border-radius: 8px;
   border: none;
-  background: #ffffff;
-  color: #000;
+  margin: 4px 0 10px;
+  box-sizing: border-box;
 }
 
-.modal-buttons {
+.modal-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  margin-top: 6px;
 }
 
-/* -------------------------------------
-   BOTTOM NAVIGATION
--------------------------------------- */
+/* =====================================
+   SETTINGS BLOCKS
+===================================== */
+.settings-block {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+body.light .settings-block {
+  background: var(--card-light);
+}
+
+/* =====================================
+   BOTTOM NAV
+===================================== */
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  width: 100%;
+  left: 0;
+  right: 0;
   background: var(--card);
+  border-top: 2px solid var(--accent);
   display: flex;
-  border-top: 2px solid #ffffff20;
+  justify-content: space-around;
+  padding: 4px 0;
 }
 
-.bottom-nav button {
-  flex: 1;
-  padding: 12px;
-  background: transparent;
-  color: var(--text);
+body.light .bottom-nav {
+  background: var(--card-light);
+}
+
+.nav-btn {
+  background: none;
   border: none;
-  font-size: 15px;
+  color: var(--text);
+  font-size: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0;
 }
 
-.bottom-nav button.active {
+.nav-btn span {
+  font-size: 10px;
+}
+
+.nav-btn.active {
   color: var(--accent);
-  font-weight: bold;
 }
 
-/* -------------------------------------
-   SETTINGS PAGE
--------------------------------------- */
-.settings-block {
-  background: var(--card);
-  padding: 16px;
-  border-radius: 10px;
-  margin-bottom: 16px;
+body.light .nav-btn {
+  color: var(--text-dark);
 }
-
-.switch {
-  position: relative;
-  width: 50px;
-  height: 26px;
-  display: inline-block;
-}
-
-.switch input { display: none; }
-
-.slider {
-  position: absolute;
-  background: #ccc;
-  border-radius: 20px;
-  inset: 0;
-  cursor: pointer;
-}
-
-.slider:before {
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 3px;
-  bottom: 3px;
-  background: white;
-  border-radius: 50%;
-  position: absolute;
-  transition: .3s;
-}
-
-input:checked + .slider {
-  background: var(--accent);
-}
-
-input:checked + .slider:before {
-  transform: translateX(24px);
+body.light .nav-btn.active {
+  color: var(--accent);
 }
