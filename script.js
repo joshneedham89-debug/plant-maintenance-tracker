@@ -1,241 +1,390 @@
-/* =======================================================
-   Plant Maintenance Tracker v9
-   Navigation • Parts • Inventory • Tons • Settings
-======================================================= */
+/* ============================================================
+   GLOBAL STORAGE KEYS
+============================================================ */
+const PARTS_KEY = "pm_parts";
+const TONS_KEY = "pm_tons";
+const START_TONS_KEY = "pm_start_tons";
+const THEME_KEY = "pm_theme";
 
-/* -------- Local Storage Keys -------- */
-const LS_PARTS = "pm_parts_v9";
-const LS_INVENTORY = "pm_inventory_v9";
-const LS_TONS = "pm_tons_v9";
-const LS_THEME = "pm_theme_v9";
+/* ============================================================
+   GLOBAL STATE
+============================================================ */
+let parts = [];
+let currentTons = 0;
+let startingTons = 0;
 
-/* -------- App State -------- */
-let parts = JSON.parse(localStorage.getItem(LS_PARTS) || "[]");
-let inventory = JSON.parse(localStorage.getItem(LS_INVENTORY) || "[]");
-let currentTons = Number(localStorage.getItem(LS_TONS) || 0);
+let editingIndex = null;
 
-/* =======================================================
-   NAVIGATION
-======================================================= */
+/* ============================================================
+   DOM ELEMENTS
+============================================================ */
 const screens = document.querySelectorAll(".screen");
 const navButtons = document.querySelectorAll(".nav-btn");
 
-navButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const target = btn.dataset.screen;
+const okCountEl = document.getElementById("okCount");
+const dueCountEl = document.getElementById("dueCount");
+const overCountEl = document.getElementById("overCount");
+const totalPartsEl = document.getElementById("totalParts");
+const nextDueEl = document.getElementById("nextDue");
 
-    screens.forEach(s => s.classList.remove("active"));
-    navButtons.forEach(b => b.classList.remove("active"));
+const currentTonsInput = document.getElementById("currentTonsInput");
+const updateTonsBtn = document.getElementById("updateTonsBtn");
 
-    document.getElementById(`screen-${target}`).classList.add("active");
-    btn.classList.add("active");
+const partsList = document.getElementById("partsList");
+const categoryFilter = document.getElementById("categoryFilter");
 
-    renderAll();
-  });
-});
+const addPartBtn = document.getElementById("addPartBtn");
 
-/* =======================================================
-   TONS TRACKER
-======================================================= */
-document.getElementById("setTonsBtn").addEventListener("click", () => {
-  const val = Number(document.getElementById("tonsInput").value);
-  if (!isNaN(val)) {
-    currentTons = val;
-    saveState();
-    renderDashboard();
-  }
-});
+const inventorySearch = document.getElementById("inventorySearch");
+const inventoryCategoryFilter = document.getElementById("inventoryCategoryFilter");
+const inventoryList = document.getElementById("inventoryList");
 
-document.getElementById("addTonsBtn").addEventListener("click", () => {
-  currentTons += 100;
-  saveState();
-  renderDashboard();
-});
+const acPercent = document.getElementById("acPercent");
+const acTons = document.getElementById("acTons");
+const acCalcBtn = document.getElementById("acCalcBtn");
+const acResult = document.getElementById("acResult");
 
-/* =======================================================
-   PARTS SYSTEM
-======================================================= */
-document.getElementById("addPartBtn").addEventListener("click", () => {
-  const name = prompt("Part Name:");
-  if (!name) return;
+const settingsButton = document.getElementById("settingsButton");
+const resetTonsBtn = document.getElementById("resetTonsBtn");
+const setStartingTons = document.getElementById("setStartingTons");
+const applyStartingTons = document.getElementById("applyStartingTons");
+const themeSelector = document.getElementById("themeSelector");
 
-  const interval = Number(prompt("Maintenance Interval (days):", "30"));
-  const date = prompt("Last Maintenance Date (YYYY-MM-DD):");
-  const notes = prompt("Notes:");
+/* Modal Elements */
+const partModal = document.getElementById("partModal");
+const modalTitle = document.getElementById("modalTitle");
+const partCategory = document.getElementById("partCategory");
+const partName = document.getElementById("partName");
+const partSection = document.getElementById("partSection");
+const partDate = document.getElementById("partDate");
+const partDays = document.getElementById("partDays");
+const partLastTons = document.getElementById("partLastTons");
+const partTonInterval = document.getElementById("partTonInterval");
+const partNotes = document.getElementById("partNotes");
+const savePartBtn = document.getElementById("savePartBtn");
+const cancelPartBtn = document.getElementById("cancelPartBtn");
 
-  parts.push({
-    name,
-    interval: interval || 0,
-    date: date || "",
-    notes: notes || "",
-    tonsAtMaintenance: currentTons
-  });
+/* ============================================================
+   LOAD STATE
+============================================================ */
+function loadState() {
+    parts = JSON.parse(localStorage.getItem(PARTS_KEY) || "[]");
+    currentTons = Number(localStorage.getItem(TONS_KEY) || 0);
+    startingTons = Number(localStorage.getItem(START_TONS_KEY) || 0);
 
-  saveState();
-  renderParts();
-});
+    const theme = localStorage.getItem(THEME_KEY) || "dark";
+    if (theme === "light") document.body.classList.add("light");
+    themeSelector.value = theme;
 
-function renderParts() {
-  const container = document.getElementById("partsList");
-  container.innerHTML = "";
+    currentTonsInput.value = currentTons;
+}
+loadState();
 
-  if (parts.length === 0) {
-    container.innerHTML = "<p>No parts added yet.</p>";
-    return;
-  }
-
-  parts.forEach((p, i) => {
-    const item = document.createElement("div");
-    item.className = "list-item";
-
-    const daysSince = p.date ? Math.floor((Date.now() - new Date(p.date)) / 86400000) : "—";
-    const tonsSince = currentTons - (p.tonsAtMaintenance || 0);
-
-    item.innerHTML = `
-      <h3>${p.name}</h3>
-      <small>Last: ${p.date || "—"} • ${daysSince} days ago</small><br>
-      <small>Tons since: ${tonsSince}</small><br>
-      <small>Notes: ${p.notes || "—"}</small>
-      <br><br>
-      <button onclick="deletePart(${i})" class="danger">Delete</button>
-    `;
-
-    container.appendChild(item);
-  });
+/* ============================================================
+   SAVE STATE
+============================================================ */
+function saveState() {
+    localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
+    localStorage.setItem(TONS_KEY, currentTons);
+    localStorage.setItem(START_TONS_KEY, startingTons);
 }
 
-function deletePart(i) {
-  if (confirm("Delete this part?")) {
-    parts.splice(i, 1);
+/* ============================================================
+   NAVIGATION
+============================================================ */
+navButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+        const screen = btn.dataset.screen;
+
+        screens.forEach(s => s.classList.remove("active"));
+        document.getElementById(screen).classList.add("active");
+
+        navButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+    });
+});
+
+/* ============================================================
+   DASHBOARD STATUS
+============================================================ */
+function daysSince(dateStr) {
+    if (!dateStr) return Infinity;
+    const d = new Date(dateStr + "T00:00:00");
+    const now = new Date();
+    return Math.floor((now - d) / (1000 * 60 * 60 * 24));
+}
+
+function partStatus(part) {
+    const d = daysSince(part.date);
+    const t = currentTons - part.lastTons;
+
+    const daysLeft = (part.days || Infinity) - d;
+    const tonsLeft = (part.tonInterval || Infinity) - t;
+
+    let status = "ok";
+    if (daysLeft <= 0 || tonsLeft <= 0) status = "overdue";
+    else if (daysLeft <= 5 || tonsLeft <= 1000) status = "due";
+
+    return { status, daysLeft, tonsLeft, days: d, tonsSince: t };
+}
+
+/* ============================================================
+   RENDER PARTS
+============================================================ */
+function renderParts() {
+    const filterVal = categoryFilter.value;
+
+    partsList.innerHTML = "";
+
+    let ok = 0, due = 0, over = 0;
+
+    const filtered = parts.filter(p =>
+        filterVal === "ALL" ? true : p.category === filterVal
+    );
+
+    filtered.forEach((p, index) => {
+        const st = partStatus(p);
+
+        if (st.status === "ok") ok++;
+        else if (st.status === "due") due++;
+        else over++;
+
+        const card = document.createElement("div");
+        card.className = "part-card";
+
+        card.innerHTML = `
+            <div class="part-header">
+                <span>${p.name}</span>
+                <span class="status-dot">${
+                    st.status === "ok" ? "🟢" :
+                    st.status === "due" ? "🟡" :
+                    "🔴"
+                }</span>
+            </div>
+            <p><strong>${p.category}</strong> — ${p.section}</p>
+            <p>Last: ${p.date} (${st.days} days ago)</p>
+            <p>Tons: ${st.tonsSince} / ${p.tonInterval}</p>
+            <button onclick="editPart(${index})" class="primary-btn">Edit</button>
+            <button onclick="deletePart(${index})" class="secondary-btn">Delete</button>
+        `;
+
+        partsList.appendChild(card);
+    });
+
+    okCountEl.textContent = ok;
+    dueCountEl.textContent = due;
+    overCountEl.textContent = over;
+    totalPartsEl.textContent = parts.length;
+
+    // Next due
+    let soonest = null;
+    parts.forEach(p => {
+        const st = partStatus(p);
+        if (!isFinite(st.daysLeft)) return;
+        if (soonest === null || st.daysLeft < soonest.daysLeft) {
+            soonest = { name: p.name, daysLeft: st.daysLeft };
+        }
+    });
+    nextDueEl.textContent = soonest ? `${soonest.name} (${soonest.daysLeft} days)` : "—";
+}
+
+/* ============================================================
+   ADD / EDIT PARTS
+============================================================ */
+addPartBtn.addEventListener("click", () => openPartModal(null));
+
+function openPartModal(index) {
+    editingIndex = index;
+
+    if (index === null) {
+        modalTitle.textContent = "Add Part";
+        partCategory.value = "";
+        partName.value = "";
+        partSection.value = "";
+        partDate.value = "";
+        partDays.value = "";
+        partLastTons.value = currentTons;
+        partTonInterval.value = "";
+        partNotes.value = "";
+    } else {
+        modalTitle.textContent = "Edit Part";
+        const p = parts[index];
+        partCategory.value = p.category;
+        partName.value = p.name;
+        partSection.value = p.section;
+        partDate.value = p.date;
+        partDays.value = p.days;
+        partLastTons.value = p.lastTons;
+        partTonInterval.value = p.tonInterval;
+        partNotes.value = p.notes;
+    }
+
+    partModal.style.display = "flex";
+}
+
+cancelPartBtn.addEventListener("click", () => {
+    partModal.style.display = "none";
+});
+
+savePartBtn.addEventListener("click", () => {
+    const obj = {
+        category: partCategory.value,
+        name: partName.value,
+        section: partSection.value,
+        date: partDate.value,
+        days: Number(partDays.value || 0),
+        lastTons: Number(partLastTons.value || 0),
+        tonInterval: Number(partTonInterval.value || 0),
+        notes: partNotes.value || ""
+    };
+
+    if (editingIndex === null) parts.push(obj);
+    else parts[editingIndex] = obj;
+
+    saveState();
+    partModal.style.display = "none";
+    renderParts();
+});
+
+function editPart(index) {
+    openPartModal(index);
+}
+
+function deletePart(index) {
+    if (!confirm("Delete this part?")) return;
+    parts.splice(index, 1);
     saveState();
     renderParts();
-  }
 }
 
-/* =======================================================
-   INVENTORY SYSTEM
-======================================================= */
-document.getElementById("addInvBtn").addEventListener("click", () => {
-  const name = prompt("Inventory Item:");
-  if (!name) return;
-
-  const qty = Number(prompt("Quantity:", "1"));
-
-  inventory.push({
-    name,
-    qty: qty || 0
-  });
-
-  saveState();
-  renderInventory();
-});
-
+/* ============================================================
+   INVENTORY
+============================================================ */
 function renderInventory() {
-  const container = document.getElementById("inventoryList");
-  container.innerHTML = "";
+    const search = inventorySearch.value.toLowerCase();
+    const cat = inventoryCategoryFilter.value;
 
-  if (inventory.length === 0) {
-    container.innerHTML = "<p>No inventory yet.</p>";
-    return;
-  }
+    inventoryList.innerHTML = "";
 
-  inventory.forEach((item, i) => {
-    const div = document.createElement("div");
-    div.className = "list-item";
+    INVENTORY_DATA.forEach(item => {
+        const matchSearch =
+            item.name.toLowerCase().includes(search) ||
+            item.category.toLowerCase().includes(search);
 
-    div.innerHTML = `
-      <h3>${item.name}</h3>
-      <small>Qty: ${item.qty}</small>
-      <br><br>
-      <button onclick="deleteInv(${i})" class="danger">Delete</button>
-    `;
+        const matchCat =
+            cat === "ALL" ? true : item.category === cat;
 
-    container.appendChild(div);
-  });
+        if (!matchSearch || !matchCat) return;
+
+        const div = document.createElement("div");
+        div.className = "inventory-item";
+
+        div.innerHTML = `
+            <strong>${item.name}</strong><br>
+            <small>${item.category}</small><br>
+            <button class="primary-btn" onclick="addInventoryToMaintenance('${item.category}','${item.name}')">
+                Add to Maintenance
+            </button>
+        `;
+
+        inventoryList.appendChild(div);
+    });
 }
 
-function deleteInv(i) {
-  if (confirm("Delete this inventory item?")) {
-    inventory.splice(i, 1);
+function addInventoryToMaintenance(cat, name) {
+    openPartModal(null);
+    partCategory.value = cat;
+    partName.value = name;
+}
+
+/* ============================================================
+   AC CALCULATOR
+============================================================ */
+acCalcBtn.addEventListener("click", () => {
+    const pct = Number(acPercent.value);
+    const tons = Number(acTons.value);
+
+    if (!pct || !tons) {
+        acResult.innerHTML = "<p>Please enter valid values.</p>";
+        return;
+    }
+
+    const gallons = (pct / 100) * tons * 2;
+    acResult.innerHTML = `<h3>${gallons.toFixed(2)} gallons needed</h3>`;
+});
+
+/* ============================================================
+   SETTINGS
+============================================================ */
+resetTonsBtn.addEventListener("click", () => {
+    if (!confirm("Reset tons to 0?")) return;
+    currentTons = 0;
+    startingTons = 0;
     saveState();
-    renderInventory();
-  }
-}
-
-/* =======================================================
-   DASHBOARD
-======================================================= */
-function renderDashboard() {
-  document.getElementById("dashTotalParts").textContent = parts.length;
-  document.getElementById("dashTons").textContent = currentTons;
-
-  if (parts.length === 0) {
-    document.getElementById("dashNextDue").textContent = "—";
-    return;
-  }
-
-  const next = parts.reduce((soonest, p) => {
-    const date = p.date ? new Date(p.date) : null;
-    return (!soonest && date) || (date && date < new Date(soonest.date)) ? p : soonest;
-  }, null);
-
-  document.getElementById("dashNextDue").textContent =
-    next && next.date ? next.name + " (" + next.date + ")" : "—";
-}
-
-/* =======================================================
-   THEME SWITCH
-======================================================= */
-const themeToggle = document.getElementById("themeToggle");
-themeToggle.addEventListener("change", () => {
-  if (themeToggle.checked) {
-    document.body.classList.add("light");
-    localStorage.setItem(LS_THEME, "light");
-  } else {
-    document.body.classList.remove("light");
-    localStorage.setItem(LS_THEME, "dark");
-  }
+    currentTonsInput.value = 0;
+    renderParts();
 });
 
-/* =======================================================
-   RESET ALL DATA
-======================================================= */
-document.getElementById("resetBtn").addEventListener("click", () => {
-  if (!confirm("Reset ALL data?")) return;
-
-  parts = [];
-  inventory = [];
-  currentTons = 0;
-
-  saveState();
-  renderAll();
+applyStartingTons.addEventListener("click", () => {
+    startingTons = Number(setStartingTons.value || 0);
+    currentTons = startingTons;
+    saveState();
+    currentTonsInput.value = currentTons;
+    renderParts();
 });
 
-/* =======================================================
-   SAVE + RENDER
-======================================================= */
-function saveState() {
-  localStorage.setItem(LS_PARTS, JSON.stringify(parts));
-  localStorage.setItem(LS_INVENTORY, JSON.stringify(inventory));
-  localStorage.setItem(LS_TONS, currentTons);
+themeSelector.addEventListener("change", () => {
+    const v = themeSelector.value;
+    if (v === "dark") document.body.classList.remove("light");
+    else document.body.classList.add("light");
+    localStorage.setItem(THEME_KEY, v);
+});
+
+/* ============================================================
+   TONS UPDATE
+============================================================ */
+updateTonsBtn.addEventListener("click", () => {
+    currentTons = Number(currentTonsInput.value || 0);
+    saveState();
+    renderParts();
+});
+
+/* ============================================================
+   INITIALIZE DROPDOWNS
+============================================================ */
+function populateCategoryDropdowns() {
+    const catSet = new Set();
+    INVENTORY_DATA.forEach(i => catSet.add(i.category));
+
+    categoryFilter.innerHTML = `<option value="ALL">All</option>`;
+    partCategory.innerHTML = "";
+    inventoryCategoryFilter.innerHTML = `<option value="ALL">All</option>`;
+
+    catSet.forEach(c => {
+        categoryFilter.innerHTML += `<option value="${c}">${c}</option>`;
+        partCategory.innerHTML += `<option value="${c}">${c}</option>`;
+        inventoryCategoryFilter.innerHTML += `<option value="${c}">${c}</option>`;
+    });
 }
+populateCategoryDropdowns();
 
-function renderAll() {
-  renderDashboard();
-  renderParts();
-  renderInventory();
-}
+/* ============================================================
+   INVENTORY LISTENERS
+============================================================ */
+inventorySearch.addEventListener("input", renderInventory);
+inventoryCategoryFilter.addEventListener("change", renderInventory);
 
-/* =======================================================
-   INIT APP
-======================================================= */
-(function init() {
-  // Load theme
-  const savedTheme = localStorage.getItem(LS_THEME);
-  if (savedTheme === "light") {
-    document.body.classList.add("light");
-    themeToggle.checked = true;
-  }
+/* ============================================================
+   CLOSE MODAL ON BACKGROUND CLICK
+============================================================ */
+window.addEventListener("click", e => {
+    if (e.target === partModal) {
+        partModal.style.display = "none";
+    }
+});
 
-  renderAll();
-})();
+/* ============================================================
+   INITIAL RENDER
+============================================================ */
+renderParts();
+renderInventory();
