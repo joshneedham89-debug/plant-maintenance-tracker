@@ -1,107 +1,189 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Plant Maintenance Tracker</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plant Maintenance Tracker</title>
 
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
+    <!-- Manifest for PWA -->
+    <link rel="manifest" href="manifest.json" />
 
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("service-worker.js");
-      });
-    }
-  </script>
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- App Icon -->
+    <link rel="icon" type="image/png" href="icons/icon-192.png" />
 </head>
 
 <body>
-<div id="app">
 
-  <!-- HEADER / TITLE BAR -->
-  <header class="app-header">
-    <img src="icons/icon-192.png" class="app-logo" alt="logo" />
-    <h1>Plant Maintenance</h1>
-  </header>
+    <!-- HEADER -->
+    <header class="top-header">
+        <h1>Plant Maintenance</h1>
+        <button id="settingsButton" class="icon-btn">⚙️</button>
+    </header>
 
-  <!-- MAIN CONTENT AREA -->
-  <main id="screen-container">
+    <!-- MAIN CONTENT AREA -->
+    <main id="appContent">
 
-    <!-- DASHBOARD SCREEN -->
-    <section id="screen-dashboard" class="screen active">
-      <h2>Dashboard</h2>
+        <!-- ######################## -->
+        <!-- DASHBOARD SCREEN -->
+        <!-- ######################## -->
+        <section id="dashboardScreen" class="screen active">
 
-      <div class="dash-grid">
-        <div class="dash-card">
-          <label>Total Parts</label>
-          <span id="dashTotalParts">0</span>
+            <h2>Dashboard</h2>
+
+            <div class="stat-grid">
+                <div class="stat-card green">
+                    <h3>OK</h3>
+                    <p id="okCount">0</p>
+                </div>
+
+                <div class="stat-card yellow">
+                    <h3>Due Soon</h3>
+                    <p id="dueCount">0</p>
+                </div>
+
+                <div class="stat-card red">
+                    <h3>Overdue</h3>
+                    <p id="overCount">0</p>
+                </div>
+
+                <div class="stat-card blue">
+                    <h3>Total Parts</h3>
+                    <p id="totalParts">0</p>
+                </div>
+            </div>
+
+            <div class="tons-box">
+                <label>Current Tons:</label>
+                <input id="currentTonsInput" type="number" placeholder="Enter tons…" />
+                <button id="updateTonsBtn">Update</button>
+            </div>
+
+            <div class="next-due-box">
+                <p><strong>Next Due:</strong> <span id="nextDue">—</span></p>
+            </div>
+        </section>
+
+        <!-- ######################## -->
+        <!-- MAINTENANCE SCREEN -->
+        <!-- ######################## -->
+        <section id="maintenanceScreen" class="screen">
+            <h2>Maintenance</h2>
+
+            <div class="row">
+                <button id="addPartBtn" class="primary-btn">+ Add Part</button>
+                <select id="categoryFilter"></select>
+            </div>
+
+            <div id="partsList" class="parts-list"></div>
+        </section>
+
+        <!-- ######################## -->
+        <!-- INVENTORY SCREEN -->
+        <!-- ######################## -->
+        <section id="inventoryScreen" class="screen">
+            <h2>Inventory</h2>
+
+            <input id="inventorySearch" class="search-box" placeholder="Search parts…" />
+
+            <select id="inventoryCategoryFilter" class="inv-filter"></select>
+
+            <div id="inventoryList" class="inventory-list"></div>
+        </section>
+
+        <!-- ######################## -->
+        <!-- AC CALCULATOR -->
+        <!-- ######################## -->
+        <section id="acScreen" class="screen">
+            <h2>AC Calculator</h2>
+
+            <label>AC %</label>
+            <input id="acPercent" type="number" />
+
+            <label>Tons</label>
+            <input id="acTons" type="number" />
+
+            <button id="acCalcBtn" class="primary-btn">Calculate</button>
+
+            <div id="acResult" class="result-box"></div>
+        </section>
+
+        <!-- ######################## -->
+        <!-- SETTINGS SCREEN -->
+        <!-- ######################## -->
+        <section id="settingsScreen" class="screen">
+            <h2>Settings</h2>
+
+            <button id="resetTonsBtn" class="danger-btn">Reset Tons</button>
+
+            <label>Set Starting Tons</label>
+            <input id="setStartingTons" type="number" />
+            <button id="applyStartingTons" class="primary-btn">Apply</button>
+
+            <label>Theme</label>
+            <select id="themeSelector">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+            </select>
+        </section>
+
+    </main>
+
+    <!-- ######################## -->
+    <!-- ADD PART MODAL -->
+    <!-- ######################## -->
+    <div id="partModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add Part</h2>
+
+            <label>Category</label>
+            <select id="partCategory"></select>
+
+            <label>Part Name</label>
+            <input id="partName" />
+
+            <label>Section / Location</label>
+            <input id="partSection" />
+
+            <label>Last Maintenance Date</label>
+            <input id="partDate" type="date" />
+
+            <label>Days Interval</label>
+            <input id="partDays" type="number" />
+
+            <label>Last Tons</label>
+            <input id="partLastTons" type="number" />
+
+            <label>Ton Interval</label>
+            <input id="partTonInterval" type="number" />
+
+            <label>Notes</label>
+            <textarea id="partNotes"></textarea>
+
+            <div class="modal-actions">
+                <button id="savePartBtn" class="primary-btn">Save</button>
+                <button id="cancelPartBtn" class="secondary-btn">Cancel</button>
+            </div>
         </div>
+    </div>
 
-        <div class="dash-card">
-          <label>Tons Run</label>
-          <span id="dashTons">0</span>
-        </div>
+    <!-- ######################## -->
+    <!-- BOTTOM NAVIGATION BAR -->
+    <!-- ######################## -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-screen="dashboardScreen">📈<span>Dashboard</span></button>
+        <button class="nav-btn" data-screen="maintenanceScreen">🛠️<span>Maintenance</span></button>
+        <button class="nav-btn" data-screen="inventoryScreen">📦<span>Inventory</span></button>
+        <button class="nav-btn" data-screen="acScreen">🧮<span>AC Calc</span></button>
+        <button class="nav-btn" data-screen="settingsScreen">⚙️<span>Settings</span></button>
+    </nav>
 
-        <div class="dash-card">
-          <label>Next Due</label>
-          <span id="dashNextDue">—</span>
-        </div>
-      </div>
+    <!-- SCRIPTS -->
+    <script src="inventory.js"></script>
+    <script src="ac.js"></script>
+    <script src="script.js"></script>
 
-      <div class="tons-box">
-        <input id="tonsInput" type="number" placeholder="Enter tons…" />
-        <button id="setTonsBtn">Set Tons</button>
-        <button id="addTonsBtn">+100 Tons</button>
-      </div>
-
-    </section>
-
-    <!-- PARTS SCREEN -->
-    <section id="screen-parts" class="screen">
-      <h2>Parts</h2>
-
-      <button id="addPartBtn" class="primary">+ Add Part</button>
-
-      <div id="partsList" class="list"></div>
-    </section>
-
-    <!-- INVENTORY SCREEN -->
-    <section id="screen-inventory" class="screen">
-      <h2>Inventory</h2>
-      <button id="addInvBtn" class="primary">+ Add Inventory</button>
-
-      <div id="inventoryList" class="list"></div>
-    </section>
-
-    <!-- SETTINGS SCREEN -->
-    <section id="screen-settings" class="screen">
-      <h2>Settings</h2>
-
-      <div class="settings-row">
-        <label>Light Mode:</label>
-        <input id="themeToggle" type="checkbox" />
-      </div>
-
-      <div class="settings-row">
-        <button id="resetBtn" class="danger">Reset All Data</button>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- BOTTOM NAVIGATION -->
-  <nav class="bottom-nav">
-    <button data-screen="dashboard" class="nav-btn active">Dashboard</button>
-    <button data-screen="parts" class="nav-btn">Parts</button>
-    <button data-screen="inventory" class="nav-btn">Inventory</button>
-    <button data-screen="settings" class="nav-btn">Settings</button>
-  </nav>
-
-</div>
-
-<script src="inventory.js"></script>
-<script src="script.js"></script>
 </body>
 </html>
