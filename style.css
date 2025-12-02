@@ -1,218 +1,312 @@
-/* ------------------------------
-   THEME + RESETS
---------------------------------*/
+/* =====================================
+   GLOBAL THEME
+===================================== */
 :root {
-  --bg: #0f172a;
-  --bg-card: #1e293b;
-  --text: #ffffff;
-  --accent: #ffd54a;
-  --danger: #ff6b6b;
-}
-
-body.light {
-  --bg: #f4f4f4;
-  --bg-card: #ffffff;
-  --text: #1a1a1a;
-  --accent: #c79c00;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, Arial, sans-serif;
+    --bg: #0f1724;
+    --bg-light: #ffffff;
+    --text: #eef2ff;
+    --text-dark: #111;
+    --card: #1c2638;
+    --card-light: #f1f1f1;
+    --accent: #ffd700;
+    --green: #00c853;
+    --yellow: #ffeb3b;
+    --red: #ff5252;
+    --blue: #4fc3f7;
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    font-family: system-ui, Arial, sans-serif;
+    color: var(--text);
 }
 
-/* ------------------------------
+/* Light mode */
+body.light {
+    background: var(--bg-light);
+    color: var(--text-dark);
+}
+
+/* =====================================
    HEADER
---------------------------------*/
-.app-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-  background: var(--bg-card);
-  border-bottom: 2px solid #00000040;
+===================================== */
+.top-header {
+    background: var(--card);
+    padding: 15px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--accent);
 }
 
-.app-header h1 {
-  font-size: 20px;
-  font-weight: 700;
+body.light .top-header {
+    background: var(--card-light);
 }
 
-.app-logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
+.icon-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--text);
 }
 
-/* ------------------------------
-   SCREENS
---------------------------------*/
+body.light .icon-btn {
+    color: var(--text-dark);
+}
+
+/* =====================================
+   MAIN CONTENT SCREENS
+===================================== */
 .screen {
-  display: none;
-  padding: 16px;
+    display: none;
+    padding: 18px;
 }
 
 .screen.active {
-  display: block;
+    display: block;
 }
 
-/* ------------------------------
+/* =====================================
    DASHBOARD
---------------------------------*/
-.dash-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+===================================== */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
 }
 
-.dash-card {
-  background: var(--bg-card);
-  padding: 14px;
-  border-radius: 10px;
-  text-align: center;
+.stat-card {
+    padding: 14px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
 }
 
-.dash-card label {
-  font-size: 13px;
-  opacity: 0.7;
-}
-
-.dash-card span {
-  margin-top: 6px;
-  display: block;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--accent);
-}
+.stat-card.green { background: var(--green); }
+.stat-card.yellow { background: var(--yellow); }
+.stat-card.red { background: var(--red); }
+.stat-card.blue { background: var(--blue); }
 
 .tons-box {
-  display: flex;
-  gap: 8px;
+    background: var(--card);
+    padding: 14px;
+    margin-top: 15px;
+    border-radius: 10px;
+}
+
+body.light .tons-box {
+    background: var(--card-light);
 }
 
 .tons-box input {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    margin-top: 6px;
+    margin-bottom: 8px;
 }
 
 .tons-box button {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: none;
-  background: var(--accent);
-  color: #000;
-  font-weight: 700;
-  cursor: pointer;
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    background: var(--accent);
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
 }
 
-/* ------------------------------
-   LISTS (Parts + Inventory)
---------------------------------*/
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
+/* =====================================
+   PARTS LIST
+===================================== */
+.parts-list {
+    margin-top: 10px;
 }
 
-.list-item {
-  background: var(--bg-card);
-  padding: 14px;
-  border-radius: 10px;
+.part-card {
+    background: var(--card);
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 12px;
 }
 
-.list-item h3 {
-  font-size: 16px;
-  margin-bottom: 4px;
+body.light .part-card {
+    background: var(--card-light);
 }
 
-.list-item small {
-  opacity: 0.7;
-  font-size: 13px;
+.part-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
 }
 
-/* ------------------------------
+.status-dot {
+    font-size: 18px;
+}
+
+/* =====================================
+   INVENTORY
+===================================== */
+.search-box {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    margin-bottom: 12px;
+}
+
+.inv-filter {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    margin-bottom: 15px;
+}
+
+.inventory-list {
+    margin-top: 10px;
+}
+
+.inventory-item {
+    background: var(--card);
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+body.light .inventory-item {
+    background: var(--card-light);
+}
+
+/* =====================================
+   AC CALCULATOR
+===================================== */
+.result-box {
+    margin-top: 15px;
+    background: var(--card);
+    padding: 14px;
+    border-radius: 10px;
+}
+
+body.light .result-box {
+    background: var(--card-light);
+}
+
+/* =====================================
    BUTTONS
---------------------------------*/
-.primary {
-  background: var(--accent);
-  color: #000;
-  font-weight: 700;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  margin-bottom: 10px;
-  width: 100%;
-  cursor: pointer;
+===================================== */
+.primary-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    width: 100%;
+    margin-top: 10px;
+    font-weight: bold;
+    cursor: pointer;
 }
 
-.danger {
-  background: var(--danger);
-  color: #fff;
-  font-weight: 700;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  margin-top: 12px;
-  width: 100%;
-  cursor: pointer;
+.secondary-btn {
+    background: #333;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    width: 100%;
+    margin-top: 10px;
+    cursor: pointer;
 }
 
-/* ------------------------------
-   SETTINGS SCREEN
---------------------------------*/
-.settings-row {
-  margin-top: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.danger-btn {
+    background: var(--red);
+    color: #000;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    width: 100%;
+    cursor: pointer;
 }
 
-/* ------------------------------
+/* =====================================
+   MODAL
+===================================== */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: var(--card);
+    padding: 18px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 480px;
+}
+
+body.light .modal-content {
+    background: var(--card-light);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* =====================================
    BOTTOM NAVIGATION
---------------------------------*/
+===================================== */
 .bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--bg-card);
-  display: flex;
-  border-top: 2px solid #00000040;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    display: flex;
+    justify-content: space-around;
+    padding: 6px 0;
+    border-top: 2px solid var(--accent);
+}
+
+body.light .bottom-nav {
+    background: var(--card-light);
 }
 
 .nav-btn {
-  flex: 1;
-  padding: 14px;
-  font-size: 14px;
-  background: transparent;
-  border: none;
-  color: var(--text);
-  cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .nav-btn.active {
-  background: var(--accent);
-  color: #000;
-  font-weight: 700;
+    color: var(--accent);
 }
 
-/* Scrollable main content */
-#screen-container {
-  flex: 1;
-  overflow-y: auto;
-  margin-bottom: 60px;
+.nav-btn span {
+    font-size: 10px;
+    margin-top: 2px;
+}
+
+body.light .nav-btn {
+    color: var(--text-dark);
+}
+
+body.light .nav-btn.active {
+    color: var(--accent);
 }
