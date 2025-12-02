@@ -1,99 +1,107 @@
 /* ============================================================
-   INVENTORY MASTER DATA
-   This is used for:
-   - Inventory screen list
-   - Category dropdowns
-   - Add Part modal autofill
+   Inventory System - pm_v9
+   Loads inventory data & provides filtering + search
 ============================================================ */
 
-const INVENTORY_DATA = [
-    /* -------------------------
-       MAIN PLANT CATEGORIES
-    ------------------------- */
-    { category: "Cold Feed", name: "Cold Feed Belt" },
-    { category: "Cold Feed", name: "Cold Feed Gearbox" },
-    { category: "Cold Feed", name: "Cold Feed Motor" },
+/* ---------- STORAGE KEYS ---------- */
+const INV_KEY = "pm_inventory";
 
-    { category: "Conveyor", name: "Conveyor Belt" },
-    { category: "Conveyor", name: "Conveyor Bearing" },
-    { category: "Conveyor", name: "Conveyor Idler" },
+/* ---------- DOM ---------- */
+const inventoryList = document.getElementById("inventoryList");
+const inventoryFilter = document.getElementById("inventoryFilter");
+const inventorySearch = document.getElementById("inventorySearch");
 
-    { category: "Dryer", name: "Dryer Flights" },
-    { category: "Dryer", name: "Dryer Drum Roller" },
-    { category: "Dryer", name: "Dryer Burner Nozzle" },
+/* ---------- DATA ---------- */
+let inventory = [];
 
-    { category: "Baghouse", name: "Baghouse Bags" },
-    { category: "Baghouse", name: "Baghouse Cages" },
-    { category: "Baghouse", name: "Baghouse Airlock" },
+/* ============================================================
+   LOAD INVENTORY (LOCAL JSON STORE)
+============================================================ */
+function loadInventoryData() {
+  // Try load from localStorage
+  const saved = localStorage.getItem(INV_KEY);
+  if (saved) {
+    inventory = JSON.parse(saved);
+    renderInventory();
+    return;
+  }
 
-    { category: "Electrical", name: "Motor Starter" },
-    { category: "Electrical", name: "Breaker" },
-    { category: "Electrical", name: "Limit Switch" },
+  // If nothing saved yet, load embedded default inventory
+  if (typeof PRELOADED_INVENTORY !== "undefined") {
+    inventory = PRELOADED_INVENTORY;
+    localStorage.setItem(INV_KEY, JSON.stringify(inventory));
+    renderInventory();
+    return;
+  }
 
-    { category: "Slat Conveyor", name: "Slat Chain" },
-    { category: "Slat Conveyor", name: "Slat Floor Plate" },
-    { category: "Slat Conveyor", name: "Slat Bearings" },
+  // Fallback: empty
+  inventory = [];
+  renderInventory();
+}
 
-    { category: "Tank Farm", name: "Asphalt Pump" },
-    { category: "Tank Farm", name: "Tank Valve" },
-    { category: "Tank Farm", name: "Expansion Joint" },
+/* ============================================================
+   FILTER + SEARCH
+============================================================ */
+function getInventoryFiltered() {
+  let data = [...inventory];
 
-    { category: "Dust System", name: "Dust Screw" },
-    { category: "Dust System", name: "Dust Auger Motor" },
-    { category: "Dust System", name: "Dust Return Pipe" },
+  // Filter by category
+  if (inventoryFilter.value !== "ALL") {
+    data = data.filter(item => item.category === inventoryFilter.value);
+  }
 
-    { category: "Mixer", name: "Mixer Paddles" },
-    { category: "Mixer", name: "Mixer Liners" },
-    { category: "Mixer", name: "Mixer Bearings" },
+  // Apply search
+  const q = inventorySearch.value.trim().toLowerCase();
+  if (q.length > 0) {
+    data = data.filter(item =>
+      item.name.toLowerCase().includes(q) ||
+      item.part.toLowerCase().includes(q) ||
+      item.notes.toLowerCase().includes(q)
+    );
+  }
 
-    { category: "Screens", name: "Screen Cloth" },
-    { category: "Screens", name: "Screen Bearings" },
+  return data;
+}
 
-    { category: "Controls", name: "PLC Module" },
-    { category: "Controls", name: "Temperature Sensor" },
-    { category: "Controls", name: "VFD" },
+/* ============================================================
+   RENDER INVENTORY LIST
+============================================================ */
+function renderInventory() {
+  inventoryList.innerHTML = "";
 
-    { category: "Asphalt System", name: "AC Pump" },
-    { category: "Asphalt System", name: "AC Valve" },
-    { category: "Asphalt System", name: "Heat Trace Wire" },
+  const filtered = getInventoryFiltered();
 
-    { category: "Pumps", name: "Oil Pump" },
-    { category: "Pumps", name: "Fuel Pump" },
-    { category: "Pumps", name: "Hydraulic Pump" },
+  if (filtered.length === 0) {
+    inventoryList.innerHTML = `<div class="empty-msg">No inventory found</div>`;
+    return;
+  }
 
-    { category: "Virgin – Other", name: "Misc Bolt Set" },
-    { category: "Virgin – Other", name: "Spare Wear Plate" },
+  filtered.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "inventory-card";
 
-    /* -------------------------
-       RECYCLING & SECONDARY
-    ------------------------- */
-    { category: "Drag Conveyor", name: "Drag Chain" },
-    { category: "Drag Conveyor", name: "Drag Sprocket" },
+    card.innerHTML = `
+      <div class="inv-top">
+        <div class="inv-name">${item.part}</div>
+        <div class="inv-cat">${item.category}</div>
+      </div>
 
-    { category: "Collar", name: "Collar Liner" },
-    { category: "Collar", name: "Collar Mount Bolts" },
+      <div class="inv-meta">Location: ${item.location || "—"}</div>
+      <div class="inv-meta">Qty: ${item.qty || "0"}</div>
+      <div class="inv-meta">Notes: ${item.notes || "—"}</div>
+    `;
 
-    { category: "Recycle Conveyor", name: "Recycle Belt" },
-    { category: "Recycle Conveyor", name: "Recycle Tail Pulley" },
+    inventoryList.appendChild(card);
+  });
+}
 
-    { category: "Bin System", name: "Bin Vibrator" },
-    { category: "Bin System", name: "Bin Gate Cylinder" },
+/* ============================================================
+   EVENTS
+============================================================ */
+inventoryFilter.addEventListener("change", renderInventory);
+inventorySearch.addEventListener("input", renderInventory);
 
-    { category: "Flights", name: "Dryer Flight Kit" },
-
-    { category: "Bearings", name: "Pillow Block" },
-    { category: "Bearings", name: "Tapered Roller Bearing" },
-
-    { category: "Reducers", name: "Gear Reducer" },
-    { category: "Reducers", name: "Reducer Oil Seal" },
-
-    { category: "Motors", name: "15 HP Motor" },
-    { category: "Motors", name: "40 HP Motor" },
-
-    /* -------------------------
-       GENERAL
-    ------------------------- */
-    { category: "Other", name: "Universal Coupling" },
-    { category: "Other", name: "Hydraulic Hose" },
-    { category: "Other", name: "Weld-On Bracket" }
-];
+/* ============================================================
+   INIT
+============================================================ */
+loadInventoryData();
