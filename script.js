@@ -1,242 +1,284 @@
-/* ============================================================
-   DATA KEYS
-============================================================ */
-const KEY_PARTS = "pm_parts";
-const KEY_INVENTORY = "pm_inventory";
-const KEY_TONS = "pm_tons";
-const KEY_THEME = "pm_theme";
+/* ---------------------------------------------------
+   STORAGE KEYS
+--------------------------------------------------- */
+const PARTS_KEY = "pm_parts";
+const TONS_KEY = "pm_tons";
+const CATEGORIES_KEY = "pm_categories";
 
-/* Preloaded Inventory (auto-inserted on first load) */
-const PRELOADED_INVENTORY = [
-  { category: "Conveyor", part: "Tail Pulley", location: "Cold Feed", qty: 2, notes: "OEM new" },
-  { category: "Dryer", part: "Burner Nozzle", location: "Burner House", qty: 1, notes: "" }
-];
-
-/* ============================================================
-   APP STATE
-============================================================ */
+/* ---------------------------------------------------
+   GLOBAL STATE
+--------------------------------------------------- */
 let parts = [];
-let inventory = [];
 let currentTons = 0;
-let activeTab = "dashboard";
+let categories = [];
+let activeScreen = "dashboardScreen";
 
-/* ============================================================
-   LOAD STATE
-============================================================ */
+/* ---------------------------------------------------
+   ELEMENT REFERENCES
+--------------------------------------------------- */
+const screens = document.querySelectorAll(".screen");
+const navButtons = document.querySelectorAll(".nav-btn");
+
+const okCountEl = document.getElementById("okCount");
+const dueCountEl = document.getElementById("dueCount");
+const overCountEl = document.getElementById("overCount");
+const tonsRunEl = document.getElementById("tonsRun");
+
+const currentTonsInput = document.getElementById("currentTonsInput");
+const updateTonsBtn = document.getElementById("updateTonsBtn");
+const resetTonsBtn = document.getElementById("resetTonsBtn");
+
+const filterCategory = document.getElementById("filterCategory");
+const partsList = document.getElementById("partsList");
+const addPartBtn = document.getElementById("addPartBtn");
+
+const inventoryList = document.getElementById("inventoryList");
+
+/* AC Calculator */
+const ac_residual = document.getElementById("ac_residual");
+const ac_rapPct = document.getElementById("ac_rapPct");
+const ac_target = document.getElementById("ac_target");
+const ac_tph = document.getElementById("ac_tph");
+const ac_totalTons = document.getElementById("ac_totalTons");
+const acCalcBtn = document.getElementById("acCalcBtn");
+
+const ac_pumpRate = document.getElementById("ac_pumpRate");
+const ac_totalAc = document.getElementById("ac_totalAc");
+
+/* Settings */
+const exportBtn = document.getElementById("exportBtn");
+const resetAllBtn = document.getElementById("resetAllBtn");
+
+/* ---------------------------------------------------
+   INIT
+--------------------------------------------------- */
 function loadState() {
-  parts = JSON.parse(localStorage.getItem(KEY_PARTS)) || [];
-  inventory = JSON.parse(localStorage.getItem(KEY_INVENTORY)) || PRELOADED_INVENTORY.slice();
-  currentTons = Number(localStorage.getItem(KEY_TONS)) || 0;
+  parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
+  currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
 
-  if (localStorage.getItem(KEY_THEME) === "light") {
-    document.body.classList.add("light");
-  }
+  // Categories come from inventory.js (preloaded)
+  categories = PRELOADED_CATEGORIES;
 
+  currentTonsInput.value = currentTons;
+  buildCategoryDropdown();
   renderDashboard();
   renderParts();
   renderInventory();
 }
 
-/* ============================================================
+loadState();
+
+/* ---------------------------------------------------
    SAVE STATE
-============================================================ */
+--------------------------------------------------- */
 function saveState() {
-  localStorage.setItem(KEY_PARTS, JSON.stringify(parts));
-  localStorage.setItem(KEY_INVENTORY, JSON.stringify(inventory));
-  localStorage.setItem(KEY_TONS, currentTons);
+  localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
+  localStorage.setItem(TONS_KEY, currentTons);
 }
 
-/* ============================================================
-   NAVIGATION
-============================================================ */
-document.querySelectorAll(".nav-item").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const target = btn.dataset.tab;
-    switchTab(target);
+/* ---------------------------------------------------
+   SCREEN SWITCHING
+--------------------------------------------------- */
+function showScreen(screenId) {
+  screens.forEach(s => s.classList.remove("active"));
+  document.getElementById(screenId).classList.add("active");
+
+  navButtons.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.screen === screenId);
   });
-});
 
-function switchTab(tab) {
-  activeTab = tab;
+  activeScreen = screenId;
 
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById("screen-" + tab).classList.add("active");
-
-  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
-  document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add("active");
-
-  if (tab === "parts") renderParts();
-  if (tab === "inventory") renderInventory();
+  if (screenId === "maintenanceScreen") renderParts();
+  if (screenId === "inventoryScreen") renderInventory();
+  if (screenId === "dashboardScreen") renderDashboard();
 }
 
-/* ============================================================
-   TONS COUNTER
-============================================================ */
-document.getElementById("addTonBtn").addEventListener("click", () => {
-  currentTons++;
-  saveState();
-  renderDashboard();
+navButtons.forEach(btn => {
+  btn.addEventListener("click", () => showScreen(btn.dataset.screen));
 });
 
-document.getElementById("resetTonsBtn").addEventListener("click", () => {
-  if (confirm("Reset tons count?")) {
-    currentTons = 0;
+/* ---------------------------------------------------
+   TON UPDATE / RESET
+--------------------------------------------------- */
+updateTonsBtn.addEventListener("click", () => {
+  const val = Number(currentTonsInput.value);
+  if (!isNaN(val)) {
+    currentTons = val;
     saveState();
     renderDashboard();
   }
 });
 
-/* ============================================================
-   ADD PART MODAL
-============================================================ */
-const partModal = document.getElementById("partModal");
-
-document.getElementById("openAddPartBtn").addEventListener("click", () => {
-  openPartModal();
+resetTonsBtn.addEventListener("click", () => {
+  currentTons = 0;
+  currentTonsInput.value = 0;
+  saveState();
+  renderDashboard();
 });
 
-document.getElementById("closePartModal").addEventListener("click", () => {
-  partModal.style.display = "none";
-});
+/* ---------------------------------------------------
+   DASHBOARD RENDER
+--------------------------------------------------- */
+function renderDashboard() {
+  let ok = 0, due = 0, over = 0;
 
-function openPartModal(existing = null, index = null) {
-  partModal.style.display = "flex";
+  parts.forEach(p => {
+    const st = calculateStatus(p);
+    if (st.status === "ok") ok++;
+    else if (st.status === "due") due++;
+    else over++;
+  });
 
-  document.getElementById("partName").value = existing?.name || "";
-  document.getElementById("partCat").value = existing?.category || "";
-  document.getElementById("partLoc").value = existing?.section || "";
-  document.getElementById("partDate").value = existing?.date || "";
-  document.getElementById("partInterval").value = existing?.interval || "";
-  document.getElementById("partLastTons").value = existing?.lastTons || currentTons;
-  document.getElementById("partNotes").value = existing?.notes || "";
-
-  document.getElementById("savePartBtn").onclick = () => {
-    savePart(index);
-  };
+  okCountEl.textContent = ok;
+  dueCountEl.textContent = due;
+  overCountEl.textContent = over;
+  tonsRunEl.textContent = currentTons;
 }
 
-function savePart(index) {
-  const obj = {
-    name: document.getElementById("partName").value.trim(),
-    category: document.getElementById("partCat").value.trim(),
-    section: document.getElementById("partLoc").value.trim(),
-    date: document.getElementById("partDate").value,
-    interval: Number(document.getElementById("partInterval").value || 0),
-    lastTons: Number(document.getElementById("partLastTons").value || 0),
-    notes: document.getElementById("partNotes").value.trim()
-  };
+/* ---------------------------------------------------
+   CATEGORY DROPDOWN
+--------------------------------------------------- */
+function buildCategoryDropdown() {
+  filterCategory.innerHTML = `<option value="ALL">All Categories</option>`;
+  categories.forEach(cat => {
+    filterCategory.innerHTML += `<option value="${cat}">${cat}</option>`;
+  });
+}
 
-  if (!obj.name) {
-    alert("Part name is required");
-    return;
+filterCategory.addEventListener("change", renderParts);
+
+/* ---------------------------------------------------
+   MAINTENANCE STATUS CALC
+--------------------------------------------------- */
+function calculateStatus(part) {
+  const daysSince = (Date.now() - new Date(part.date)) / (1000 * 60 * 60 * 24);
+  const tonsSince = currentTons - part.lastTons;
+
+  let status = "ok";
+
+  if (daysSince > part.days || tonsSince > part.tonInterval) {
+    status = "overdue";
+  } else if (
+    part.days - daysSince < 5 ||
+    part.tonInterval - tonsSince < 500
+  ) {
+    status = "due";
   }
 
-  if (index != null) {
-    parts[index] = obj;
-  } else {
-    parts.unshift(obj);
-  }
+  return { status, daysSince, tonsSince };
+}
 
+/* ---------------------------------------------------
+   RENDER PARTS
+--------------------------------------------------- */
+function renderParts() {
+  const selected = filterCategory.value;
+  partsList.innerHTML = "";
+
+  const filtered = selected === "ALL"
+    ? parts
+    : parts.filter(p => p.category === selected);
+
+  filtered.forEach((p, i) => {
+    const st = calculateStatus(p);
+
+    const card = document.createElement("div");
+    card.className = "part-card";
+
+    card.innerHTML = `
+      <div class="part-name">${p.name}</div>
+      <div class="part-meta">${p.category} — ${p.section}</div>
+      <div class="part-meta">Last: ${p.date}</div>
+      <div class="part-meta">Interval: ${p.days} days / ${p.tonInterval} tons</div>
+      <div class="part-meta">Status: <b>${st.status.toUpperCase()}</b></div>
+
+      <div class="part-actions">
+        <button onclick="deletePart(${i})">Delete</button>
+      </div>
+    `;
+
+    partsList.appendChild(card);
+  });
+}
+
+/* ---------------------------------------------------
+   DELETE PART
+--------------------------------------------------- */
+function deletePart(index) {
+  if (!confirm("Delete this part?")) return;
+  parts.splice(index, 1);
   saveState();
   renderParts();
-  renderDashboard();
-  partModal.style.display = "none";
 }
 
-/* ============================================================
-   PART STATUS
-============================================================ */
-function calcStatus(part) {
-  const daysSince = part.date ? (Date.now() - new Date(part.date)) / 86400000 : 9999;
-  const daysLeft = part.interval ? part.interval - daysSince : 9999;
-
-  let tonsSince = currentTons - part.lastTons;
-  let tonsLeft = part.interval ? part.interval - tonsSince : 9999;
-
-  if (daysLeft <= 0 || tonsLeft <= 0) return "overdue";
-  if (daysLeft <= 7 || tonsLeft <= 500) return "due";
-  return "ok";
-}
-
-/* ============================================================
-   RENDER PARTS
-============================================================ */
-function renderParts() {
-  const area = document.getElementById("partsList");
-  area.innerHTML = "";
-
-  if (parts.length === 0) {
-    area.innerHTML = `<div class="placeholder-text">No parts added yet</div>`;
-    return;
-  }
-
-  parts.forEach((p, i) => {
-    const status = calcStatus(p);
-    const card = document.createElement("div");
-    card.className = `list-card ${status}`;
-    card.innerHTML = `
-      <div class="list-title">${p.name}</div>
-      <div class="list-sub">${p.category} — ${p.section}</div>
-      <div class="list-notes">Last: ${p.date || "—"} • Interval: ${p.interval}</div>
-      <button class="btn-secondary" onclick="openPartModal(${JSON.stringify(p)}, ${i})">Edit</button>
-    `;
-    area.appendChild(card);
-  });
-}
-
-/* ============================================================
-   RENDER INVENTORY
-============================================================ */
+/* ---------------------------------------------------
+   INVENTORY RENDER
+--------------------------------------------------- */
 function renderInventory() {
-  const area = document.getElementById("inventoryList");
-  area.innerHTML = "";
+  inventoryList.innerHTML = "";
 
-  if (inventory.length === 0) {
-    area.innerHTML = `<div class="placeholder-text">No inventory loaded</div>`;
-    return;
-  }
-
-  inventory.forEach((item, i) => {
+  PRELOADED_INVENTORY.forEach(item => {
     const card = document.createElement("div");
-    card.className = "list-card";
+    card.className = "part-card";
+
     card.innerHTML = `
-      <div class="list-title">${item.part}</div>
-      <div class="list-sub">${item.category} — ${item.location}</div>
-      <div class="list-notes">Qty: ${item.qty}</div>
+      <div class="part-name">${item.part}</div>
+      <div class="part-meta">${item.category} — ${item.location}</div>
+      <div class="part-meta">Qty: ${item.qty}</div>
+      <div class="part-meta">${item.notes || ""}</div>
     `;
-    area.appendChild(card);
+
+    inventoryList.appendChild(card);
   });
 }
 
-/* ============================================================
-   SETTINGS
-============================================================ */
-document.getElementById("toggleTheme").addEventListener("click", () => {
-  document.body.classList.toggle("light");
-  localStorage.setItem(KEY_THEME, document.body.classList.contains("light") ? "light" : "dark");
+/* ---------------------------------------------------
+   EXPORT FULL DATA
+--------------------------------------------------- */
+exportBtn.addEventListener("click", () => {
+  const data = {
+    parts,
+    tons: currentTons,
+    inventory: PRELOADED_INVENTORY
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json"
+  });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "maintenance_export.json";
+  a.click();
 });
 
-/* ============================================================
-   DASHBOARD SUMMARY
-============================================================ */
-function renderDashboard() {
-  document.getElementById("tonsValue").textContent = currentTons;
+/* ---------------------------------------------------
+   RESET EVERYTHING
+--------------------------------------------------- */
+resetAllBtn.addEventListener("click", () => {
+  if (confirm("Reset ALL data?")) {
+    localStorage.clear();
+    location.reload();
+  }
+});
 
-  let ok = 0, due = 0, overdue = 0;
-  parts.forEach(p => {
-    const s = calcStatus(p);
-    if (s === "ok") ok++;
-    else if (s === "due") due++;
-    else overdue++;
-  });
+/* ---------------------------------------------------
+   AC CALCULATOR
+--------------------------------------------------- */
+acCalcBtn.addEventListener("click", () => {
+  const R = Number(ac_residual.value) / 100;
+  const RAPpct = Number(ac_rapPct.value) / 100;
+  const ACtarget = Number(ac_target.value) / 100;
+  const TPH = Number(ac_tph.value);
+  const totalTons = Number(ac_totalTons.value);
 
-  document.getElementById("statOK").textContent = ok;
-  document.getElementById("statDue").textContent = due;
-  document.getElementById("statOver").textContent = overdue;
-}
+  const acFromRAP = RAPpct * R;
+  const virginAC = ACtarget - acFromRAP;
 
-/* ============================================================
-   INITIALIZE APP
-============================================================ */
-loadState();
-switchTab("dashboard");
+  const pumpRate = TPH * virginAC;
+  const totalAC = totalTons * virginAC;
+
+  ac_pumpRate.textContent = pumpRate.toFixed(3);
+  ac_totalAc.textContent = totalAC.toFixed(2);
+});
