@@ -1,285 +1,271 @@
-/* ============================================================
-   ROOT THEME COLORS
-============================================================ */
+/* ---------------------------------------------------
+   Global Theme
+--------------------------------------------------- */
 :root {
-  --bg: #0f172a;
-  --bg-light: #ffffff;
-  --card: #1e293b;
-  --card-light: #f1f5f9;
-  --accent: #fbbf24;
-  --accent-dark: #d97706;
-  --text: #e2e8f0;
-  --text-dark: #0f172a;
+  --bg: #0f1724;
+  --text: #ffffff;
+  --card: #1a2537;
+  --card-light: #f3f4f6;
+  --accent: #4caf50;
+  --yellow: #fff7cd;
   --muted: #94a3b8;
-  --red: #ef4444;
-  --yellow: #facc15;
-  --green: #22c55e;
+  --danger: #cc3333;
 }
 
-/* Light mode class */
-body.light {
-  --bg: var(--bg-light);
-  --card: var(--card-light);
-  --text: var(--text-dark);
-}
-
-
-/* ============================================================
-   BASE LAYOUT
-============================================================ */
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-family: system-ui, Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
 }
 
-#app {
-  padding-bottom: 80px; /* space for bottom nav */
+.app-container {
+  padding-bottom: 80px;
+  max-width: 900px;
+  margin: auto;
 }
 
-.screen {
-  display: none;
-  padding: 20px;
+/* ---------------------------------------------------
+   Headers / Titles
+--------------------------------------------------- */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #08101f;
+  border-bottom: 1px solid #142034;
 }
 
-.screen.active {
-  display: block;
+.app-header .logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
 }
 
 .section-title {
+  margin: 18px 0 10px 12px;
   font-size: 22px;
   font-weight: 700;
-  margin-bottom: 12px;
 }
 
+/* ---------------------------------------------------
+   Cards
+--------------------------------------------------- */
 
-/* ============================================================
-   HEADER
-============================================================ */
-.app-header {
+.card {
   background: var(--card);
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-bottom: 2px solid var(--accent);
-}
-
-.app-header h1 {
-  margin: 0;
-  font-size: 22px;
-  color: var(--accent);
-}
-
-.app-logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-}
-
-
-/* ============================================================
-   DASHBOARD CARDS
-============================================================ */
-.stats-grid {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  flex: 1;
-  background: var(--card);
-  padding: 16px;
-  text-align: center;
+  padding: 14px;
+  margin: 12px;
   border-radius: 12px;
 }
 
-.stat-card span {
-  font-size: 26px;
-  font-weight: 800;
-  display: block;
+.card.light {
+  background: var(--card-light);
+  color: #000;
 }
 
-.stat-card.green span { color: var(--green); }
-.stat-card.yellow span { color: var(--yellow); }
-.stat-card.red span { color: var(--red); }
-
-
-.dashboard-box {
-  background: var(--card);
-  padding: 16px;
-  border-radius: 12px;
+.card h3 {
+  margin-top: 0;
+  font-size: 18px;
 }
 
-.tons-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.tons-row span {
-  font-size: 26px;
-  font-weight: 700;
-}
-
-#addTonBtn {
-  background: var(--accent);
-  padding: 10px 14px;
-  border: 0;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 700;
-}
-
-
-/* ============================================================
-   PARTS LIST / INVENTORY LIST
-============================================================ */
-.list-area {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.list-card {
-  background: var(--card);
-  padding: 16px;
-  border-radius: 12px;
-  border-left: 8px solid var(--accent-dark);
-}
-
-.list-title {
-  font-size: 17px;
-  font-weight: 800;
-  margin-bottom: 6px;
-}
-
-.list-sub {
+label {
   font-size: 14px;
+  margin-top: 8px;
+  display: block;
   color: var(--muted);
-  margin-bottom: 6px;
 }
 
-.list-notes {
-  font-size: 13px;
-  color: var(--text);
-  opacity: .8;
-}
-
-
-/* Overdue colors */
-.list-card.ok     { border-left-color: var(--green); }
-.list-card.due    { border-left-color: var(--yellow); }
-.list-card.overdue{ border-left-color: var(--red); }
-
-
-/* ============================================================
-   INPUTS & BUTTONS
-============================================================ */
-.input-text,
-.input-select,
-textarea {
+/* Inputs */
+input, select {
   width: 100%;
   padding: 10px;
-  border-radius: 10px;
-  border: 0;
-  margin-bottom: 12px;
+  border-radius: 8px;
+  border: none;
+  margin-top: 4px;
+  background: #ffffff;
   font-size: 15px;
 }
 
-.btn-primary {
+.card.light input {
+  background: var(--yellow);
+}
+
+/* ---------------------------------------------------
+   Buttons
+--------------------------------------------------- */
+
+.primary-btn {
   background: var(--accent);
+  color: #fff;
   border: none;
-  width: 100%;
   padding: 12px;
   border-radius: 10px;
   font-weight: 700;
-  margin-top: 6px;
+  cursor: pointer;
+  margin-top: 12px;
 }
 
-.btn-secondary {
-  background: #475569;
+.secondary-btn {
+  background: #ffffff20;
+  color: #fff;
   border: none;
-  width: 100%;
   padding: 12px;
   border-radius: 10px;
   font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
 }
 
-.btn-warning {
-  background: var(--red);
-  width: 100%;
-  border: none;
+.danger-btn {
+  background: var(--danger);
+  color: #fff;
   padding: 12px;
   border-radius: 10px;
-  color: white;
-  margin-top: 6px;
+  font-weight: 700;
+  margin-top: 12px;
+  border: none;
 }
 
+.full { width: 100%; }
 
-/* ============================================================
-   BOTTOM NAVIGATION
-============================================================ */
+/* ---------------------------------------------------
+   Stats Grid
+--------------------------------------------------- */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 0 12px;
+}
+
+.stat-card {
+  background: var(--card);
+  padding: 10px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  margin-top: 6px;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------
+   Parts List
+--------------------------------------------------- */
+
+.part-card {
+  background: var(--card);
+  padding: 14px;
+  border-radius: 12px;
+  margin: 12px;
+}
+
+.part-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.part-meta {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.part-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.part-actions button {
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------
+   AC Calculator
+--------------------------------------------------- */
+
+.result-card {
+  background: #dff7df;
+  color: #000;
+  margin: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 6px solid var(--accent);
+  font-size: 16px;
+}
+
+.result-card h3 {
+  margin-top: 0;
+}
+
+.result-card span {
+  font-weight: 800;
+  color: #0a4f0a;
+}
+
+/* ---------------------------------------------------
+   Screens
+--------------------------------------------------- */
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ---------------------------------------------------
+   Bottom Navigation
+--------------------------------------------------- */
+
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--card);
+  width: 100%;
+  max-width: 900px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #08101f;
   display: flex;
   justify-content: space-around;
-  border-top: 2px solid var(--accent);
   padding: 8px 0;
+  border-top: 1px solid #142034;
 }
 
-.nav-item {
-  flex: 1;
-  background: transparent;
-  color: var(--text);
-  border: 0;
-  padding: 10px 0;
+.nav-btn {
+  background: none;
+  border: none;
+  color: #ffffff80;
   font-size: 14px;
-}
-
-.nav-item.active {
-  color: var(--accent);
-  font-weight: 800;
-}
-
-
-/* ============================================================
-   MODAL
-============================================================ */
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-}
-
-.modal-content {
-  background: var(--card);
-  padding: 20px;
-  border-radius: 14px;
-  width: 100%;
-  max-width: 420px;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 14px;
-}
-
-
-/* Placeholder text */
-.placeholder-text {
+  padding: 6px;
+  cursor: pointer;
   text-align: center;
-  opacity: 0.7;
-  margin-top: 20px;
 }
+
+.nav-btn.active {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Icons above text */
+.nav-btn br {
+  line-height: 0;
+}
+
+/* ---------------------------------------------------
+   Utility
+--------------------------------------------------- */
+
+.hidden { display: none; }
