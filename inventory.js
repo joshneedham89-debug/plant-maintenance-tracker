@@ -1,107 +1,106 @@
-/* ============================================================
-   Inventory System - pm_v9
-   Loads inventory data & provides filtering + search
-============================================================ */
+/* ---------------------------------------------------
+   CATEGORY LIST (your full set)
+--------------------------------------------------- */
+const PRELOADED_CATEGORIES = [
+  "Cold Feed",
+  "Conveyor",
+  "Dryer",
+  "Baghouse",
+  "Electrical",
+  "Slat Conveyor",
+  "Tank Farm",
+  "Dust System",
+  "Mixer",
+  "Screens",
+  "Controls",
+  "Asphalt System",
+  "Pumps",
+  "Virgin – Other",
+  "Drag Conveyor",
+  "Collar",
+  "Recycle Conveyor",
+  "Bin System",
+  "Flights",
+  "Bearings",
+  "Reducers",
+  "Motors",
+  "Other"
+];
 
-/* ---------- STORAGE KEYS ---------- */
-const INV_KEY = "pm_inventory";
+/* ---------------------------------------------------
+   INVENTORY LIST
+   (You can expand this with real plant parts later)
+--------------------------------------------------- */
 
-/* ---------- DOM ---------- */
-const inventoryList = document.getElementById("inventoryList");
-const inventoryFilter = document.getElementById("inventoryFilter");
-const inventorySearch = document.getElementById("inventorySearch");
-
-/* ---------- DATA ---------- */
-let inventory = [];
-
-/* ============================================================
-   LOAD INVENTORY (LOCAL JSON STORE)
-============================================================ */
-function loadInventoryData() {
-  // Try load from localStorage
-  const saved = localStorage.getItem(INV_KEY);
-  if (saved) {
-    inventory = JSON.parse(saved);
-    renderInventory();
-    return;
+const PRELOADED_INVENTORY = [
+  {
+    category: "Conveyor",
+    part: "Tail Pulley",
+    location: "Cold Feed",
+    qty: 2,
+    notes: "OEM new"
+  },
+  {
+    category: "Dryer",
+    part: "Burner Nozzle",
+    location: "Burner House",
+    qty: 1,
+    notes: ""
+  },
+  {
+    category: "Bearings",
+    part: "Pillow Block Bearing",
+    location: "Slat Conveyor",
+    qty: 4,
+    notes: "Standard replacement"
+  },
+  {
+    category: "Electrical",
+    part: "Limit Switch",
+    location: "Drag Conveyor",
+    qty: 6,
+    notes: "For emergency stop circuit"
+  },
+  {
+    category: "Motors",
+    part: "10 HP Motor",
+    location: "Mixer",
+    qty: 1,
+    notes: "Rebuilt, spare"
+  },
+  {
+    category: "Flights",
+    part: "Dryer Flight Set",
+    location: "Dryer",
+    qty: 1,
+    notes: "Full set for drum"
+  },
+  {
+    category: "Tank Farm",
+    part: "AC Pump Seal Kit",
+    location: "Asphalt Tank 1",
+    qty: 3,
+    notes: ""
+  },
+  {
+    category: "Bin System",
+    part: "Bin Vibrator",
+    location: "Cold Feed Bin #2",
+    qty: 1,
+    notes: ""
+  },
+  {
+    category: "Controls",
+    part: "HMI Touchscreen",
+    location: "Control House",
+    qty: 1,
+    notes: "Spare"
+  },
+  {
+    category: "Other",
+    part: "General Hardware Assortment",
+    location: "Maintenance Shop",
+    qty: 1,
+    notes: "Nuts, bolts, fasteners"
   }
-
-  // If nothing saved yet, load embedded default inventory
-  if (typeof PRELOADED_INVENTORY !== "undefined") {
-    inventory = PRELOADED_INVENTORY;
-    localStorage.setItem(INV_KEY, JSON.stringify(inventory));
-    renderInventory();
-    return;
-  }
-
-  // Fallback: empty
-  inventory = [];
-  renderInventory();
-}
-
-/* ============================================================
-   FILTER + SEARCH
-============================================================ */
-function getInventoryFiltered() {
-  let data = [...inventory];
-
-  // Filter by category
-  if (inventoryFilter.value !== "ALL") {
-    data = data.filter(item => item.category === inventoryFilter.value);
-  }
-
-  // Apply search
-  const q = inventorySearch.value.trim().toLowerCase();
-  if (q.length > 0) {
-    data = data.filter(item =>
-      item.name.toLowerCase().includes(q) ||
-      item.part.toLowerCase().includes(q) ||
-      item.notes.toLowerCase().includes(q)
-    );
-  }
-
-  return data;
-}
-
-/* ============================================================
-   RENDER INVENTORY LIST
-============================================================ */
-function renderInventory() {
-  inventoryList.innerHTML = "";
-
-  const filtered = getInventoryFiltered();
-
-  if (filtered.length === 0) {
-    inventoryList.innerHTML = `<div class="empty-msg">No inventory found</div>`;
-    return;
-  }
-
-  filtered.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "inventory-card";
-
-    card.innerHTML = `
-      <div class="inv-top">
-        <div class="inv-name">${item.part}</div>
-        <div class="inv-cat">${item.category}</div>
-      </div>
-
-      <div class="inv-meta">Location: ${item.location || "—"}</div>
-      <div class="inv-meta">Qty: ${item.qty || "0"}</div>
-      <div class="inv-meta">Notes: ${item.notes || "—"}</div>
-    `;
-
-    inventoryList.appendChild(card);
-  });
-}
-
-/* ============================================================
-   EVENTS
-============================================================ */
-inventoryFilter.addEventListener("change", renderInventory);
-inventorySearch.addEventListener("input", renderInventory);
-
-/* ============================================================
-   INIT
-============================================================ */
-loadInventoryData();
+];
