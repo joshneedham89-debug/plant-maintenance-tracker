@@ -231,3 +231,47 @@ currentTonsInput.value = currentTons;
 renderDashboard();
 renderParts();
 renderInventory();
+
+/* ===================================================
+   ADD / EDIT PART PANEL WIRING
+=================================================== */
+const partPanelOverlay = document.getElementById("partPanelOverlay");
+const addPartPanel = document.getElementById("addPartPanel");
+const closePartPanel = document.getElementById("closePartPanel");
+
+addPartBtn?.addEventListener("click", () => {
+  editingPartIndex = null;
+  partPanelOverlay.classList.remove("hidden");
+  setTimeout(() => addPartPanel.classList.add("show"), 10);
+});
+
+closePartPanel?.addEventListener("click", () => {
+  addPartPanel.classList.remove("show");
+  setTimeout(() => partPanelOverlay.classList.add("hidden"), 200);
+});
+
+partPanelOverlay?.addEventListener("click", e => {
+  if (e.target === partPanelOverlay) closePartPanel.click();
+});
+
+/* ===================================================
+   ADD / EDIT INVENTORY PANEL WIRING
+=================================================== */
+const inventoryPanelOverlay = document.getElementById("inventoryPanelOverlay");
+const inventoryPanel = document.getElementById("inventoryPanel");
+const closeInventoryPanel = document.getElementById("closeInventoryPanel");
+
+addInventoryBtn?.addEventListener("click", () => {
+  editingInventoryIndex = null;
+  inventoryPanelOverlay.classList.remove("hidden");
+  setTimeout(() => inventoryPanel.classList.add("show"), 10);
+});
+
+closeInventoryPanel?.addEventListener("click", () => {
+  inventoryPanel.classList.remove("show");
+  setTimeout(() => inventoryPanelOverlay.classList.add("hidden"), 200);
+});
+
+inventoryPanelOverlay?.addEventListener("click", e => {
+  if (e.target === inventoryPanelOverlay) closeInventoryPanel.click();
+});
