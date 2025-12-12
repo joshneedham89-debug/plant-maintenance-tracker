@@ -180,9 +180,10 @@ function renderDashboard() {
 }
 
 /* ---------------------------------------------------
-   CATEGORY DROPDOWN
+   CATEGORY DROPDOWNS
 --------------------------------------------------- */
 function buildCategoryDropdown() {
+  if (!filterCategory) return;
   filterCategory.innerHTML = `<option value="ALL">All Categories</option>`;
   categories.forEach(cat => {
     filterCategory.innerHTML += `<option value="${cat}">${cat}</option>`;
@@ -190,14 +191,19 @@ function buildCategoryDropdown() {
 }
 
 function buildInventoryCategoryDropdown() {
+  if (!invCategory) return;
   invCategory.innerHTML = "";
   categories.forEach(cat => {
     invCategory.innerHTML += `<option value="${cat}">${cat}</option>`;
   });
 }
 
-filterCategory.addEventListener("change", renderParts);
-searchPartsInput.addEventListener("input", renderParts);
+if (filterCategory) {
+  filterCategory.addEventListener("change", renderParts);
+}
+if (searchPartsInput) {
+  searchPartsInput.addEventListener("input", renderParts);
+}
 
 /* ---------------------------------------------------
    MAINTENANCE STATUS CALC
@@ -224,28 +230,34 @@ function calculateStatus(part) {
    RENDER PARTS (with search + expand + status colors)
 --------------------------------------------------- */
 function renderParts() {
-  const selected = filterCategory.value;
-  const query = searchPartsInput.value.toLowerCase().trim();
+  if (!partsList) return;
+
+  const selected = filterCategory ? filterCategory.value : "ALL";
+  const query = searchPartsInput ? searchPartsInput.value.toLowerCase().trim() : "";
 
   partsList.innerHTML = "";
 
-  const filtered = parts.filter(p => {
-    const catMatch = selected === "ALL" || p.category === selected;
-    const searchMatch = !query ||
-      p.name.toLowerCase().includes(query) ||
-      p.category.toLowerCase().includes(query) ||
-      (p.section || "").toLowerCase().includes(query);
-    return catMatch && searchMatch;
-  });
+  // Keep track of original index so edit/delete/duplicate work correctly
+  const filtered = parts
+    .map((p, idx) => ({ p, idx }))
+    .filter(({ p }) => {
+      const catMatch = selected === "ALL" || p.category === selected;
+      const searchMatch =
+        !query ||
+        p.name.toLowerCase().includes(query) ||
+        p.category.toLowerCase().includes(query) ||
+        (p.section || "").toLowerCase().includes(query);
+      return catMatch && searchMatch;
+    });
 
-  filtered.forEach((p, i) => {
+  filtered.forEach(({ p, idx }) => {
     const st = calculateStatus(p);
 
     const card = document.createElement("div");
     card.className = `part-card status-${st.status}`;
 
     card.innerHTML = `
-      <div class="part-main" data-index="${i}">
+      <div class="part-main" data-index="${idx}">
         <div>
           <div class="part-name">${p.name}</div>
           <div class="part-meta">${p.category} — ${p.section}</div>
@@ -255,14 +267,14 @@ function renderParts() {
         </div>
         <div class="expand-icon">▼</div>
       </div>
-      <div class="part-details hidden" data-details-index="${i}">
+      <div class="part-details hidden" data-details-index="${idx}">
         <div class="part-meta">Days since: ${Math.floor(st.daysSince)}</div>
         <div class="part-meta">Tons since: ${st.tonsSince}</div>
 
         <div class="part-actions">
-          <button class="edit-part-btn" data-index="${i}">Edit</button>
-          <button class="duplicate-part-btn" data-index="${i}">Duplicate</button>
-          <button class="delete-part-btn" data-index="${i}">Delete</button>
+          <button class="edit-part-btn" data-index="${idx}">Edit</button>
+          <button class="duplicate-part-btn" data-index="${idx}">Duplicate</button>
+          <button class="delete-part-btn" data-index="${idx}">Delete</button>
         </div>
       </div>
     `;
@@ -271,36 +283,40 @@ function renderParts() {
   });
 }
 
-/* Expand / collapse */
-partsList.addEventListener("click", (e) => {
-  const main = e.target.closest(".part-main");
-  if (main) {
-    const idx = main.dataset.index;
-    const details = partsList.querySelector(`.part-details[data-details-index="${idx}"]`);
-    if (details) {
-      details.classList.toggle("hidden");
+/* Expand / collapse & action buttons */
+if (partsList) {
+  partsList.addEventListener("click", (e) => {
+    const main = e.target.closest(".part-main");
+    if (main) {
+      const idx = main.dataset.index;
+      const details = partsList.querySelector(
+        `.part-details[data-details-index="${idx}"]`
+      );
+      if (details) {
+        details.classList.toggle("hidden");
+      }
+      return;
     }
-    return;
-  }
 
-  if (e.target.classList.contains("edit-part-btn")) {
-    const index = Number(e.target.dataset.index);
-    openPartForEdit(index);
-    return;
-  }
+    if (e.target.classList.contains("edit-part-btn")) {
+      const index = Number(e.target.dataset.index);
+      openPartForEdit(index);
+      return;
+    }
 
-  if (e.target.classList.contains("duplicate-part-btn")) {
-    const index = Number(e.target.dataset.index);
-    duplicatePart(index);
-    return;
-  }
+    if (e.target.classList.contains("duplicate-part-btn")) {
+      const index = Number(e.target.dataset.index);
+      duplicatePart(index);
+      return;
+    }
 
-  if (e.target.classList.contains("delete-part-btn")) {
-    const index = Number(e.target.dataset.index);
-    deletePart(index);
-    return;
-  }
-});
+    if (e.target.classList.contains("delete-part-btn")) {
+      const index = Number(e.target.dataset.index);
+      deletePart(index);
+      return;
+    }
+  });
+}
 
 /* ---------------------------------------------------
    DELETE PART
@@ -337,6 +353,8 @@ function duplicatePart(index) {
    INVENTORY RENDER
 --------------------------------------------------- */
 function renderInventory() {
+  if (!inventoryList) return;
+
   inventoryList.innerHTML = "";
 
   inventory.forEach((item, i) => {
@@ -361,84 +379,98 @@ function renderInventory() {
 }
 
 /* Inventory actions (edit / delete) */
-inventoryList.addEventListener("click", (e) => {
-  if (e.target.classList.contains("edit-inv-btn")) {
-    const index = Number(e.target.dataset.index);
-    openInventoryForEdit(index);
-    return;
-  }
-  if (e.target.classList.contains("delete-inv-btn")) {
-    const index = Number(e.target.dataset.index);
-    deleteInventoryItem(index);
-    return;
-  }
-});
+if (inventoryList) {
+  inventoryList.addEventListener("click", (e) => {
+    if (e.target.classList.contains("edit-inv-btn")) {
+      const index = Number(e.target.dataset.index);
+      openInventoryForEdit(index);
+      return;
+    }
+    if (e.target.classList.contains("delete-inv-btn")) {
+      const index = Number(e.target.dataset.index);
+      deleteInventoryItem(index);
+      return;
+    }
+  });
+}
 
 /* ---------------------------------------------------
    EXPORT FULL DATA
 --------------------------------------------------- */
-exportBtn.addEventListener("click", () => {
-  const data = {
-    parts,
-    tons: currentTons,
-    inventory
-  };
+if (exportBtn) {
+  exportBtn.addEventListener("click", () => {
+    const data = {
+      parts,
+      tons: currentTons,
+      inventory
+    };
 
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json"
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json"
+    });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "maintenance_export.json";
+    a.click();
   });
-
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "maintenance_export.json";
-  a.click();
-});
+}
 
 /* ---------------------------------------------------
    RESET EVERYTHING
 --------------------------------------------------- */
-resetAllBtn.addEventListener("click", () => {
-  if (confirm("Reset ALL data?")) {
-    localStorage.clear();
-    location.reload();
-  }
-});
+if (resetAllBtn) {
+  resetAllBtn.addEventListener("click", () => {
+    if (confirm("Reset ALL data?")) {
+      localStorage.clear();
+      location.reload();
+    }
+  });
+}
 
 /* ---------------------------------------------------
    AC CALCULATOR
 --------------------------------------------------- */
-acCalcBtn.addEventListener("click", () => {
-  const R = Number(ac_residual.value) / 100;
-  const RAPpct = Number(ac_rapPct.value) / 100;
-  const ACtarget = Number(ac_target.value) / 100;
-  const TPH = Number(ac_tph.value);
-  const totalTons = Number(ac_totalTons.value);
+if (acCalcBtn) {
+  acCalcBtn.addEventListener("click", () => {
+    const R = Number(ac_residual.value) / 100;
+    const RAPpct = Number(ac_rapPct.value) / 100;
+    const ACtarget = Number(ac_target.value) / 100;
+    const TPH = Number(ac_tph.value);
+    const totalTons = Number(ac_totalTons.value);
 
-  const acFromRAP = RAPpct * R;
-  const virginAC = ACtarget - acFromRAP;
+    const acFromRAP = RAPpct * R;
+    const virginAC = ACtarget - acFromRAP;
 
-  const pumpRate = TPH * virginAC;
-  const totalAC = totalTons * virginAC;
+    const pumpRate = TPH * virginAC;
+    const totalAC = totalTons * virginAC;
 
-  ac_pumpRate.textContent = pumpRate.toFixed(3);
-  ac_totalAc.textContent = totalAC.toFixed(2);
-});
+    ac_pumpRate.textContent = pumpRate.toFixed(3);
+    ac_totalAc.textContent = totalAC.toFixed(2);
+  });
+}
 
 /* ---------------------------------------------------
    ADD / EDIT PART — SLIDE-UP PANEL LOGIC
 --------------------------------------------------- */
 
 function openPartPanel(isEdit, index) {
+  if (!addPartPanel) return;
+
   editingPartIndex = isEdit ? index : null;
 
   // Title
-  partPanelTitle.textContent = isEdit ? "Edit Part" : "Add New Part";
+  if (partPanelTitle) {
+    partPanelTitle.textContent = isEdit ? "Edit Part" : "Add New Part";
+  }
 
   // Categories
-  newPartCategory.innerHTML = "";
-  categories.forEach(c => {
-    newPartCategory.innerHTML += `<option value="${c}">${c}</option>`;
-  });
+  if (newPartCategory) {
+    newPartCategory.innerHTML = "";
+    categories.forEach(c => {
+      newPartCategory.innerHTML += `<option value="${c}">${c}</option>`;
+    });
+  }
 
   // Prefill if editing
   if (isEdit && parts[index]) {
@@ -463,84 +495,96 @@ function openPartPanel(isEdit, index) {
   }, 20);
 }
 
-addPartBtn.addEventListener("click", () => {
-  openPartPanel(false, null);
-});
+if (addPartBtn) {
+  addPartBtn.addEventListener("click", () => {
+    openPartPanel(false, null);
+  });
+}
 
 function openPartForEdit(index) {
   openPartPanel(true, index);
 }
 
 /* Close panel */
-closePartPanel.addEventListener("click", () => {
-  addPartPanel.classList.remove("show");
-  setTimeout(() => {
-    addPartPanel.classList.add("hidden");
-  }, 250);
-});
+if (closePartPanel) {
+  closePartPanel.addEventListener("click", () => {
+    addPartPanel.classList.remove("show");
+    setTimeout(() => {
+      addPartPanel.classList.add("hidden");
+    }, 250);
+  });
+}
 
 /* When selecting part name from inventory, auto-set category */
-newPartName.addEventListener("change", () => {
-  const name = newPartName.value.toLowerCase().trim();
-  const match = inventory.find(item => item.part.toLowerCase() === name);
-  if (match) {
-    newPartCategory.value = match.category;
-  }
-});
+if (newPartName) {
+  newPartName.addEventListener("change", () => {
+    const name = newPartName.value.toLowerCase().trim();
+    const match = inventory.find(item => item.part.toLowerCase() === name);
+    if (match && newPartCategory) {
+      newPartCategory.value = match.category;
+    }
+  });
+}
 
 /* Save part (add or edit) */
-savePartBtn.addEventListener("click", () => {
-  const name = newPartName.value.trim();
-  const category = newPartCategory.value;
-  const section = newPartSection.value.trim();
-  const days = Number(newPartDays.value);
-  const tonInterval = Number(newPartTons.value);
+if (savePartBtn) {
+  savePartBtn.addEventListener("click", () => {
+    const name = newPartName.value.trim();
+    const category = newPartCategory.value;
+    const section = newPartSection.value.trim();
+    const days = Number(newPartDays.value);
+    const tonInterval = Number(newPartTons.value);
 
-  if (!name || !category || !section || !days || !tonInterval) {
-    alert("Please fill all fields.");
-    return;
-  }
+    if (!name || !category || !section || !days || !tonInterval) {
+      alert("Please fill all fields.");
+      return;
+    }
 
-  if (editingPartIndex !== null && parts[editingPartIndex]) {
-    // Edit existing
-    const existing = parts[editingPartIndex];
-    parts[editingPartIndex] = {
-      ...existing,
-      name,
-      category,
-      section,
-      days,
-      tonInterval
-    };
-  } else {
-    // New part
-    const newPart = {
-      name,
-      category,
-      section,
-      days,
-      tonInterval,
-      date: new Date().toISOString().split("T")[0],
-      lastTons: currentTons
-    };
-    parts.push(newPart);
-  }
+    if (editingPartIndex !== null && parts[editingPartIndex]) {
+      // Edit existing
+      const existing = parts[editingPartIndex];
+      parts[editingPartIndex] = {
+        ...existing,
+        name,
+        category,
+        section,
+        days,
+        tonInterval
+      };
+    } else {
+      // New part
+      const newPart = {
+        name,
+        category,
+        section,
+        days,
+        tonInterval,
+        date: new Date().toISOString().split("T")[0],
+        lastTons: currentTons
+      };
+      parts.push(newPart);
+    }
 
-  saveState();
-  renderParts();
-  renderDashboard();
+    saveState();
+    renderParts();
+    renderDashboard();
 
-  addPartPanel.classList.remove("show");
-  setTimeout(() => addPartPanel.classList.add("hidden"), 250);
-});
+    addPartPanel.classList.remove("show");
+    setTimeout(() => addPartPanel.classList.add("hidden"), 250);
+  });
+}
 
 /* ---------------------------------------------------
    INVENTORY – SLIDE-UP PANEL LOGIC
 --------------------------------------------------- */
 
 function openInventoryPanel(isEdit, index) {
+  if (!inventoryPanel) return;
+
   editingInventoryIndex = isEdit ? index : null;
-  inventoryPanelTitle.textContent = isEdit ? "Edit Inventory Item" : "Add Inventory Item";
+  if (inventoryPanelTitle) {
+    inventoryPanelTitle.textContent = isEdit ? "Edit Inventory Item" : "Add Inventory Item";
+  }
 
   // Rebuild categories
   buildInventoryCategoryDropdown();
@@ -566,48 +610,54 @@ function openInventoryPanel(isEdit, index) {
   }, 20);
 }
 
-addInventoryBtn.addEventListener("click", () => {
-  openInventoryPanel(false, null);
-});
+if (addInventoryBtn) {
+  addInventoryBtn.addEventListener("click", () => {
+    openInventoryPanel(false, null);
+  });
+}
 
 function openInventoryForEdit(index) {
   openInventoryPanel(true, index);
 }
 
-closeInventoryPanel.addEventListener("click", () => {
-  inventoryPanel.classList.remove("show");
-  setTimeout(() => {
-    inventoryPanel.classList.add("hidden");
-  }, 250);
-});
+if (closeInventoryPanel) {
+  closeInventoryPanel.addEventListener("click", () => {
+    inventoryPanel.classList.remove("show");
+    setTimeout(() => {
+      inventoryPanel.classList.add("hidden");
+    }, 250);
+  });
+}
 
 /* Save inventory item */
-saveInventoryBtn.addEventListener("click", () => {
-  const part = invPartName.value.trim();
-  const category = invCategory.value;
-  const location = invLocation.value.trim();
-  const qty = Number(invQty.value);
-  const notes = invNotes.value.trim();
+if (saveInventoryBtn) {
+  saveInventoryBtn.addEventListener("click", () => {
+    const part = invPartName.value.trim();
+    const category = invCategory.value;
+    const location = invLocation.value.trim();
+    const qty = Number(invQty.value);
+    const notes = invNotes.value.trim();
 
-  if (!part || !category || !location || !qty) {
-    alert("Please fill required fields (part, category, location, qty).");
-    return;
-  }
+    if (!part || !category || !location || !qty) {
+      alert("Please fill required fields (part, category, location, qty).");
+      return;
+    }
 
-  const itemData = { part, category, location, qty, notes };
+    const itemData = { part, category, location, qty, notes };
 
-  if (editingInventoryIndex !== null && inventory[editingInventoryIndex]) {
-    inventory[editingInventoryIndex] = itemData;
-  } else {
-    inventory.push(itemData);
-  }
+    if (editingInventoryIndex !== null && inventory[editingInventoryIndex]) {
+      inventory[editingInventoryIndex] = itemData;
+    } else {
+      inventory.push(itemData);
+    }
 
-  saveState();
-  renderInventory();
+    saveState();
+    renderInventory();
 
-  inventoryPanel.classList.remove("show");
-  setTimeout(() => inventoryPanel.classList.add("hidden"), 250);
-});
+    inventoryPanel.classList.remove("show");
+    setTimeout(() => inventoryPanel.classList.add("hidden"), 250);
+  });
+}
 
 /* Delete inventory item */
 function deleteInventoryItem(index) {
@@ -630,3 +680,29 @@ function buildInventoryNameDatalist() {
     inventoryNameList.appendChild(option);
   });
 }
+
+/* ---------------------------------------------------
+   STICKY SAVE BUTTON SUPPORT (Option B)
+   Wrap save buttons in a footer container so CSS
+   can make them sticky at the bottom of the panel.
+--------------------------------------------------- */
+
+function setupStickyFooter(buttonEl) {
+  if (!buttonEl) return;
+  const parent = buttonEl.parentElement;
+  if (!parent) return;
+
+  // Avoid double-wrapping
+  if (buttonEl.parentElement.classList.contains("panel-footer")) return;
+
+  const footer = document.createElement("div");
+  footer.className = "panel-footer";
+
+  parent.appendChild(footer);
+  parent.removeChild(buttonEl);
+  footer.appendChild(buttonEl);
+}
+
+// Run after everything is wired
+setupStickyFooter(savePartBtn);
+setupStickyFooter(saveInventoryBtn);
