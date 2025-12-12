@@ -170,6 +170,27 @@ input, select {
   padding: 14px;
   border-radius: 12px;
   margin: 12px;
+  border-left: 5px solid transparent;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.part-card.status-ok {
+  border-left-color: #2ecc71;
+}
+
+.part-card.status-due {
+  border-left-color: #f39c12;
+}
+
+.part-card.status-overdue {
+  border-left-color: #e74c3c;
+}
+
+.part-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
 }
 
 .part-name {
@@ -182,10 +203,22 @@ input, select {
   color: var(--muted);
 }
 
+.expand-icon {
+  font-size: 18px;
+  margin-left: 10px;
+}
+
+.part-details {
+  margin-top: 8px;
+  border-top: 1px solid #223049;
+  padding-top: 8px;
+}
+
 .part-actions {
   margin-top: 12px;
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .part-actions button {
@@ -194,6 +227,7 @@ input, select {
   border-radius: 8px;
   border: none;
   cursor: pointer;
+  font-size: 13px;
 }
 
 /* ---------------------------------------------------
@@ -265,7 +299,7 @@ input, select {
 }
 
 /* ---------------------------------------------------
-   ADD PART – DARK SLIDE-UP PANEL
+   ADD PART / INVENTORY – DARK SLIDE-UP PANEL
 --------------------------------------------------- */
 
 .slide-panel {
