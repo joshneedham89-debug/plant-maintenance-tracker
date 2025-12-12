@@ -265,6 +265,56 @@ input, select {
 }
 
 /* ---------------------------------------------------
+   ADD PART – DARK SLIDE-UP PANEL
+--------------------------------------------------- */
+
+.slide-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-width: 900px;
+  background: var(--card);
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+  padding: 18px;
+  transform: translateY(110%);
+  transition: transform 0.35s ease-out;
+  z-index: 2000;
+}
+
+.slide-panel.show {
+  transform: translateY(0);
+}
+
+.slide-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.slide-panel-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.close-btn {
+  background: none;
+  color: var(--text);
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.slide-panel-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+/* ---------------------------------------------------
    Utility
 --------------------------------------------------- */
 
