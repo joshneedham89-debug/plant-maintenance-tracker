@@ -122,6 +122,36 @@
 
   </div>
 
+  <!-- ---------------------------------------------------------
+       ADD PART SLIDE-UP PANEL (Option C2 – Dark Theme)
+  ---------------------------------------------------------- -->
+  <div id="addPartPanel" class="slide-panel hidden">
+    <div class="slide-panel-header">
+      <h3>Add New Part</h3>
+      <button id="closePartPanel" class="close-btn">✖</button>
+    </div>
+
+    <div class="slide-panel-body">
+
+      <label>Part Name</label>
+      <input id="newPartName" type="text">
+
+      <label>Category</label>
+      <select id="newPartCategory"></select>
+
+      <label>Section / Location</label>
+      <input id="newPartSection" type="text">
+
+      <label>Days Interval</label>
+      <input id="newPartDays" type="number">
+
+      <label>Ton Interval</label>
+      <input id="newPartTons" type="number">
+
+      <button id="savePartBtn" class="primary-btn full">Save Part</button>
+    </div>
+  </div>
+
   <script src="inventory.js"></script>
   <script src="script.js"></script>
 </body>
