@@ -49,6 +49,17 @@ const ac_totalAc = document.getElementById("ac_totalAc");
 const exportBtn = document.getElementById("exportBtn");
 const resetAllBtn = document.getElementById("resetAllBtn");
 
+/* Add Part Slide Panel */
+const addPartPanel = document.getElementById("addPartPanel");
+const closePartPanel = document.getElementById("closePartPanel");
+
+const newPartName = document.getElementById("newPartName");
+const newPartCategory = document.getElementById("newPartCategory");
+const newPartSection = document.getElementById("newPartSection");
+const newPartDays = document.getElementById("newPartDays");
+const newPartTons = document.getElementById("newPartTons");
+const savePartBtn = document.getElementById("savePartBtn");
+
 /* ---------------------------------------------------
    INIT
 --------------------------------------------------- */
@@ -281,4 +292,70 @@ acCalcBtn.addEventListener("click", () => {
 
   ac_pumpRate.textContent = pumpRate.toFixed(3);
   ac_totalAc.textContent = totalAC.toFixed(2);
+});
+
+/* ---------------------------------------------------
+   ADD PART — SLIDE-UP PANEL LOGIC
+--------------------------------------------------- */
+
+// OPEN PANEL
+addPartBtn.addEventListener("click", () => {
+  newPartCategory.innerHTML = "";
+  categories.forEach(c => {
+    newPartCategory.innerHTML += `<option value="${c}">${c}</option>`;
+  });
+
+  addPartPanel.classList.remove("hidden");
+
+  // Add small async delay to trigger animation correctly
+  setTimeout(() => {
+    addPartPanel.classList.add("show");
+  }, 20);
+});
+
+// CLOSE PANEL
+closePartPanel.addEventListener("click", () => {
+  addPartPanel.classList.remove("show");
+
+  setTimeout(() => {
+    addPartPanel.classList.add("hidden");
+  }, 250);
+});
+
+// SAVE NEW PART
+savePartBtn.addEventListener("click", () => {
+  const name = newPartName.value.trim();
+  const category = newPartCategory.value;
+  const section = newPartSection.value.trim();
+  const days = Number(newPartDays.value);
+  const tonInterval = Number(newPartTons.value);
+
+  if (!name || !category || !section || !days || !tonInterval) {
+    alert("Please fill all fields.");
+    return;
+  }
+
+  const newPart = {
+    name,
+    category,
+    section,
+    days,
+    tonInterval,
+    date: new Date().toISOString().split("T")[0],
+    lastTons: currentTons
+  };
+
+  parts.push(newPart);
+  saveState();
+  renderParts();
+
+  // Close Panel After Save
+  addPartPanel.classList.remove("show");
+  setTimeout(() => addPartPanel.classList.add("hidden"), 250);
+
+  // Clear Inputs
+  newPartName.value = "";
+  newPartSection.value = "";
+  newPartDays.value = "";
+  newPartTons.value = "";
 });
