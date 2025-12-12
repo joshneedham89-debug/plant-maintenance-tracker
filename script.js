@@ -12,7 +12,6 @@ let parts = [];
 let currentTons = 0;
 let categories = [];
 let inventory = [];
-let activeScreen = "dashboardScreen";
 
 let editingPartIndex = null;
 let editingInventoryIndex = null;
@@ -57,7 +56,6 @@ const ac_target = document.getElementById("ac_target");
 const ac_tph = document.getElementById("ac_tph");
 const ac_totalTons = document.getElementById("ac_totalTons");
 const acCalcBtn = document.getElementById("acCalcBtn");
-
 const ac_pumpRate = document.getElementById("ac_pumpRate");
 const ac_totalAc = document.getElementById("ac_totalAc");
 
@@ -65,7 +63,7 @@ const ac_totalAc = document.getElementById("ac_totalAc");
 const exportBtn = document.getElementById("exportBtn");
 const resetAllBtn = document.getElementById("resetAllBtn");
 
-/* Add/Edit Part Panel */
+/* Add/Edit Part Panel (overlay version in your HTML) */
 const partPanelOverlay = document.getElementById("partPanelOverlay");
 const addPartPanel = document.getElementById("addPartPanel");
 const closePartPanelBtn = document.getElementById("closePartPanel");
@@ -79,7 +77,7 @@ const newPartTons = document.getElementById("newPartTons");
 const savePartBtn = document.getElementById("savePartBtn");
 const inventoryNameList = document.getElementById("inventoryNameList");
 
-/* Inventory Panel */
+/* Inventory Panel (overlay version in your HTML) */
 const inventoryPanelOverlay = document.getElementById("inventoryPanelOverlay");
 const inventoryPanel = document.getElementById("inventoryPanel");
 const closeInventoryPanelBtn = document.getElementById("closeInventoryPanel");
@@ -114,6 +112,8 @@ let toastTimeoutId = null;
    TOAST
 --------------------------------------------------- */
 function showToast(message, type = "success") {
+  if (!toastContainer) return;
+
   toastContainer.textContent = message;
   toastContainer.className = "toast " + type;
   void toastContainer.offsetWidth;
@@ -132,12 +132,13 @@ function loadState() {
   parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
   currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
 
-  categories = PRELOADED_CATEGORIES;
+  // categories + default inventory come from inventory.js
+  categories = Array.isArray(PRELOADED_CATEGORIES) ? PRELOADED_CATEGORIES : [];
 
   const storedInventory = JSON.parse(localStorage.getItem(INVENTORY_KEY));
-  inventory = storedInventory?.length ? storedInventory : PRELOADED_INVENTORY.slice();
+  inventory = storedInventory?.length ? storedInventory : (PRELOADED_INVENTORY?.slice?.() || []);
 
-  currentTonsInput.value = currentTons;
+  if (currentTonsInput) currentTonsInput.value = currentTons;
 
   buildCategoryDropdown();
   buildInventoryCategoryDropdown();
@@ -149,23 +150,20 @@ function loadState() {
   renderInventory();
 }
 
-loadState();
-
-/* ---------------------------------------------------
-   SAVE
---------------------------------------------------- */
 function saveState() {
   localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
-  localStorage.setItem(TONS_KEY, currentTons);
+  localStorage.setItem(TONS_KEY, String(currentTons));
   localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
 }
+
+loadState();
 
 /* ---------------------------------------------------
    SCREEN SWITCHING
 --------------------------------------------------- */
 function showScreen(screenId) {
   screens.forEach(s => s.classList.remove("active"));
-  document.getElementById(screenId).classList.add("active");
+  document.getElementById(screenId)?.classList.add("active");
 
   navButtons.forEach(btn => {
     btn.classList.toggle("active", btn.dataset.screen === screenId);
@@ -183,17 +181,16 @@ navButtons.forEach(btn => {
 /* ---------------------------------------------------
    TONS
 --------------------------------------------------- */
-
-updateTonsBtn.addEventListener("click", () => {
-  currentTons = Number(currentTonsInput.value);
+updateTonsBtn?.addEventListener("click", () => {
+  currentTons = Number(currentTonsInput.value) || 0;
   saveState();
   renderDashboard();
   showToast("Tons updated");
 });
 
-resetTonsBtn.addEventListener("click", () => {
+resetTonsBtn?.addEventListener("click", () => {
   currentTons = 0;
-  currentTonsInput.value = 0;
+  if (currentTonsInput) currentTonsInput.value = 0;
   saveState();
   renderDashboard();
   showToast("Tons reset");
@@ -203,6 +200,8 @@ resetTonsBtn.addEventListener("click", () => {
    DASHBOARD
 --------------------------------------------------- */
 function renderDashboard() {
+  if (!okCountEl) return;
+
   let ok = 0, due = 0, over = 0;
   let completedToday = 0;
   let completedMonth = 0;
@@ -219,7 +218,7 @@ function renderDashboard() {
     if (Array.isArray(p.history)) {
       p.history.forEach(h => {
         if (h.date === today) completedToday++;
-        const [hy, hm] = h.date.split("-");
+        const [hy, hm] = (h.date || "").split("-");
         if (hy === year && hm === month) completedMonth++;
       });
     }
@@ -228,15 +227,17 @@ function renderDashboard() {
   okCountEl.textContent = ok;
   dueCountEl.textContent = due;
   overCountEl.textContent = over;
-  tonsRunEl.textContent = currentTons;
-  completedTodayEl.textContent = completedToday;
-  completedMonthEl.textContent = completedMonth;
+  if (tonsRunEl) tonsRunEl.textContent = currentTons;
+
+  if (completedTodayEl) completedTodayEl.textContent = completedToday;
+  if (completedMonthEl) completedMonthEl.textContent = completedMonth;
 }
 
 /* ---------------------------------------------------
    CATEGORY DROPDOWNS
 --------------------------------------------------- */
 function buildCategoryDropdown() {
+  if (!filterCategory) return;
   filterCategory.innerHTML = `<option value="ALL">All Categories</option>`;
   categories.forEach(c => {
     filterCategory.innerHTML += `<option value="${c}">${c}</option>`;
@@ -244,21 +245,22 @@ function buildCategoryDropdown() {
 }
 
 function buildInventoryCategoryDropdown() {
+  if (!invCategory) return;
   invCategory.innerHTML = "";
   categories.forEach(c => {
     invCategory.innerHTML += `<option value="${c}">${c}</option>`;
   });
 }
 
-filterCategory.addEventListener("change", renderParts);
-searchPartsInput.addEventListener("input", renderParts);
+filterCategory?.addEventListener("change", renderParts);
+searchPartsInput?.addEventListener("input", renderParts);
 
 /* ---------------------------------------------------
    STATUS CALC
 --------------------------------------------------- */
 function calculateStatus(p) {
   const daysSince = (Date.now() - new Date(p.date)) / 86400000;
-  const tonsSince = currentTons - p.lastTons;
+  const tonsSince = currentTons - (Number(p.lastTons) || 0);
 
   let status = "ok";
 
@@ -272,8 +274,10 @@ function calculateStatus(p) {
    RENDER PARTS
 --------------------------------------------------- */
 function renderParts() {
-  const selected = filterCategory.value;
-  const query = searchPartsInput.value.toLowerCase().trim();
+  if (!partsList) return;
+
+  const selected = filterCategory?.value || "ALL";
+  const query = (searchPartsInput?.value || "").toLowerCase().trim();
 
   partsList.innerHTML = "";
 
@@ -283,9 +287,9 @@ function renderParts() {
     const matchesCategory = selected === "ALL" || p.category === selected;
     const matchesSearch =
       !query ||
-      p.name.toLowerCase().includes(query) ||
-      p.category.toLowerCase().includes(query) ||
-      p.section.toLowerCase().includes(query);
+      (p.name || "").toLowerCase().includes(query) ||
+      (p.category || "").toLowerCase().includes(query) ||
+      (p.section || "").toLowerCase().includes(query);
 
     if (!matchesCategory || !matchesSearch) return;
 
@@ -331,7 +335,7 @@ function renderParts() {
 }
 
 /* Expand/collapse + part actions */
-partsList.addEventListener("click", (e) => {
+partsList?.addEventListener("click", (e) => {
   const main = e.target.closest(".part-main");
   if (main) {
     const idx = main.dataset.idx;
@@ -355,7 +359,98 @@ partsList.addEventListener("click", (e) => {
 });
 
 /* ---------------------------------------------------
-   DELETE PART
+   PART: ADD/EDIT PANEL (overlay)
+--------------------------------------------------- */
+function openPartPanel(isEdit, index) {
+  editingPartIndex = isEdit ? index : null;
+
+  if (partPanelTitle) partPanelTitle.textContent = isEdit ? "Edit Part" : "Add New Part";
+
+  // categories dropdown for the panel
+  if (newPartCategory) {
+    newPartCategory.innerHTML = "";
+    categories.forEach(c => {
+      newPartCategory.innerHTML += `<option value="${c}">${c}</option>`;
+    });
+  }
+
+  if (isEdit && parts[index]) {
+    const p = parts[index];
+    newPartName.value = p.name || "";
+    newPartCategory.value = p.category || (categories[0] || "");
+    newPartSection.value = p.section || "";
+    newPartDays.value = p.days ?? "";
+    newPartTons.value = p.tonInterval ?? "";
+  } else {
+    newPartName.value = "";
+    newPartSection.value = "";
+    newPartDays.value = "";
+    newPartTons.value = "";
+    if (categories.length) newPartCategory.value = categories[0];
+  }
+
+  // show overlay + slide panel
+  partPanelOverlay?.classList.remove("hidden");
+  setTimeout(() => addPartPanel?.classList.add("show"), 10);
+}
+
+function closePartPanel() {
+  addPartPanel?.classList.remove("show");
+  setTimeout(() => partPanelOverlay?.classList.add("hidden"), 250);
+}
+
+addPartBtn?.addEventListener("click", () => openPartPanel(false, null));
+function openPartForEdit(index) { openPartPanel(true, index); }
+
+closePartPanelBtn?.addEventListener("click", closePartPanel);
+partPanelOverlay?.addEventListener("click", (e) => {
+  if (e.target === partPanelOverlay) closePartPanel();
+});
+
+// If user selects an inventory name, auto-set category
+newPartName?.addEventListener("change", () => {
+  const name = newPartName.value.toLowerCase().trim();
+  const match = inventory.find(item => (item.part || "").toLowerCase() === name);
+  if (match && newPartCategory) newPartCategory.value = match.category;
+});
+
+savePartBtn?.addEventListener("click", () => {
+  const name = newPartName.value.trim();
+  const category = newPartCategory.value;
+  const section = newPartSection.value.trim();
+  const days = Number(newPartDays.value);
+  const tonInterval = Number(newPartTons.value);
+
+  if (!name || !category || !section || !days || !tonInterval) {
+    showToast("Fill all 5 fields", "error");
+    return;
+  }
+
+  if (editingPartIndex !== null && parts[editingPartIndex]) {
+    const existing = parts[editingPartIndex];
+    parts[editingPartIndex] = { ...existing, name, category, section, days, tonInterval };
+  } else {
+    parts.push({
+      name,
+      category,
+      section,
+      days,
+      tonInterval,
+      date: new Date().toISOString().split("T")[0],
+      lastTons: currentTons,
+      history: []
+    });
+  }
+
+  saveState();
+  renderParts();
+  renderDashboard();
+  closePartPanel();
+  showToast(editingPartIndex !== null ? "Part updated" : "Part added");
+});
+
+/* ---------------------------------------------------
+   DELETE / DUPLICATE PART
 --------------------------------------------------- */
 function deletePart(i) {
   if (!confirm("Delete this part?")) return;
@@ -366,17 +461,17 @@ function deletePart(i) {
   showToast("Part deleted");
 }
 
-/* ---------------------------------------------------
-   DUPLICATE PART
---------------------------------------------------- */
 function duplicatePart(i) {
   const p = parts[i];
+  if (!p) return;
+
   parts.push({
     ...p,
     name: p.name + " (Copy)",
     date: new Date().toISOString().split("T")[0],
     lastTons: currentTons,
   });
+
   saveState();
   renderParts();
   showToast("Part duplicated");
@@ -386,15 +481,17 @@ function duplicatePart(i) {
    INVENTORY SEARCH + RENDER
 --------------------------------------------------- */
 function renderInventory() {
-  const query = searchInventoryInput.value.toLowerCase().trim();
+  if (!inventoryList) return;
+
+  const query = (searchInventoryInput?.value || "").toLowerCase().trim();
   inventoryList.innerHTML = "";
 
   inventory.forEach((item, idx) => {
     const matchesSearch =
       !query ||
-      item.part.toLowerCase().includes(query) ||
-      item.category.toLowerCase().includes(query) ||
-      item.location.toLowerCase().includes(query);
+      (item.part || "").toLowerCase().includes(query) ||
+      (item.category || "").toLowerCase().includes(query) ||
+      (item.location || "").toLowerCase().includes(query);
 
     if (!matchesSearch) return;
 
@@ -415,13 +512,14 @@ function renderInventory() {
 
     inventoryList.appendChild(card);
   });
+
+  buildInventoryNameDatalist();
+  buildCompleteInventorySelect();
 }
 
-/* Inventory search listener */
-searchInventoryInput.addEventListener("input", renderInventory);
+searchInventoryInput?.addEventListener("input", renderInventory);
 
-/* Inventory actions */
-inventoryList.addEventListener("click", (e) => {
+inventoryList?.addEventListener("click", (e) => {
   if (e.target.classList.contains("edit-inv-btn"))
     openInventoryForEdit(Number(e.target.dataset.idx));
 
@@ -430,15 +528,94 @@ inventoryList.addEventListener("click", (e) => {
 });
 
 /* ---------------------------------------------------
-   INVENTORY EDIT / DELETE
+   INVENTORY: ADD/EDIT PANEL (overlay)
 --------------------------------------------------- */
+function openInventoryPanel(isEdit, index) {
+  editingInventoryIndex = isEdit ? index : null;
+
+  if (inventoryPanelTitle) {
+    inventoryPanelTitle.textContent = isEdit ? "Edit Inventory Item" : "Add Inventory Item";
+  }
+
+  buildInventoryCategoryDropdown();
+
+  if (isEdit && inventory[index]) {
+    const item = inventory[index];
+    invPartName.value = item.part || "";
+    invCategory.value = item.category || (categories[0] || "");
+    invLocation.value = item.location || "";
+    invQty.value = item.qty ?? "";
+    invNotes.value = item.notes || "";
+  } else {
+    invPartName.value = "";
+    invLocation.value = "";
+    invQty.value = "";
+    invNotes.value = "";
+    if (categories.length) invCategory.value = categories[0];
+  }
+
+  inventoryPanelOverlay?.classList.remove("hidden");
+  setTimeout(() => inventoryPanel?.classList.add("show"), 10);
+}
+
+function closeInventoryPanel() {
+  inventoryPanel?.classList.remove("show");
+  setTimeout(() => inventoryPanelOverlay?.classList.add("hidden"), 250);
+}
+
+addInventoryBtn?.addEventListener("click", () => openInventoryPanel(false, null));
+function openInventoryForEdit(index) { openInventoryPanel(true, index); }
+
+closeInventoryPanelBtn?.addEventListener("click", closeInventoryPanel);
+inventoryPanelOverlay?.addEventListener("click", (e) => {
+  if (e.target === inventoryPanelOverlay) closeInventoryPanel();
+});
+
+saveInventoryBtn?.addEventListener("click", () => {
+  const part = invPartName.value.trim();
+  const category = invCategory.value;
+  const location = invLocation.value.trim();
+  const qty = Number(invQty.value);
+  const notes = invNotes.value.trim();
+
+  if (!part || !category || !location || !Number.isFinite(qty)) {
+    showToast("Fill part/category/location/qty", "error");
+    return;
+  }
+
+  const itemData = { part, category, location, qty, notes };
+
+  if (editingInventoryIndex !== null && inventory[editingInventoryIndex]) {
+    inventory[editingInventoryIndex] = itemData;
+  } else {
+    inventory.push(itemData);
+  }
+
+  saveState();
+  renderInventory();
+  closeInventoryPanel();
+  showToast(editingInventoryIndex !== null ? "Inventory updated" : "Inventory added");
+});
+
 function deleteInventoryItem(i) {
   if (!confirm("Delete this item?")) return;
   inventory.splice(i, 1);
   saveState();
   renderInventory();
-  buildCompleteInventorySelect();
   showToast("Inventory item deleted");
+}
+
+/* ---------------------------------------------------
+   INVENTORY NAME DATALIST (sync into parts)
+--------------------------------------------------- */
+function buildInventoryNameDatalist() {
+  if (!inventoryNameList) return;
+  inventoryNameList.innerHTML = "";
+  inventory.forEach(item => {
+    const option = document.createElement("option");
+    option.value = item.part;
+    inventoryNameList.appendChild(option);
+  });
 }
 
 /* ---------------------------------------------------
@@ -456,25 +633,22 @@ function openCompletePanel(i) {
   buildCompleteInventorySelect();
   compUsedList.innerHTML = "";
 
-  completePanelOverlay.classList.remove("hidden");
-  setTimeout(() => completePanel.classList.add("show"), 10);
+  completePanelOverlay?.classList.remove("hidden");
+  setTimeout(() => completePanel?.classList.add("show"), 10);
 }
 
 function closeCompletePanel() {
-  completePanel.classList.remove("show");
-  setTimeout(() => completePanelOverlay.classList.add("hidden"), 250);
+  completePanel?.classList.remove("show");
+  setTimeout(() => completePanelOverlay?.classList.add("hidden"), 250);
 }
 
-closeCompletePanelBtn.addEventListener("click", closeCompletePanel);
-
-completePanelOverlay.addEventListener("click", (e) => {
+closeCompletePanelBtn?.addEventListener("click", closeCompletePanel);
+completePanelOverlay?.addEventListener("click", (e) => {
   if (e.target === completePanelOverlay) closeCompletePanel();
 });
 
-/* ---------------------------------------------------
-   BUILD INVENTORY DROPDOWN FOR COMPLETION
---------------------------------------------------- */
 function buildCompleteInventorySelect() {
+  if (!compInvSelect) return;
   compInvSelect.innerHTML = `<option value="">Select inventory item</option>`;
   inventory.forEach((item, idx) => {
     compInvSelect.innerHTML += `<option value="${idx}">
@@ -483,8 +657,7 @@ function buildCompleteInventorySelect() {
   });
 }
 
-/* Add used inventory to list */
-compAddItemBtn.addEventListener("click", () => {
+compAddItemBtn?.addEventListener("click", () => {
   const invIndex = compInvSelect.value;
   const qty = Number(compInvQty.value);
 
@@ -502,24 +675,22 @@ compAddItemBtn.addEventListener("click", () => {
   compInvQty.value = 1;
 });
 
-/* ---------------------------------------------------
-   SAVE COMPLETION
---------------------------------------------------- */
-saveCompletionBtn.addEventListener("click", () => {
+saveCompletionBtn?.addEventListener("click", () => {
   const p = parts[completingPartIndex];
+  if (!p) return;
+
   const date = compDate.value;
   const tons = Number(compTons.value);
-  const notes = compNotes.value.trim();
+  const notes = (compNotes.value || "").trim();
 
   if (!date || isNaN(tons)) return showToast("Enter date + tons", "error");
 
-  /* Create history entry */
   const historyEntry = {
     date,
     tons,
     notes,
     usedItems: completionUsedItems.map(u => ({
-      part: inventory[u.invIndex].part,
+      part: inventory[u.invIndex]?.part || "Unknown",
       qty: u.qty
     }))
   };
@@ -527,13 +698,12 @@ saveCompletionBtn.addEventListener("click", () => {
   if (!p.history) p.history = [];
   p.history.push(historyEntry);
 
-  /* Reset part */
   p.date = date;
   p.lastTons = tons;
 
-  /* Update inventory quantities */
   completionUsedItems.forEach(u => {
-    inventory[u.invIndex].qty = Math.max(0, inventory[u.invIndex].qty - u.qty);
+    if (!inventory[u.invIndex]) return;
+    inventory[u.invIndex].qty = Math.max(0, Number(inventory[u.invIndex].qty) - u.qty);
   });
 
   saveState();
@@ -548,7 +718,7 @@ saveCompletionBtn.addEventListener("click", () => {
 /* ---------------------------------------------------
    AC CALCULATOR
 --------------------------------------------------- */
-acCalcBtn.addEventListener("click", () => {
+acCalcBtn?.addEventListener("click", () => {
   const R = Number(ac_residual.value) / 100;
   const RAPpct = Number(ac_rapPct.value) / 100;
   const ACtarget = Number(ac_target.value) / 100;
@@ -567,7 +737,7 @@ acCalcBtn.addEventListener("click", () => {
 /* ---------------------------------------------------
    EXPORT DATA
 --------------------------------------------------- */
-exportBtn.addEventListener("click", () => {
+exportBtn?.addEventListener("click", () => {
   const data = { parts, currentTons, inventory };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -583,7 +753,7 @@ exportBtn.addEventListener("click", () => {
 /* ---------------------------------------------------
    RESET ALL
 --------------------------------------------------- */
-resetAllBtn.addEventListener("click", () => {
+resetAllBtn?.addEventListener("click", () => {
   if (!confirm("Reset ALL data?")) return;
   localStorage.clear();
   showToast("Reset complete");
