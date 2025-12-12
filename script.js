@@ -17,6 +17,9 @@ let activeScreen = "dashboardScreen";
 let editingPartIndex = null;
 let editingInventoryIndex = null;
 
+let completingPartIndex = null;
+let completionUsedItems = []; // {invIndex, qty}
+
 /* ---------------------------------------------------
    ELEMENT REFERENCES
 --------------------------------------------------- */
@@ -27,6 +30,8 @@ const okCountEl = document.getElementById("okCount");
 const dueCountEl = document.getElementById("dueCount");
 const overCountEl = document.getElementById("overCount");
 const tonsRunEl = document.getElementById("tonsRun");
+const completedTodayEl = document.getElementById("completedTodayCount");
+const completedMonthEl = document.getElementById("completedMonthCount");
 
 const currentTonsInput = document.getElementById("currentTonsInput");
 const updateTonsBtn = document.getElementById("updateTonsBtn");
@@ -82,6 +87,19 @@ const invQty = document.getElementById("invQty");
 const invNotes = document.getElementById("invNotes");
 const saveInventoryBtn = document.getElementById("saveInventoryBtn");
 
+/* Complete Maintenance Panel */
+const completePanelOverlay = document.getElementById("completePanelOverlay");
+const completePanel = document.getElementById("completePanel");
+const closeCompletePanelBtn = document.getElementById("closeCompletePanel");
+const compDate = document.getElementById("compDate");
+const compTons = document.getElementById("compTons");
+const compNotes = document.getElementById("compNotes");
+const compInvSelect = document.getElementById("compInvSelect");
+const compInvQty = document.getElementById("compInvQty");
+const compAddItemBtn = document.getElementById("compAddItemBtn");
+const compUsedList = document.getElementById("compUsedList");
+const saveCompletionBtn = document.getElementById("saveCompletionBtn");
+
 /* Toast */
 const toastContainer = document.getElementById("toastContainer");
 let toastTimeoutId = null;
@@ -92,10 +110,9 @@ let toastTimeoutId = null;
 function showToast(message, type = "success") {
   if (!toastContainer) return;
   toastContainer.textContent = message;
-  toastContainer.className = "toast " + type; // resets classes
+  toastContainer.className = "toast " + type;
 
-  // trigger reflow so animation restarts
-  void toastContainer.offsetWidth;
+  void toastContainer.offsetWidth; // restart animation
 
   toastContainer.classList.add("show");
   clearTimeout(toastTimeoutId);
@@ -111,7 +128,6 @@ function loadState() {
   parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
   currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
 
-  // Categories + default inventory come from inventory.js
   categories = PRELOADED_CATEGORIES;
 
   const storedInventory = JSON.parse(localStorage.getItem(INVENTORY_KEY));
@@ -121,7 +137,7 @@ function loadState() {
     inventory = PRELOADED_INVENTORY.slice();
   }
 
-  currentTonsInput.value = currentTons;
+  if (currentTonsInput) currentTonsInput.value = currentTons;
 
   buildCategoryDropdown();
   buildInventoryCategoryDropdown();
@@ -191,18 +207,34 @@ resetTonsBtn?.addEventListener("click", () => {
 --------------------------------------------------- */
 function renderDashboard() {
   let ok = 0, due = 0, over = 0;
+  let completedToday = 0;
+  let completedMonth = 0;
+
+  const todayStr = new Date().toISOString().split("T")[0];
+  const [year, month] = todayStr.split("-");
 
   parts.forEach(p => {
     const st = calculateStatus(p);
     if (st.status === "ok") ok++;
     else if (st.status === "due") due++;
     else over++;
+
+    if (Array.isArray(p.history)) {
+      p.history.forEach(h => {
+        if (!h.date) return;
+        if (h.date === todayStr) completedToday++;
+        const [hy, hm] = h.date.split("-");
+        if (hy === year && hm === month) completedMonth++;
+      });
+    }
   });
 
   okCountEl.textContent = ok;
   dueCountEl.textContent = due;
   overCountEl.textContent = over;
   tonsRunEl.textContent = currentTons;
+  if (completedTodayEl) completedTodayEl.textContent = completedToday;
+  if (completedMonthEl) completedMonthEl.textContent = completedMonth;
 }
 
 /* ---------------------------------------------------
@@ -273,6 +305,20 @@ function renderParts() {
 
   filtered.forEach(({ p, idx }) => {
     const st = calculateStatus(p);
+    const history = Array.isArray(p.history) ? p.history : [];
+
+    let historyHtml = "";
+    if (!history.length) {
+      historyHtml = `<div class="part-meta">No maintenance history yet.</div>`;
+    } else {
+      const recent = history.slice().reverse().slice(0, 3);
+      historyHtml = recent
+        .map(h => {
+          const noteBit = h.notes ? " – " + h.notes : "";
+          return `<div class="part-meta">• ${h.date} – ${h.tons} tons${noteBit}</div>`;
+        })
+        .join("");
+    }
 
     const card = document.createElement("div");
     card.className = `part-card status-${st.status}`;
@@ -293,9 +339,15 @@ function renderParts() {
         <div class="part-meta">Tons since: ${st.tonsSince}</div>
 
         <div class="part-actions">
+          <button class="complete-part-btn" data-index="${idx}">Complete</button>
           <button class="edit-part-btn" data-index="${idx}">Edit</button>
           <button class="duplicate-part-btn" data-index="${idx}">Duplicate</button>
           <button class="delete-part-btn" data-index="${idx}">Delete</button>
+        </div>
+
+        <div class="part-history">
+          <div class="part-meta"><b>History:</b></div>
+          ${historyHtml}
         </div>
       </div>
     `;
@@ -333,6 +385,12 @@ partsList?.addEventListener("click", (e) => {
   if (e.target.classList.contains("delete-part-btn")) {
     const index = Number(e.target.dataset.index);
     deletePart(index);
+    return;
+  }
+
+  if (e.target.classList.contains("complete-part-btn")) {
+    const index = Number(e.target.dataset.index);
+    openCompletePanel(index);
     return;
   }
 });
@@ -476,12 +534,10 @@ function openPartPanel(isEdit, index) {
 
   editingPartIndex = isEdit ? index : null;
 
-  // Title
   if (partPanelTitle) {
     partPanelTitle.textContent = isEdit ? "Edit Part" : "Add New Part";
   }
 
-  // Categories
   if (newPartCategory) {
     newPartCategory.innerHTML = "";
     categories.forEach(c => {
@@ -489,7 +545,6 @@ function openPartPanel(isEdit, index) {
     });
   }
 
-  // Prefill if editing
   if (isEdit && parts[index]) {
     const p = parts[index];
     newPartName.value = p.name;
@@ -505,7 +560,6 @@ function openPartPanel(isEdit, index) {
     if (categories.length) newPartCategory.value = categories[0];
   }
 
-  // Show overlay + panel
   partPanelOverlay.classList.remove("hidden");
   setTimeout(() => {
     addPartPanel.classList.add("show");
@@ -577,7 +631,8 @@ savePartBtn?.addEventListener("click", () => {
       days,
       tonInterval,
       date: new Date().toISOString().split("T")[0],
-      lastTons: currentTons
+      lastTons: currentTons,
+      history: []
     };
     parts.push(newPart);
     showToast("Part added");
@@ -603,7 +658,6 @@ function openInventoryPanel(isEdit, index) {
       : "Add Inventory Item";
   }
 
-  // Rebuild categories
   buildInventoryCategoryDropdown();
 
   if (isEdit && inventory[index]) {
@@ -700,4 +754,134 @@ function buildInventoryNameDatalist() {
     option.value = item.part;
     inventoryNameList.appendChild(option);
   });
-     }
+}
+
+/* ---------------------------------------------------
+   COMPLETE MAINTENANCE PANEL LOGIC
+--------------------------------------------------- */
+
+function openCompletePanel(index) {
+  if (!completePanelOverlay || !completePanel) return;
+
+  completingPartIndex = index;
+  completionUsedItems = [];
+
+  const p = parts[index];
+  if (!p.history) p.history = [];
+
+  const todayStr = new Date().toISOString().split("T")[0];
+  compDate.value = todayStr;
+  compTons.value = currentTons;
+  compNotes.value = "";
+
+  compInvSelect.innerHTML = `<option value="">Select inventory item</option>`;
+  inventory.forEach((item, invIdx) => {
+    compInvSelect.innerHTML += `<option value="${invIdx}">${item.part} (Qty: ${item.qty})</option>`;
+  });
+
+  compInvQty.value = "1";
+  compUsedList.innerHTML = "";
+
+  completePanelOverlay.classList.remove("hidden");
+  setTimeout(() => {
+    completePanel.classList.add("show");
+  }, 20);
+}
+
+function closeCompletePanel() {
+  if (!completePanelOverlay || !completePanel) return;
+  completePanel.classList.remove("show");
+  setTimeout(() => {
+    completePanelOverlay.classList.add("hidden");
+  }, 250);
+}
+
+closeCompletePanelBtn?.addEventListener("click", closeCompletePanel);
+
+completePanelOverlay?.addEventListener("click", (e) => {
+  if (e.target === completePanelOverlay) {
+    closeCompletePanel();
+  }
+});
+
+/* Add used inventory item to temp list */
+compAddItemBtn?.addEventListener("click", () => {
+  const invIndexStr = compInvSelect.value;
+  const qty = Number(compInvQty.value);
+
+  if (invIndexStr === "" || isNaN(qty) || qty <= 0) {
+    showToast("Select an item & qty", "error");
+    return;
+  }
+
+  const invIndex = Number(invIndexStr);
+  const item = inventory[invIndex];
+  if (!item) return;
+
+  completionUsedItems.push({ invIndex, qty });
+
+  const line = document.createElement("div");
+  line.className = "part-meta";
+  line.textContent = `• ${item.part} – ${qty}`;
+  compUsedList.appendChild(line);
+
+  compInvSelect.value = "";
+  compInvQty.value = "1";
+});
+
+/* Save maintenance completion */
+saveCompletionBtn?.addEventListener("click", () => {
+  if (completingPartIndex === null || completingPartIndex < 0) {
+    showToast("No part selected", "error");
+    return;
+  }
+
+  const dateStr = compDate.value;
+  const tonsVal = Number(compTons.value);
+  const notes = compNotes.value.trim();
+
+  if (!dateStr || isNaN(tonsVal)) {
+    showToast("Enter date & tons", "error");
+    return;
+  }
+
+  const part = parts[completingPartIndex];
+  if (!part) return;
+  if (!part.history) part.history = [];
+
+  // Create history entry
+  const historyEntry = {
+    date: dateStr,
+    tons: tonsVal,
+    notes,
+    usedItems: completionUsedItems.map(item => {
+      const inv = inventory[item.invIndex];
+      return {
+        part: inv ? inv.part : "Unknown",
+        qty: item.qty
+      };
+    })
+  };
+
+  part.history.push(historyEntry);
+
+  // Reset part counters
+  part.date = dateStr;
+  part.lastTons = tonsVal;
+
+  // Adjust inventory quantities
+  completionUsedItems.forEach(item => {
+    const inv = inventory[item.invIndex];
+    if (inv) {
+      inv.qty = Math.max(0, Number(inv.qty) - item.qty);
+    }
+  });
+
+  saveState();
+  renderParts();
+  renderInventory();
+  renderDashboard();
+
+  showToast("Maintenance completed");
+  closeCompletePanel();
+});
