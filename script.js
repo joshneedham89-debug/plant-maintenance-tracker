@@ -322,3 +322,14 @@ currentTonsInput.value = currentTons;
 renderDashboard();
 renderParts();
 renderInventory();
+/* ----------------------------------------
+   SCREEN VISIBILITY (REQUIRED FOR TABS)
+---------------------------------------- */
+
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
