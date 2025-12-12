@@ -5,7 +5,7 @@ body {
   font-family: system-ui;
 }
 
-.app-container { padding-bottom: 80px; }
+.app-container { padding-bottom: 90px; }
 
 .section-title { margin: 12px; }
 
@@ -35,6 +35,14 @@ input, select {
 
 .secondary-btn {
   background: #ffffff30;
+  color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+}
+
+.danger-btn {
+  background: #cc3333;
   color: #fff;
   padding: 12px;
   border-radius: 8px;
@@ -95,6 +103,7 @@ input, select {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  margin-top: 8px;
 }
 
 .photo-preview img {
@@ -112,6 +121,7 @@ input, select {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 5000;
 }
 
 .photo-viewer img {
@@ -123,7 +133,7 @@ input, select {
 
 .toast {
   position: fixed;
-  bottom: 90px;
+  bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
   background: #000;
