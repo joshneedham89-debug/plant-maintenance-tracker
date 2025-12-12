@@ -84,7 +84,16 @@
       <h2 class="section-title">Inventory</h2>
 
       <div class="card">
-        <button id="addInventoryBtn" class="primary-btn full">+ Add Inventory Item</button>
+        <label>Search Inventory</label>
+        <input
+          id="searchInventoryInput"
+          type="text"
+          placeholder="Search by name, category, or location"
+        />
+
+        <button id="addInventoryBtn" class="primary-btn full">
+          + Add Inventory Item
+        </button>
       </div>
 
       <div id="inventoryList"></div>
@@ -141,14 +150,12 @@
 
   </div>
 
-  <!-- ---------------------------------------------------------
-       ADD / EDIT PART OVERLAY + SLIDE-UP PANEL
-  ---------------------------------------------------------- -->
+  <!-- ADD / EDIT PART PANEL -->
   <div id="partPanelOverlay" class="panel-overlay hidden">
     <div id="addPartPanel" class="slide-panel">
       <div class="slide-panel-header">
         <h3 id="partPanelTitle">Add New Part</h3>
-        <button id="closePartPanel" class="close-btn" aria-label="Close">✖</button>
+        <button id="closePartPanel" class="close-btn">✖</button>
       </div>
 
       <div class="slide-panel-body">
@@ -177,14 +184,12 @@
     </div>
   </div>
 
-  <!-- ---------------------------------------------------------
-       ADD / EDIT INVENTORY OVERLAY + SLIDE-UP PANEL
-  ---------------------------------------------------------- -->
+  <!-- ADD / EDIT INVENTORY PANEL -->
   <div id="inventoryPanelOverlay" class="panel-overlay hidden">
     <div id="inventoryPanel" class="slide-panel">
       <div class="slide-panel-header">
         <h3 id="inventoryPanelTitle">Add Inventory Item</h3>
-        <button id="closeInventoryPanel" class="close-btn" aria-label="Close">✖</button>
+        <button id="closeInventoryPanel" class="close-btn">✖</button>
       </div>
 
       <div class="slide-panel-body">
@@ -205,20 +210,20 @@
         <input id="invNotes" type="text">
 
         <div class="panel-footer">
-          <button id="saveInventoryBtn" class="primary-btn full">Save Inventory Item</button>
+          <button id="saveInventoryBtn" class="primary-btn full">
+            Save Inventory Item
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ---------------------------------------------------------
-       COMPLETE MAINTENANCE OVERLAY + SLIDE-UP PANEL
-  ---------------------------------------------------------- -->
+  <!-- COMPLETE MAINTENANCE PANEL -->
   <div id="completePanelOverlay" class="panel-overlay hidden">
     <div id="completePanel" class="slide-panel">
       <div class="slide-panel-header">
         <h3>Complete Maintenance</h3>
-        <button id="closeCompletePanel" class="close-btn" aria-label="Close">✖</button>
+        <button id="closeCompletePanel" class="close-btn">✖</button>
       </div>
 
       <div class="slide-panel-body">
@@ -229,27 +234,32 @@
         <input id="compTons" type="number">
 
         <label>Notes</label>
-        <input id="compNotes" type="text" placeholder="What did you do? (optional)">
+        <input id="compNotes" type="text">
 
         <h4 class="subheading">Inventory Used (optional)</h4>
+
         <label>Inventory Item</label>
         <select id="compInvSelect"></select>
 
         <label>Quantity Used</label>
         <input id="compInvQty" type="number" min="1" value="1">
 
-        <button id="compAddItemBtn" class="secondary-btn full">+ Add Used Item</button>
+        <button id="compAddItemBtn" class="secondary-btn full">
+          + Add Used Item
+        </button>
 
         <div id="compUsedList" class="used-items-list"></div>
 
         <div class="panel-footer">
-          <button id="saveCompletionBtn" class="primary-btn full">Save Maintenance</button>
+          <button id="saveCompletionBtn" class="primary-btn full">
+            Save Maintenance
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ---------------- GLOBAL TOAST ---------------- -->
+  <!-- TOAST -->
   <div id="toastContainer" class="toast"></div>
 
   <script src="inventory.js"></script>
