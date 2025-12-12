@@ -10,89 +10,120 @@
 </head>
 
 <body>
-  <div class="app-container">
+<div class="app-container">
 
-    <!-- HEADER -->
-    <header class="app-header">
-      <h1>Plant Maintenance Tracker</h1>
-    </header>
+  <!-- HEADER -->
+  <header class="app-header">
+    <h1>Plant Maintenance Tracker</h1>
+  </header>
 
-    <!-- DASHBOARD -->
-    <section id="dashboardScreen" class="screen active">
-      <h2 class="section-title">Dashboard</h2>
+  <!-- DASHBOARD -->
+  <section id="dashboardScreen" class="screen active">
+    <h2 class="section-title">Dashboard</h2>
 
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-label">OK</div><div id="okCount" class="stat-value">0</div></div>
-        <div class="stat-card"><div class="stat-label">Due Soon</div><div id="dueCount" class="stat-value">0</div></div>
-        <div class="stat-card"><div class="stat-label">Overdue</div><div id="overCount" class="stat-value">0</div></div>
-        <div class="stat-card"><div class="stat-label">Tons</div><div id="tonsRun" class="stat-value">0</div></div>
-      </div>
-
-      <div class="card">
-        <input id="currentTonsInput" type="number" placeholder="Current tons" />
-        <button id="updateTonsBtn" class="primary-btn full">Update Tons</button>
-      </div>
-    </section>
-
-    <!-- MAINTENANCE -->
-    <section id="maintenanceScreen" class="screen">
-      <h2 class="section-title">Maintenance</h2>
-
-      <div class="card maintenance-header">
-        <input id="searchPartsInput" placeholder="Search parts">
-        <select id="filterCategory"></select>
-        <button id="addPartBtn" class="primary-btn full">+ Add Part</button>
-      </div>
-
-      <div id="partsList"></div>
-    </section>
-
-    <!-- INVENTORY -->
-    <section id="inventoryScreen" class="screen">
-      <h2 class="section-title">Inventory</h2>
-
-      <div class="card">
-        <input id="searchInventoryInput" placeholder="Search inventory">
-        <button id="addInventoryBtn" class="primary-btn full">+ Add Inventory</button>
-      </div>
-
-      <div id="inventoryList"></div>
-    </section>
-
-    <!-- NAV -->
-    <nav class="bottom-nav">
-      <button class="nav-btn active" data-screen="dashboardScreen">🏠</button>
-      <button class="nav-btn" data-screen="maintenanceScreen">🛠️</button>
-      <button class="nav-btn" data-screen="inventoryScreen">📦</button>
-    </nav>
-  </div>
-
-  <!-- COMPLETE MAINTENANCE PANEL -->
-  <div id="completePanelOverlay" class="panel-overlay hidden">
-    <div id="completePanel" class="slide-panel">
-      <h3>Complete Maintenance</h3>
-
-      <input id="compDate" type="date">
-      <input id="compTons" type="number" placeholder="Tons">
-      <input id="compNotes" placeholder="Notes">
-
-      <label>Photos</label>
-      <input id="compPhotoInput" type="file" accept="image/*" multiple>
-      <div id="photoPreview" class="photo-preview"></div>
-
-      <button id="saveCompletionBtn" class="primary-btn full">Save</button>
-      <button id="closeCompletePanel" class="secondary-btn full">Cancel</button>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">OK</div><div id="okCount" class="stat-value">0</div></div>
+      <div class="stat-card"><div class="stat-label">Due</div><div id="dueCount" class="stat-value">0</div></div>
+      <div class="stat-card"><div class="stat-label">Overdue</div><div id="overCount" class="stat-value">0</div></div>
+      <div class="stat-card"><div class="stat-label">Tons</div><div id="tonsRun" class="stat-value">0</div></div>
     </div>
+
+    <div class="card">
+      <label>Update Tons</label>
+      <input id="currentTonsInput" type="number" />
+      <button id="updateTonsBtn" class="primary-btn full">Update</button>
+    </div>
+  </section>
+
+  <!-- MAINTENANCE -->
+  <section id="maintenanceScreen" class="screen">
+    <h2 class="section-title">Maintenance</h2>
+
+    <div class="card maintenance-header">
+      <input id="searchPartsInput" placeholder="Search parts">
+      <select id="filterCategory"></select>
+      <button id="addPartBtn" class="primary-btn full">+ Add Part</button>
+    </div>
+
+    <div id="partsList"></div>
+  </section>
+
+  <!-- INVENTORY -->
+  <section id="inventoryScreen" class="screen">
+    <h2 class="section-title">Inventory</h2>
+
+    <div class="card">
+      <input id="searchInventoryInput" placeholder="Search inventory">
+      <button id="addInventoryBtn" class="primary-btn full">+ Add Inventory</button>
+    </div>
+
+    <div id="inventoryList"></div>
+  </section>
+
+  <!-- AC CALC -->
+  <section id="acScreen" class="screen">
+    <h2 class="section-title">Virgin AC Calculator</h2>
+
+    <div class="card">
+      <input id="ac_residual" placeholder="Residual AC %">
+      <input id="ac_rapPct" placeholder="RAP %">
+      <input id="ac_target" placeholder="Target AC %">
+      <input id="ac_tph" placeholder="TPH">
+      <input id="ac_totalTons" placeholder="Total Tons">
+      <button id="acCalcBtn" class="primary-btn full">Calculate</button>
+      <div class="result-card">
+        Pump: <span id="ac_pumpRate"></span><br>
+        Total: <span id="ac_totalAc"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="settingsScreen" class="screen">
+    <h2 class="section-title">Settings</h2>
+    <div class="card">
+      <button id="exportBtn" class="primary-btn full">Export Data</button>
+      <button id="resetAllBtn" class="danger-btn full">Reset App</button>
+    </div>
+  </section>
+
+  <!-- NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-screen="dashboardScreen">🏠</button>
+    <button class="nav-btn" data-screen="maintenanceScreen">🛠️</button>
+    <button class="nav-btn" data-screen="inventoryScreen">📦</button>
+    <button class="nav-btn" data-screen="acScreen">📊</button>
+    <button class="nav-btn" data-screen="settingsScreen">⚙️</button>
+  </nav>
+</div>
+
+<!-- COMPLETE MAINTENANCE PANEL -->
+<div id="completePanelOverlay" class="panel-overlay hidden">
+  <div id="completePanel" class="slide-panel">
+    <h3>Complete Maintenance</h3>
+
+    <input id="compDate" type="date">
+    <input id="compTons" type="number" placeholder="Tons">
+    <input id="compNotes" placeholder="Notes">
+
+    <!-- PHASE 3A PHOTOS -->
+    <label>Photos</label>
+    <input id="compPhotoInput" type="file" accept="image/*" multiple>
+    <div id="photoPreview" class="photo-preview"></div>
+
+    <button id="saveCompletionBtn" class="primary-btn full">Save</button>
+    <button id="closeCompletePanel" class="secondary-btn full">Cancel</button>
   </div>
+</div>
 
-  <!-- PHOTO VIEWER -->
-  <div id="photoViewer" class="photo-viewer hidden">
-    <img id="photoViewerImg">
-  </div>
+<!-- PHOTO VIEWER -->
+<div id="photoViewer" class="photo-viewer hidden">
+  <img id="photoViewerImg">
+</div>
 
-  <div id="toastContainer" class="toast"></div>
+<div id="toastContainer" class="toast"></div>
 
-  <script src="inventory.js"></script>
-  <script src="script.js"></script>
+<script src="inventory.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
