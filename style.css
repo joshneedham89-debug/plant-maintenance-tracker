@@ -79,7 +79,8 @@ label {
 }
 
 /* Inputs */
-input, select {
+input,
+select {
   width: 100%;
   padding: 10px;
   border-radius: 8px;
@@ -87,6 +88,7 @@ input, select {
   margin-top: 4px;
   background: #ffffff;
   font-size: 15px;
+  box-sizing: border-box;
 }
 
 .card.light input {
@@ -129,7 +131,9 @@ input, select {
   border: none;
 }
 
-.full { width: 100%; }
+.full {
+  width: 100%;
+}
 
 /* ---------------------------------------------------
    Stats Grid
@@ -174,12 +178,13 @@ input, select {
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
+/* Status colors */
 .part-card.status-ok {
   border-left-color: #2ecc71;
 }
 
 .part-card.status-due {
-  border-left-color: #f39c12;
+  border-left-color: #f1c40f;
 }
 
 .part-card.status-overdue {
@@ -257,8 +262,13 @@ input, select {
    Screens
 --------------------------------------------------- */
 
-.screen { display: none; }
-.screen.active { display: block; }
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
 
 /* ---------------------------------------------------
    Bottom Navigation
@@ -293,33 +303,32 @@ input, select {
   font-weight: 700;
 }
 
-/* Icons above text */
 .nav-btn br {
   line-height: 0;
 }
 
 /* ---------------------------------------------------
-   ADD PART / INVENTORY – DARK SLIDE-UP PANEL
+   FIXED MOBILE-SAFE SLIDE PANEL SIZING (Add Part + Inventory)
 --------------------------------------------------- */
 
 .slide-panel {
   position: fixed;
   bottom: 0;
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(110%);
   width: 100%;
-  max-width: 900px;
+  max-width: 480px; /* prevents it from being too wide on mobile */
   background: var(--card);
   border-top-left-radius: 18px;
   border-top-right-radius: 18px;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
   padding: 18px;
-  transform: translateY(110%);
   transition: transform 0.35s ease-out;
   z-index: 2000;
 }
 
 .slide-panel.show {
-  transform: translateY(0);
+  transform: translateX(-50%) translateY(0);
 }
 
 .slide-panel-header {
@@ -327,6 +336,7 @@ input, select {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 14px;
+  padding-right: 8px;
 }
 
 .slide-panel-header h3 {
@@ -343,13 +353,31 @@ input, select {
 }
 
 .slide-panel-body {
-  max-height: 70vh;
+  max-height: 65vh;
   overflow-y: auto;
   padding-bottom: 20px;
+}
+
+/* Inputs inside panel should always fit */
+.slide-panel input,
+.slide-panel select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ---------------------------------------------------
+   Inventory Adjustments
+--------------------------------------------------- */
+
+.part-card .edit-inv-btn,
+.part-card .delete-inv-btn {
+  font-size: 13px;
 }
 
 /* ---------------------------------------------------
    Utility
 --------------------------------------------------- */
 
-.hidden { display: none; }
+.hidden {
+  display: none;
+}
