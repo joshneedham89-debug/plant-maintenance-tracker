@@ -39,6 +39,14 @@
           <div class="stat-label">Tons Run</div>
           <div id="tonsRun" class="stat-value">0</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed Today</div>
+          <div id="completedTodayCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed This Month</div>
+          <div id="completedMonthCount" class="stat-value">0</div>
+        </div>
       </div>
 
       <!-- Tons Update -->
@@ -203,10 +211,48 @@
     </div>
   </div>
 
+  <!-- ---------------------------------------------------------
+       COMPLETE MAINTENANCE OVERLAY + SLIDE-UP PANEL
+  ---------------------------------------------------------- -->
+  <div id="completePanelOverlay" class="panel-overlay hidden">
+    <div id="completePanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3>Complete Maintenance</h3>
+        <button id="closeCompletePanel" class="close-btn" aria-label="Close">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <label>Completion Date</label>
+        <input id="compDate" type="date">
+
+        <label>Tons at Completion</label>
+        <input id="compTons" type="number">
+
+        <label>Notes</label>
+        <input id="compNotes" type="text" placeholder="What did you do? (optional)">
+
+        <h4 class="subheading">Inventory Used (optional)</h4>
+        <label>Inventory Item</label>
+        <select id="compInvSelect"></select>
+
+        <label>Quantity Used</label>
+        <input id="compInvQty" type="number" min="1" value="1">
+
+        <button id="compAddItemBtn" class="secondary-btn full">+ Add Used Item</button>
+
+        <div id="compUsedList" class="used-items-list"></div>
+
+        <div class="panel-footer">
+          <button id="saveCompletionBtn" class="primary-btn full">Save Maintenance</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ---------------- GLOBAL TOAST ---------------- -->
   <div id="toastContainer" class="toast"></div>
 
   <script src="inventory.js"></script>
   <script src="script.js"></script>
 </body>
-          </html>
+</html>
