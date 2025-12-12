@@ -9,6 +9,8 @@ let currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
 let inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY)) || PRELOADED_INVENTORY.slice();
 let categories = PRELOADED_CATEGORIES;
 
+let editingPartIndex = null;
+let editingInventoryIndex = null;
 let completingPartIndex = null;
 let completionPhotos = [];
 
@@ -16,25 +18,54 @@ let completionPhotos = [];
 const screens = document.querySelectorAll(".screen");
 const navButtons = document.querySelectorAll(".nav-btn");
 
+/* Dashboard */
 const okCountEl = document.getElementById("okCount");
 const dueCountEl = document.getElementById("dueCount");
 const overCountEl = document.getElementById("overCount");
 const tonsRunEl = document.getElementById("tonsRun");
-
 const currentTonsInput = document.getElementById("currentTonsInput");
 const updateTonsBtn = document.getElementById("updateTonsBtn");
 
+/* Maintenance */
 const partsList = document.getElementById("partsList");
+const addPartBtn = document.getElementById("addPartBtn");
 const searchPartsInput = document.getElementById("searchPartsInput");
 const filterCategory = document.getElementById("filterCategory");
 
+/* Inventory */
 const inventoryList = document.getElementById("inventoryList");
+const addInventoryBtn = document.getElementById("addInventoryBtn");
 const searchInventoryInput = document.getElementById("searchInventoryInput");
 
+/* Panels */
+const partPanelOverlay = document.getElementById("partPanelOverlay");
+const addPartPanel = document.getElementById("addPartPanel");
+const closePartPanel = document.getElementById("closePartPanel");
+
+const inventoryPanelOverlay = document.getElementById("inventoryPanelOverlay");
+const inventoryPanel = document.getElementById("inventoryPanel");
+const closeInventoryPanel = document.getElementById("closeInventoryPanel");
+
+/* Part form */
+const newPartName = document.getElementById("newPartName");
+const newPartCategory = document.getElementById("newPartCategory");
+const newPartSection = document.getElementById("newPartSection");
+const newPartDays = document.getElementById("newPartDays");
+const newPartTons = document.getElementById("newPartTons");
+const savePartBtn = document.getElementById("savePartBtn");
+
+/* Inventory form */
+const invPartName = document.getElementById("invPartName");
+const invCategory = document.getElementById("invCategory");
+const invLocation = document.getElementById("invLocation");
+const invQty = document.getElementById("invQty");
+const invNotes = document.getElementById("invNotes");
+const saveInventoryBtn = document.getElementById("saveInventoryBtn");
+
+/* Complete Maintenance + Photos */
 const completePanelOverlay = document.getElementById("completePanelOverlay");
 const closeCompletePanel = document.getElementById("closeCompletePanel");
 const saveCompletionBtn = document.getElementById("saveCompletionBtn");
-
 const compDate = document.getElementById("compDate");
 const compTons = document.getElementById("compTons");
 const compNotes = document.getElementById("compNotes");
@@ -43,6 +74,7 @@ const photoPreview = document.getElementById("photoPreview");
 const photoViewer = document.getElementById("photoViewer");
 const photoViewerImg = document.getElementById("photoViewerImg");
 
+/* Toast */
 const toast = document.getElementById("toastContainer");
 
 /* ================= HELPERS ================= */
@@ -72,9 +104,9 @@ function showScreen(id) {
   if (id === "inventoryScreen") renderInventory();
 }
 
-navButtons.forEach(btn => {
-  btn.addEventListener("click", () => showScreen(btn.dataset.screen));
-});
+navButtons.forEach(btn =>
+  btn.addEventListener("click", () => showScreen(btn.dataset.screen))
+);
 
 /* ================= DASHBOARD ================= */
 updateTonsBtn?.addEventListener("click", () => {
@@ -108,9 +140,9 @@ function renderDashboard() {
 
 /* ================= MAINTENANCE ================= */
 filterCategory.innerHTML = `<option value="ALL">All</option>`;
-categories.forEach(c => {
-  filterCategory.innerHTML += `<option value="${c}">${c}</option>`;
-});
+categories.forEach(c =>
+  filterCategory.innerHTML += `<option value="${c}">${c}</option>`
+);
 
 filterCategory.addEventListener("change", renderParts);
 searchPartsInput.addEventListener("input", renderParts);
@@ -154,6 +186,61 @@ function renderInventory() {
 
 searchInventoryInput.addEventListener("input", renderInventory);
 
+/* ================= ADD / EDIT PART ================= */
+addPartBtn?.addEventListener("click", () => {
+  editingPartIndex = null;
+  partPanelOverlay.classList.remove("hidden");
+});
+
+closePartPanel?.addEventListener("click", () => {
+  partPanelOverlay.classList.add("hidden");
+});
+
+savePartBtn?.addEventListener("click", () => {
+  const part = {
+    name: newPartName.value.trim(),
+    category: newPartCategory.value,
+    section: newPartSection.value.trim(),
+    days: Number(newPartDays.value),
+    tonInterval: Number(newPartTons.value),
+    date: new Date().toISOString().split("T")[0],
+    lastTons: currentTons,
+    history: []
+  };
+  if (!part.name) return showToast("Part name required");
+  parts.push(part);
+  saveState();
+  renderParts();
+  partPanelOverlay.classList.add("hidden");
+  showToast("Part saved");
+});
+
+/* ================= ADD / EDIT INVENTORY ================= */
+addInventoryBtn?.addEventListener("click", () => {
+  editingInventoryIndex = null;
+  inventoryPanelOverlay.classList.remove("hidden");
+});
+
+closeInventoryPanel?.addEventListener("click", () => {
+  inventoryPanelOverlay.classList.add("hidden");
+});
+
+saveInventoryBtn?.addEventListener("click", () => {
+  const item = {
+    part: invPartName.value.trim(),
+    category: invCategory.value,
+    location: invLocation.value.trim(),
+    qty: Number(invQty.value),
+    notes: invNotes.value.trim()
+  };
+  if (!item.part) return showToast("Inventory name required");
+  inventory.push(item);
+  saveState();
+  renderInventory();
+  inventoryPanelOverlay.classList.add("hidden");
+  showToast("Inventory saved");
+});
+
 /* ================= COMPLETE + PHOTOS ================= */
 window.openComplete = function (idx) {
   completingPartIndex = idx;
@@ -190,7 +277,6 @@ compPhotoInput?.addEventListener("change", async () => {
   for (const file of compPhotoInput.files) {
     const src = await compressImage(file);
     completionPhotos.push({ type: "local", src });
-
     const img = document.createElement("img");
     img.src = src;
     img.onclick = () => {
@@ -208,17 +294,14 @@ photoViewer?.addEventListener("click", () => {
 saveCompletionBtn?.addEventListener("click", () => {
   const p = parts[completingPartIndex];
   if (!p.history) p.history = [];
-
   p.history.push({
     date: compDate.value,
     tons: Number(compTons.value),
     notes: compNotes.value,
     photos: completionPhotos.slice()
   });
-
   p.date = compDate.value;
   p.lastTons = Number(compTons.value);
-
   saveState();
   completePanelOverlay.classList.add("hidden");
   renderParts();
@@ -231,47 +314,3 @@ currentTonsInput.value = currentTons;
 renderDashboard();
 renderParts();
 renderInventory();
-
-/* ===================================================
-   ADD / EDIT PART PANEL WIRING
-=================================================== */
-const partPanelOverlay = document.getElementById("partPanelOverlay");
-const addPartPanel = document.getElementById("addPartPanel");
-const closePartPanel = document.getElementById("closePartPanel");
-
-addPartBtn?.addEventListener("click", () => {
-  editingPartIndex = null;
-  partPanelOverlay.classList.remove("hidden");
-  setTimeout(() => addPartPanel.classList.add("show"), 10);
-});
-
-closePartPanel?.addEventListener("click", () => {
-  addPartPanel.classList.remove("show");
-  setTimeout(() => partPanelOverlay.classList.add("hidden"), 200);
-});
-
-partPanelOverlay?.addEventListener("click", e => {
-  if (e.target === partPanelOverlay) closePartPanel.click();
-});
-
-/* ===================================================
-   ADD / EDIT INVENTORY PANEL WIRING
-=================================================== */
-const inventoryPanelOverlay = document.getElementById("inventoryPanelOverlay");
-const inventoryPanel = document.getElementById("inventoryPanel");
-const closeInventoryPanel = document.getElementById("closeInventoryPanel");
-
-addInventoryBtn?.addEventListener("click", () => {
-  editingInventoryIndex = null;
-  inventoryPanelOverlay.classList.remove("hidden");
-  setTimeout(() => inventoryPanel.classList.add("show"), 10);
-});
-
-closeInventoryPanel?.addEventListener("click", () => {
-  inventoryPanel.classList.remove("show");
-  setTimeout(() => inventoryPanelOverlay.classList.add("hidden"), 200);
-});
-
-inventoryPanelOverlay?.addEventListener("click", e => {
-  if (e.target === inventoryPanelOverlay) closeInventoryPanel.click();
-});
