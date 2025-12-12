@@ -9,8 +9,6 @@ let currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
 let inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY)) || PRELOADED_INVENTORY.slice();
 let categories = PRELOADED_CATEGORIES;
 
-let editingPartIndex = null;
-let editingInventoryIndex = null;
 let completingPartIndex = null;
 let completionPhotos = [];
 
@@ -37,32 +35,17 @@ const inventoryList = document.getElementById("inventoryList");
 const addInventoryBtn = document.getElementById("addInventoryBtn");
 const searchInventoryInput = document.getElementById("searchInventoryInput");
 
-/* Panels */
-const partPanelOverlay = document.getElementById("partPanelOverlay");
-const addPartPanel = document.getElementById("addPartPanel");
-const closePartPanel = document.getElementById("closePartPanel");
+/* AC */
+const acCalcBtn = document.getElementById("acCalcBtn");
+const ac_residual = document.getElementById("ac_residual");
+const ac_rapPct = document.getElementById("ac_rapPct");
+const ac_target = document.getElementById("ac_target");
+const ac_tph = document.getElementById("ac_tph");
+const ac_totalTons = document.getElementById("ac_totalTons");
+const ac_pumpRate = document.getElementById("ac_pumpRate");
+const ac_totalAc = document.getElementById("ac_totalAc");
 
-const inventoryPanelOverlay = document.getElementById("inventoryPanelOverlay");
-const inventoryPanel = document.getElementById("inventoryPanel");
-const closeInventoryPanel = document.getElementById("closeInventoryPanel");
-
-/* Part form */
-const newPartName = document.getElementById("newPartName");
-const newPartCategory = document.getElementById("newPartCategory");
-const newPartSection = document.getElementById("newPartSection");
-const newPartDays = document.getElementById("newPartDays");
-const newPartTons = document.getElementById("newPartTons");
-const savePartBtn = document.getElementById("savePartBtn");
-
-/* Inventory form */
-const invPartName = document.getElementById("invPartName");
-const invCategory = document.getElementById("invCategory");
-const invLocation = document.getElementById("invLocation");
-const invQty = document.getElementById("invQty");
-const invNotes = document.getElementById("invNotes");
-const saveInventoryBtn = document.getElementById("saveInventoryBtn");
-
-/* Complete Maintenance + Photos */
+/* Complete Maintenance */
 const completePanelOverlay = document.getElementById("completePanelOverlay");
 const closeCompletePanel = document.getElementById("closeCompletePanel");
 const saveCompletionBtn = document.getElementById("saveCompletionBtn");
@@ -90,7 +73,7 @@ function saveState() {
   localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
 }
 
-/* ================= NAVIGATION ================= */
+/* ================= NAV ================= */
 function showScreen(id) {
   screens.forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -109,7 +92,7 @@ navButtons.forEach(btn =>
 );
 
 /* ================= DASHBOARD ================= */
-updateTonsBtn?.addEventListener("click", () => {
+updateTonsBtn.addEventListener("click", () => {
   currentTons = Number(currentTonsInput.value);
   saveState();
   renderDashboard();
@@ -161,8 +144,9 @@ function renderParts() {
     card.innerHTML = `
       <strong>${p.name}</strong><br>
       ${p.category} — ${p.section}<br>
-      <button onclick="openComplete(${i})">Complete</button>
+      <button class="primary-btn full">Complete</button>
     `;
+    card.querySelector("button").onclick = () => openComplete(i);
     partsList.appendChild(card);
   });
 }
@@ -171,6 +155,7 @@ function renderParts() {
 function renderInventory() {
   inventoryList.innerHTML = "";
   const q = searchInventoryInput.value.toLowerCase();
+
   inventory.forEach(item => {
     if (q && !item.part.toLowerCase().includes(q)) return;
     const card = document.createElement("div");
@@ -186,63 +171,48 @@ function renderInventory() {
 
 searchInventoryInput.addEventListener("input", renderInventory);
 
-/* ================= ADD / EDIT PART ================= */
-addPartBtn?.addEventListener("click", () => {
-  editingPartIndex = null;
-  partPanelOverlay.classList.remove("hidden");
-});
+/* ================= ADD PART (TEMP PROMPT VERSION) ================= */
+addPartBtn.addEventListener("click", () => {
+  const name = prompt("Part name?");
+  if (!name) return;
 
-closePartPanel?.addEventListener("click", () => {
-  partPanelOverlay.classList.add("hidden");
-});
-
-savePartBtn?.addEventListener("click", () => {
-  const part = {
-    name: newPartName.value.trim(),
-    category: newPartCategory.value,
-    section: newPartSection.value.trim(),
-    days: Number(newPartDays.value),
-    tonInterval: Number(newPartTons.value),
+  parts.push({
+    name,
+    category: categories[0],
+    section: "General",
+    days: 30,
+    tonInterval: 5000,
     date: new Date().toISOString().split("T")[0],
     lastTons: currentTons,
     history: []
-  };
-  if (!part.name) return showToast("Part name required");
-  parts.push(part);
+  });
+
   saveState();
   renderParts();
-  partPanelOverlay.classList.add("hidden");
-  showToast("Part saved");
+  renderDashboard();
+  showToast("Part added");
 });
 
-/* ================= ADD / EDIT INVENTORY ================= */
-addInventoryBtn?.addEventListener("click", () => {
-  editingInventoryIndex = null;
-  inventoryPanelOverlay.classList.remove("hidden");
-});
+/* ================= ADD INVENTORY (TEMP PROMPT VERSION) ================= */
+addInventoryBtn.addEventListener("click", () => {
+  const name = prompt("Inventory item name?");
+  if (!name) return;
 
-closeInventoryPanel?.addEventListener("click", () => {
-  inventoryPanelOverlay.classList.add("hidden");
-});
+  inventory.push({
+    part: name,
+    category: categories[0],
+    location: "Stock",
+    qty: 1,
+    notes: ""
+  });
 
-saveInventoryBtn?.addEventListener("click", () => {
-  const item = {
-    part: invPartName.value.trim(),
-    category: invCategory.value,
-    location: invLocation.value.trim(),
-    qty: Number(invQty.value),
-    notes: invNotes.value.trim()
-  };
-  if (!item.part) return showToast("Inventory name required");
-  inventory.push(item);
   saveState();
   renderInventory();
-  inventoryPanelOverlay.classList.add("hidden");
-  showToast("Inventory saved");
+  showToast("Inventory added");
 });
 
 /* ================= COMPLETE + PHOTOS ================= */
-window.openComplete = function (idx) {
+function openComplete(idx) {
   completingPartIndex = idx;
   compDate.value = new Date().toISOString().split("T")[0];
   compTons.value = currentTons;
@@ -250,9 +220,9 @@ window.openComplete = function (idx) {
   completionPhotos = [];
   photoPreview.innerHTML = "";
   completePanelOverlay.classList.remove("hidden");
-};
+}
 
-closeCompletePanel?.addEventListener("click", () => {
+closeCompletePanel.addEventListener("click", () => {
   completePanelOverlay.classList.add("hidden");
 });
 
@@ -273,7 +243,7 @@ function compressImage(file) {
   });
 }
 
-compPhotoInput?.addEventListener("change", async () => {
+compPhotoInput.addEventListener("change", async () => {
   for (const file of compPhotoInput.files) {
     const src = await compressImage(file);
     completionPhotos.push({ type: "local", src });
@@ -287,26 +257,49 @@ compPhotoInput?.addEventListener("change", async () => {
   }
 });
 
-photoViewer?.addEventListener("click", () => {
+photoViewer.addEventListener("click", () => {
   photoViewer.classList.add("hidden");
 });
 
-saveCompletionBtn?.addEventListener("click", () => {
+saveCompletionBtn.addEventListener("click", () => {
   const p = parts[completingPartIndex];
   if (!p.history) p.history = [];
+
   p.history.push({
     date: compDate.value,
     tons: Number(compTons.value),
     notes: compNotes.value,
     photos: completionPhotos.slice()
   });
+
   p.date = compDate.value;
   p.lastTons = Number(compTons.value);
+
   saveState();
   completePanelOverlay.classList.add("hidden");
   renderParts();
   renderDashboard();
   showToast("Maintenance saved");
+});
+
+/* ================= AC CALCULATOR (FIXED) ================= */
+acCalcBtn.addEventListener("click", () => {
+  const R = Number(ac_residual.value) / 100;
+  const RAP = Number(ac_rapPct.value) / 100;
+  const T = Number(ac_target.value) / 100;
+  const TPH = Number(ac_tph.value);
+  const total = Number(ac_totalTons.value);
+
+  if (isNaN(R) || isNaN(RAP) || isNaN(T)) {
+    showToast("Enter valid AC values");
+    return;
+  }
+
+  const pump = TPH * (T - (RAP * R));
+  const needed = total * (T - (RAP * R));
+
+  ac_pumpRate.textContent = pump.toFixed(3);
+  ac_totalAc.textContent = needed.toFixed(2);
 });
 
 /* ================= INIT ================= */
