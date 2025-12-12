@@ -56,8 +56,9 @@ const exportBtn = document.getElementById("exportBtn");
 const resetAllBtn = document.getElementById("resetAllBtn");
 
 /* Add Part Slide Panel */
+const partPanelOverlay = document.getElementById("partPanelOverlay");
 const addPartPanel = document.getElementById("addPartPanel");
-const closePartPanel = document.getElementById("closePartPanel");
+const closePartPanelBtn = document.getElementById("closePartPanel");
 const partPanelTitle = document.getElementById("partPanelTitle");
 
 const newPartName = document.getElementById("newPartName");
@@ -69,8 +70,9 @@ const savePartBtn = document.getElementById("savePartBtn");
 const inventoryNameList = document.getElementById("inventoryNameList");
 
 /* Inventory Slide Panel */
+const inventoryPanelOverlay = document.getElementById("inventoryPanelOverlay");
 const inventoryPanel = document.getElementById("inventoryPanel");
-const closeInventoryPanel = document.getElementById("closeInventoryPanel");
+const closeInventoryPanelBtn = document.getElementById("closeInventoryPanel");
 const inventoryPanelTitle = document.getElementById("inventoryPanelTitle");
 
 const invPartName = document.getElementById("invPartName");
@@ -79,6 +81,28 @@ const invLocation = document.getElementById("invLocation");
 const invQty = document.getElementById("invQty");
 const invNotes = document.getElementById("invNotes");
 const saveInventoryBtn = document.getElementById("saveInventoryBtn");
+
+/* Toast */
+const toastContainer = document.getElementById("toastContainer");
+let toastTimeoutId = null;
+
+/* ---------------------------------------------------
+   TOAST HELPERS
+--------------------------------------------------- */
+function showToast(message, type = "success") {
+  if (!toastContainer) return;
+  toastContainer.textContent = message;
+  toastContainer.className = "toast " + type; // resets classes
+
+  // trigger reflow so animation restarts
+  void toastContainer.offsetWidth;
+
+  toastContainer.classList.add("show");
+  clearTimeout(toastTimeoutId);
+  toastTimeoutId = setTimeout(() => {
+    toastContainer.classList.remove("show");
+  }, 2500);
+}
 
 /* ---------------------------------------------------
    INIT
@@ -144,20 +168,22 @@ navButtons.forEach(btn => {
 /* ---------------------------------------------------
    TON UPDATE / RESET
 --------------------------------------------------- */
-updateTonsBtn.addEventListener("click", () => {
+updateTonsBtn?.addEventListener("click", () => {
   const val = Number(currentTonsInput.value);
   if (!isNaN(val)) {
     currentTons = val;
     saveState();
     renderDashboard();
+    showToast("Tons updated");
   }
 });
 
-resetTonsBtn.addEventListener("click", () => {
+resetTonsBtn?.addEventListener("click", () => {
   currentTons = 0;
   currentTonsInput.value = 0;
   saveState();
   renderDashboard();
+  showToast("Tons reset");
 });
 
 /* ---------------------------------------------------
@@ -198,12 +224,8 @@ function buildInventoryCategoryDropdown() {
   });
 }
 
-if (filterCategory) {
-  filterCategory.addEventListener("change", renderParts);
-}
-if (searchPartsInput) {
-  searchPartsInput.addEventListener("input", renderParts);
-}
+filterCategory?.addEventListener("change", renderParts);
+searchPartsInput?.addEventListener("input", renderParts);
 
 /* ---------------------------------------------------
    MAINTENANCE STATUS CALC
@@ -237,7 +259,6 @@ function renderParts() {
 
   partsList.innerHTML = "";
 
-  // Keep track of original index so edit/delete/duplicate work correctly
   const filtered = parts
     .map((p, idx) => ({ p, idx }))
     .filter(({ p }) => {
@@ -267,7 +288,7 @@ function renderParts() {
         </div>
         <div class="expand-icon">▼</div>
       </div>
-      <div class="part-details hidden" data-details-index="${idx}">
+      <div class="part-details" data-details-index="${idx}">
         <div class="part-meta">Days since: ${Math.floor(st.daysSince)}</div>
         <div class="part-meta">Tons since: ${st.tonsSince}</div>
 
@@ -284,39 +305,37 @@ function renderParts() {
 }
 
 /* Expand / collapse & action buttons */
-if (partsList) {
-  partsList.addEventListener("click", (e) => {
-    const main = e.target.closest(".part-main");
-    if (main) {
-      const idx = main.dataset.index;
-      const details = partsList.querySelector(
-        `.part-details[data-details-index="${idx}"]`
-      );
-      if (details) {
-        details.classList.toggle("hidden");
-      }
-      return;
+partsList?.addEventListener("click", (e) => {
+  const main = e.target.closest(".part-main");
+  if (main) {
+    const idx = main.dataset.index;
+    const details = partsList.querySelector(
+      `.part-details[data-details-index="${idx}"]`
+    );
+    if (details) {
+      details.classList.toggle("expanded");
     }
+    return;
+  }
 
-    if (e.target.classList.contains("edit-part-btn")) {
-      const index = Number(e.target.dataset.index);
-      openPartForEdit(index);
-      return;
-    }
+  if (e.target.classList.contains("edit-part-btn")) {
+    const index = Number(e.target.dataset.index);
+    openPartForEdit(index);
+    return;
+  }
 
-    if (e.target.classList.contains("duplicate-part-btn")) {
-      const index = Number(e.target.dataset.index);
-      duplicatePart(index);
-      return;
-    }
+  if (e.target.classList.contains("duplicate-part-btn")) {
+    const index = Number(e.target.dataset.index);
+    duplicatePart(index);
+    return;
+  }
 
-    if (e.target.classList.contains("delete-part-btn")) {
-      const index = Number(e.target.dataset.index);
-      deletePart(index);
-      return;
-    }
-  });
-}
+  if (e.target.classList.contains("delete-part-btn")) {
+    const index = Number(e.target.dataset.index);
+    deletePart(index);
+    return;
+  }
+});
 
 /* ---------------------------------------------------
    DELETE PART
@@ -327,6 +346,7 @@ function deletePart(index) {
   saveState();
   renderParts();
   renderDashboard();
+  showToast("Part deleted");
 }
 
 /* ---------------------------------------------------
@@ -347,6 +367,7 @@ function duplicatePart(index) {
   saveState();
   renderParts();
   renderDashboard();
+  showToast("Part duplicated");
 }
 
 /* ---------------------------------------------------
@@ -379,83 +400,79 @@ function renderInventory() {
 }
 
 /* Inventory actions (edit / delete) */
-if (inventoryList) {
-  inventoryList.addEventListener("click", (e) => {
-    if (e.target.classList.contains("edit-inv-btn")) {
-      const index = Number(e.target.dataset.index);
-      openInventoryForEdit(index);
-      return;
-    }
-    if (e.target.classList.contains("delete-inv-btn")) {
-      const index = Number(e.target.dataset.index);
-      deleteInventoryItem(index);
-      return;
-    }
-  });
-}
+inventoryList?.addEventListener("click", (e) => {
+  if (e.target.classList.contains("edit-inv-btn")) {
+    const index = Number(e.target.dataset.index);
+    openInventoryForEdit(index);
+    return;
+  }
+  if (e.target.classList.contains("delete-inv-btn")) {
+    const index = Number(e.target.dataset.index);
+    deleteInventoryItem(index);
+    return;
+  }
+});
 
 /* ---------------------------------------------------
    EXPORT FULL DATA
 --------------------------------------------------- */
-if (exportBtn) {
-  exportBtn.addEventListener("click", () => {
-    const data = {
-      parts,
-      tons: currentTons,
-      inventory
-    };
+exportBtn?.addEventListener("click", () => {
+  const data = {
+    parts,
+    tons: currentTons,
+    inventory
+  };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json"
-    });
-
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "maintenance_export.json";
-    a.click();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json"
   });
-}
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "maintenance_export.json";
+  a.click();
+
+  showToast("Data exported");
+});
 
 /* ---------------------------------------------------
    RESET EVERYTHING
 --------------------------------------------------- */
-if (resetAllBtn) {
-  resetAllBtn.addEventListener("click", () => {
-    if (confirm("Reset ALL data?")) {
-      localStorage.clear();
-      location.reload();
-    }
-  });
-}
+resetAllBtn?.addEventListener("click", () => {
+  if (confirm("Reset ALL data?")) {
+    localStorage.clear();
+    showToast("App reset", "success");
+    location.reload();
+  }
+});
 
 /* ---------------------------------------------------
    AC CALCULATOR
 --------------------------------------------------- */
-if (acCalcBtn) {
-  acCalcBtn.addEventListener("click", () => {
-    const R = Number(ac_residual.value) / 100;
-    const RAPpct = Number(ac_rapPct.value) / 100;
-    const ACtarget = Number(ac_target.value) / 100;
-    const TPH = Number(ac_tph.value);
-    const totalTons = Number(ac_totalTons.value);
+acCalcBtn?.addEventListener("click", () => {
+  const R = Number(ac_residual.value) / 100;
+  const RAPpct = Number(ac_rapPct.value) / 100;
+  const ACtarget = Number(ac_target.value) / 100;
+  const TPH = Number(ac_tph.value);
+  const totalTons = Number(ac_totalTons.value);
 
-    const acFromRAP = RAPpct * R;
-    const virginAC = ACtarget - acFromRAP;
+  const acFromRAP = RAPpct * R;
+  const virginAC = ACtarget - acFromRAP;
 
-    const pumpRate = TPH * virginAC;
-    const totalAC = totalTons * virginAC;
+  const pumpRate = TPH * virginAC;
+  const totalAC = totalTons * virginAC;
 
-    ac_pumpRate.textContent = pumpRate.toFixed(3);
-    ac_totalAc.textContent = totalAC.toFixed(2);
-  });
-}
+  ac_pumpRate.textContent = pumpRate.toFixed(3);
+  ac_totalAc.textContent = totalAC.toFixed(2);
+  showToast("AC calculated");
+});
 
 /* ---------------------------------------------------
    ADD / EDIT PART — SLIDE-UP PANEL LOGIC
 --------------------------------------------------- */
 
 function openPartPanel(isEdit, index) {
-  if (!addPartPanel) return;
+  if (!partPanelOverlay || !addPartPanel) return;
 
   editingPartIndex = isEdit ? index : null;
 
@@ -488,102 +505,102 @@ function openPartPanel(isEdit, index) {
     if (categories.length) newPartCategory.value = categories[0];
   }
 
-  // Show panel
-  addPartPanel.classList.remove("hidden");
+  // Show overlay + panel
+  partPanelOverlay.classList.remove("hidden");
   setTimeout(() => {
     addPartPanel.classList.add("show");
   }, 20);
 }
 
-if (addPartBtn) {
-  addPartBtn.addEventListener("click", () => {
-    openPartPanel(false, null);
-  });
-}
+addPartBtn?.addEventListener("click", () => {
+  openPartPanel(false, null);
+});
 
 function openPartForEdit(index) {
   openPartPanel(true, index);
 }
 
-/* Close panel */
-if (closePartPanel) {
-  closePartPanel.addEventListener("click", () => {
-    addPartPanel.classList.remove("show");
-    setTimeout(() => {
-      addPartPanel.classList.add("hidden");
-    }, 250);
-  });
+function closePartPanel() {
+  if (!partPanelOverlay || !addPartPanel) return;
+  addPartPanel.classList.remove("show");
+  setTimeout(() => {
+    partPanelOverlay.classList.add("hidden");
+  }, 250);
 }
+
+closePartPanelBtn?.addEventListener("click", closePartPanel);
+
+partPanelOverlay?.addEventListener("click", (e) => {
+  if (e.target === partPanelOverlay) {
+    closePartPanel();
+  }
+});
 
 /* When selecting part name from inventory, auto-set category */
-if (newPartName) {
-  newPartName.addEventListener("change", () => {
-    const name = newPartName.value.toLowerCase().trim();
-    const match = inventory.find(item => item.part.toLowerCase() === name);
-    if (match && newPartCategory) {
-      newPartCategory.value = match.category;
-    }
-  });
-}
+newPartName?.addEventListener("change", () => {
+  const name = newPartName.value.toLowerCase().trim();
+  const match = inventory.find(item => item.part.toLowerCase() === name);
+  if (match && newPartCategory) {
+    newPartCategory.value = match.category;
+  }
+});
 
 /* Save part (add or edit) */
-if (savePartBtn) {
-  savePartBtn.addEventListener("click", () => {
-    const name = newPartName.value.trim();
-    const category = newPartCategory.value;
-    const section = newPartSection.value.trim();
-    const days = Number(newPartDays.value);
-    const tonInterval = Number(newPartTons.value);
+savePartBtn?.addEventListener("click", () => {
+  const name = newPartName.value.trim();
+  const category = newPartCategory.value;
+  const section = newPartSection.value.trim();
+  const days = Number(newPartDays.value);
+  const tonInterval = Number(newPartTons.value);
 
-    if (!name || !category || !section || !days || !tonInterval) {
-      alert("Please fill all fields.");
-      return;
-    }
+  if (!name || !category || !section || !days || !tonInterval) {
+    showToast("Please fill all part fields", "error");
+    return;
+  }
 
-    if (editingPartIndex !== null && parts[editingPartIndex]) {
-      // Edit existing
-      const existing = parts[editingPartIndex];
-      parts[editingPartIndex] = {
-        ...existing,
-        name,
-        category,
-        section,
-        days,
-        tonInterval
-      };
-    } else {
-      // New part
-      const newPart = {
-        name,
-        category,
-        section,
-        days,
-        tonInterval,
-        date: new Date().toISOString().split("T")[0],
-        lastTons: currentTons
-      };
-      parts.push(newPart);
-    }
+  if (editingPartIndex !== null && parts[editingPartIndex]) {
+    const existing = parts[editingPartIndex];
+    parts[editingPartIndex] = {
+      ...existing,
+      name,
+      category,
+      section,
+      days,
+      tonInterval
+    };
+    showToast("Part updated");
+  } else {
+    const newPart = {
+      name,
+      category,
+      section,
+      days,
+      tonInterval,
+      date: new Date().toISOString().split("T")[0],
+      lastTons: currentTons
+    };
+    parts.push(newPart);
+    showToast("Part added");
+  }
 
-    saveState();
-    renderParts();
-    renderDashboard();
-
-    addPartPanel.classList.remove("show");
-    setTimeout(() => addPartPanel.classList.add("hidden"), 250);
-  });
-}
+  saveState();
+  renderParts();
+  renderDashboard();
+  closePartPanel();
+});
 
 /* ---------------------------------------------------
    INVENTORY – SLIDE-UP PANEL LOGIC
 --------------------------------------------------- */
 
 function openInventoryPanel(isEdit, index) {
-  if (!inventoryPanel) return;
+  if (!inventoryPanelOverlay || !inventoryPanel) return;
 
   editingInventoryIndex = isEdit ? index : null;
   if (inventoryPanelTitle) {
-    inventoryPanelTitle.textContent = isEdit ? "Edit Inventory Item" : "Add Inventory Item";
+    inventoryPanelTitle.textContent = isEdit
+      ? "Edit Inventory Item"
+      : "Add Inventory Item";
   }
 
   // Rebuild categories
@@ -604,60 +621,63 @@ function openInventoryPanel(isEdit, index) {
     if (categories.length) invCategory.value = categories[0];
   }
 
-  inventoryPanel.classList.remove("hidden");
+  inventoryPanelOverlay.classList.remove("hidden");
   setTimeout(() => {
     inventoryPanel.classList.add("show");
   }, 20);
 }
 
-if (addInventoryBtn) {
-  addInventoryBtn.addEventListener("click", () => {
-    openInventoryPanel(false, null);
-  });
-}
+addInventoryBtn?.addEventListener("click", () => {
+  openInventoryPanel(false, null);
+});
 
 function openInventoryForEdit(index) {
   openInventoryPanel(true, index);
 }
 
-if (closeInventoryPanel) {
-  closeInventoryPanel.addEventListener("click", () => {
-    inventoryPanel.classList.remove("show");
-    setTimeout(() => {
-      inventoryPanel.classList.add("hidden");
-    }, 250);
-  });
+function closeInventoryPanel() {
+  if (!inventoryPanelOverlay || !inventoryPanel) return;
+  inventoryPanel.classList.remove("show");
+  setTimeout(() => {
+    inventoryPanelOverlay.classList.add("hidden");
+  }, 250);
 }
+
+closeInventoryPanelBtn?.addEventListener("click", closeInventoryPanel);
+
+inventoryPanelOverlay?.addEventListener("click", (e) => {
+  if (e.target === inventoryPanelOverlay) {
+    closeInventoryPanel();
+  }
+});
 
 /* Save inventory item */
-if (saveInventoryBtn) {
-  saveInventoryBtn.addEventListener("click", () => {
-    const part = invPartName.value.trim();
-    const category = invCategory.value;
-    const location = invLocation.value.trim();
-    const qty = Number(invQty.value);
-    const notes = invNotes.value.trim();
+saveInventoryBtn?.addEventListener("click", () => {
+  const part = invPartName.value.trim();
+  const category = invCategory.value;
+  const location = invLocation.value.trim();
+  const qty = Number(invQty.value);
+  const notes = invNotes.value.trim();
 
-    if (!part || !category || !location || !qty) {
-      alert("Please fill required fields (part, category, location, qty).");
-      return;
-    }
+  if (!part || !category || !location || !qty) {
+    showToast("Fill part, category, location, qty", "error");
+    return;
+  }
 
-    const itemData = { part, category, location, qty, notes };
+  const itemData = { part, category, location, qty, notes };
 
-    if (editingInventoryIndex !== null && inventory[editingInventoryIndex]) {
-      inventory[editingInventoryIndex] = itemData;
-    } else {
-      inventory.push(itemData);
-    }
+  if (editingInventoryIndex !== null && inventory[editingInventoryIndex]) {
+    inventory[editingInventoryIndex] = itemData;
+    showToast("Inventory updated");
+  } else {
+    inventory.push(itemData);
+    showToast("Inventory item added");
+  }
 
-    saveState();
-    renderInventory();
-
-    inventoryPanel.classList.remove("show");
-    setTimeout(() => inventoryPanel.classList.add("hidden"), 250);
-  });
-}
+  saveState();
+  renderInventory();
+  closeInventoryPanel();
+});
 
 /* Delete inventory item */
 function deleteInventoryItem(index) {
@@ -665,6 +685,7 @@ function deleteInventoryItem(index) {
   inventory.splice(index, 1);
   saveState();
   renderInventory();
+  showToast("Inventory item deleted");
 }
 
 /* ---------------------------------------------------
@@ -679,30 +700,4 @@ function buildInventoryNameDatalist() {
     option.value = item.part;
     inventoryNameList.appendChild(option);
   });
-}
-
-/* ---------------------------------------------------
-   STICKY SAVE BUTTON SUPPORT (Option B)
-   Wrap save buttons in a footer container so CSS
-   can make them sticky at the bottom of the panel.
---------------------------------------------------- */
-
-function setupStickyFooter(buttonEl) {
-  if (!buttonEl) return;
-  const parent = buttonEl.parentElement;
-  if (!parent) return;
-
-  // Avoid double-wrapping
-  if (buttonEl.parentElement.classList.contains("panel-footer")) return;
-
-  const footer = document.createElement("div");
-  footer.className = "panel-footer";
-
-  parent.appendChild(footer);
-  parent.removeChild(buttonEl);
-  footer.appendChild(buttonEl);
-}
-
-// Run after everything is wired
-setupStickyFooter(savePartBtn);
-setupStickyFooter(saveInventoryBtn);
+     }
