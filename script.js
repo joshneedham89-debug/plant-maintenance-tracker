@@ -1,5 +1,6 @@
-let parts = [];
-let currentTons = 0;
+let parts = JSON.parse(localStorage.getItem("pm_parts")) || [];
+let currentTons = Number(localStorage.getItem("pm_tons")) || 0;
+
 let completingPartIndex = null;
 let completionPhotos = [];
 
