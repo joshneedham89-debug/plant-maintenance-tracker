@@ -3,7 +3,7 @@
 --------------------------------------------------- */
 const PARTS_KEY = "pm_parts";
 const TONS_KEY = "pm_tons";
-const CATEGORIES_KEY = "pm_categories";
+const INVENTORY_KEY = "pm_inventory";
 
 /* ---------------------------------------------------
    GLOBAL STATE
@@ -11,7 +11,11 @@ const CATEGORIES_KEY = "pm_categories";
 let parts = [];
 let currentTons = 0;
 let categories = [];
+let inventory = [];
 let activeScreen = "dashboardScreen";
+
+let editingPartIndex = null;
+let editingInventoryIndex = null;
 
 /* ---------------------------------------------------
    ELEMENT REFERENCES
@@ -31,8 +35,10 @@ const resetTonsBtn = document.getElementById("resetTonsBtn");
 const filterCategory = document.getElementById("filterCategory");
 const partsList = document.getElementById("partsList");
 const addPartBtn = document.getElementById("addPartBtn");
+const searchPartsInput = document.getElementById("searchPartsInput");
 
 const inventoryList = document.getElementById("inventoryList");
+const addInventoryBtn = document.getElementById("addInventoryBtn");
 
 /* AC Calculator */
 const ac_residual = document.getElementById("ac_residual");
@@ -52,6 +58,7 @@ const resetAllBtn = document.getElementById("resetAllBtn");
 /* Add Part Slide Panel */
 const addPartPanel = document.getElementById("addPartPanel");
 const closePartPanel = document.getElementById("closePartPanel");
+const partPanelTitle = document.getElementById("partPanelTitle");
 
 const newPartName = document.getElementById("newPartName");
 const newPartCategory = document.getElementById("newPartCategory");
@@ -59,6 +66,19 @@ const newPartSection = document.getElementById("newPartSection");
 const newPartDays = document.getElementById("newPartDays");
 const newPartTons = document.getElementById("newPartTons");
 const savePartBtn = document.getElementById("savePartBtn");
+const inventoryNameList = document.getElementById("inventoryNameList");
+
+/* Inventory Slide Panel */
+const inventoryPanel = document.getElementById("inventoryPanel");
+const closeInventoryPanel = document.getElementById("closeInventoryPanel");
+const inventoryPanelTitle = document.getElementById("inventoryPanelTitle");
+
+const invPartName = document.getElementById("invPartName");
+const invCategory = document.getElementById("invCategory");
+const invLocation = document.getElementById("invLocation");
+const invQty = document.getElementById("invQty");
+const invNotes = document.getElementById("invNotes");
+const saveInventoryBtn = document.getElementById("saveInventoryBtn");
 
 /* ---------------------------------------------------
    INIT
@@ -67,11 +87,22 @@ function loadState() {
   parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
   currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
 
-  // Categories come from inventory.js (preloaded)
+  // Categories + default inventory come from inventory.js
   categories = PRELOADED_CATEGORIES;
 
+  const storedInventory = JSON.parse(localStorage.getItem(INVENTORY_KEY));
+  if (storedInventory && storedInventory.length) {
+    inventory = storedInventory;
+  } else {
+    inventory = PRELOADED_INVENTORY.slice();
+  }
+
   currentTonsInput.value = currentTons;
+
   buildCategoryDropdown();
+  buildInventoryCategoryDropdown();
+  buildInventoryNameDatalist();
+
   renderDashboard();
   renderParts();
   renderInventory();
@@ -85,6 +116,7 @@ loadState();
 function saveState() {
   localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
   localStorage.setItem(TONS_KEY, currentTons);
+  localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
 }
 
 /* ---------------------------------------------------
@@ -157,7 +189,15 @@ function buildCategoryDropdown() {
   });
 }
 
+function buildInventoryCategoryDropdown() {
+  invCategory.innerHTML = "";
+  categories.forEach(cat => {
+    invCategory.innerHTML += `<option value="${cat}">${cat}</option>`;
+  });
+}
+
 filterCategory.addEventListener("change", renderParts);
+searchPartsInput.addEventListener("input", renderParts);
 
 /* ---------------------------------------------------
    MAINTENANCE STATUS CALC
@@ -181,37 +221,86 @@ function calculateStatus(part) {
 }
 
 /* ---------------------------------------------------
-   RENDER PARTS
+   RENDER PARTS (with search + expand + status colors)
 --------------------------------------------------- */
 function renderParts() {
   const selected = filterCategory.value;
+  const query = searchPartsInput.value.toLowerCase().trim();
+
   partsList.innerHTML = "";
 
-  const filtered = selected === "ALL"
-    ? parts
-    : parts.filter(p => p.category === selected);
+  const filtered = parts.filter(p => {
+    const catMatch = selected === "ALL" || p.category === selected;
+    const searchMatch = !query ||
+      p.name.toLowerCase().includes(query) ||
+      p.category.toLowerCase().includes(query) ||
+      (p.section || "").toLowerCase().includes(query);
+    return catMatch && searchMatch;
+  });
 
   filtered.forEach((p, i) => {
     const st = calculateStatus(p);
 
     const card = document.createElement("div");
-    card.className = "part-card";
+    card.className = `part-card status-${st.status}`;
 
     card.innerHTML = `
-      <div class="part-name">${p.name}</div>
-      <div class="part-meta">${p.category} — ${p.section}</div>
-      <div class="part-meta">Last: ${p.date}</div>
-      <div class="part-meta">Interval: ${p.days} days / ${p.tonInterval} tons</div>
-      <div class="part-meta">Status: <b>${st.status.toUpperCase()}</b></div>
+      <div class="part-main" data-index="${i}">
+        <div>
+          <div class="part-name">${p.name}</div>
+          <div class="part-meta">${p.category} — ${p.section}</div>
+          <div class="part-meta">Last: ${p.date}</div>
+          <div class="part-meta">Interval: ${p.days} days / ${p.tonInterval} tons</div>
+          <div class="part-meta">Status: <b>${st.status.toUpperCase()}</b></div>
+        </div>
+        <div class="expand-icon">▼</div>
+      </div>
+      <div class="part-details hidden" data-details-index="${i}">
+        <div class="part-meta">Days since: ${Math.floor(st.daysSince)}</div>
+        <div class="part-meta">Tons since: ${st.tonsSince}</div>
 
-      <div class="part-actions">
-        <button onclick="deletePart(${i})">Delete</button>
+        <div class="part-actions">
+          <button class="edit-part-btn" data-index="${i}">Edit</button>
+          <button class="duplicate-part-btn" data-index="${i}">Duplicate</button>
+          <button class="delete-part-btn" data-index="${i}">Delete</button>
+        </div>
       </div>
     `;
 
     partsList.appendChild(card);
   });
 }
+
+/* Expand / collapse */
+partsList.addEventListener("click", (e) => {
+  const main = e.target.closest(".part-main");
+  if (main) {
+    const idx = main.dataset.index;
+    const details = partsList.querySelector(`.part-details[data-details-index="${idx}"]`);
+    if (details) {
+      details.classList.toggle("hidden");
+    }
+    return;
+  }
+
+  if (e.target.classList.contains("edit-part-btn")) {
+    const index = Number(e.target.dataset.index);
+    openPartForEdit(index);
+    return;
+  }
+
+  if (e.target.classList.contains("duplicate-part-btn")) {
+    const index = Number(e.target.dataset.index);
+    duplicatePart(index);
+    return;
+  }
+
+  if (e.target.classList.contains("delete-part-btn")) {
+    const index = Number(e.target.dataset.index);
+    deletePart(index);
+    return;
+  }
+});
 
 /* ---------------------------------------------------
    DELETE PART
@@ -221,6 +310,27 @@ function deletePart(index) {
   parts.splice(index, 1);
   saveState();
   renderParts();
+  renderDashboard();
+}
+
+/* ---------------------------------------------------
+   DUPLICATE PART
+--------------------------------------------------- */
+function duplicatePart(index) {
+  const original = parts[index];
+  if (!original) return;
+
+  const copy = {
+    ...original,
+    name: original.name + " (Copy)",
+    date: new Date().toISOString().split("T")[0],
+    lastTons: currentTons
+  };
+
+  parts.push(copy);
+  saveState();
+  renderParts();
+  renderDashboard();
 }
 
 /* ---------------------------------------------------
@@ -229,7 +339,7 @@ function deletePart(index) {
 function renderInventory() {
   inventoryList.innerHTML = "";
 
-  PRELOADED_INVENTORY.forEach(item => {
+  inventory.forEach((item, i) => {
     const card = document.createElement("div");
     card.className = "part-card";
 
@@ -238,11 +348,31 @@ function renderInventory() {
       <div class="part-meta">${item.category} — ${item.location}</div>
       <div class="part-meta">Qty: ${item.qty}</div>
       <div class="part-meta">${item.notes || ""}</div>
+      <div class="part-actions">
+        <button class="edit-inv-btn" data-index="${i}">Edit</button>
+        <button class="delete-inv-btn" data-index="${i}">Delete</button>
+      </div>
     `;
 
     inventoryList.appendChild(card);
   });
+
+  buildInventoryNameDatalist();
 }
+
+/* Inventory actions (edit / delete) */
+inventoryList.addEventListener("click", (e) => {
+  if (e.target.classList.contains("edit-inv-btn")) {
+    const index = Number(e.target.dataset.index);
+    openInventoryForEdit(index);
+    return;
+  }
+  if (e.target.classList.contains("delete-inv-btn")) {
+    const index = Number(e.target.dataset.index);
+    deleteInventoryItem(index);
+    return;
+  }
+});
 
 /* ---------------------------------------------------
    EXPORT FULL DATA
@@ -251,7 +381,7 @@ exportBtn.addEventListener("click", () => {
   const data = {
     parts,
     tons: currentTons,
-    inventory: PRELOADED_INVENTORY
+    inventory
   };
 
   const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -295,34 +425,70 @@ acCalcBtn.addEventListener("click", () => {
 });
 
 /* ---------------------------------------------------
-   ADD PART — SLIDE-UP PANEL LOGIC
+   ADD / EDIT PART — SLIDE-UP PANEL LOGIC
 --------------------------------------------------- */
 
-// OPEN PANEL
-addPartBtn.addEventListener("click", () => {
+function openPartPanel(isEdit, index) {
+  editingPartIndex = isEdit ? index : null;
+
+  // Title
+  partPanelTitle.textContent = isEdit ? "Edit Part" : "Add New Part";
+
+  // Categories
   newPartCategory.innerHTML = "";
   categories.forEach(c => {
     newPartCategory.innerHTML += `<option value="${c}">${c}</option>`;
   });
 
-  addPartPanel.classList.remove("hidden");
+  // Prefill if editing
+  if (isEdit && parts[index]) {
+    const p = parts[index];
+    newPartName.value = p.name;
+    newPartCategory.value = p.category;
+    newPartSection.value = p.section || "";
+    newPartDays.value = p.days;
+    newPartTons.value = p.tonInterval;
+  } else {
+    newPartName.value = "";
+    newPartSection.value = "";
+    newPartDays.value = "";
+    newPartTons.value = "";
+    if (categories.length) newPartCategory.value = categories[0];
+  }
 
-  // Add small async delay to trigger animation correctly
+  // Show panel
+  addPartPanel.classList.remove("hidden");
   setTimeout(() => {
     addPartPanel.classList.add("show");
   }, 20);
+}
+
+addPartBtn.addEventListener("click", () => {
+  openPartPanel(false, null);
 });
 
-// CLOSE PANEL
+function openPartForEdit(index) {
+  openPartPanel(true, index);
+}
+
+/* Close panel */
 closePartPanel.addEventListener("click", () => {
   addPartPanel.classList.remove("show");
-
   setTimeout(() => {
     addPartPanel.classList.add("hidden");
   }, 250);
 });
 
-// SAVE NEW PART
+/* When selecting part name from inventory, auto-set category */
+newPartName.addEventListener("change", () => {
+  const name = newPartName.value.toLowerCase().trim();
+  const match = inventory.find(item => item.part.toLowerCase() === name);
+  if (match) {
+    newPartCategory.value = match.category;
+  }
+});
+
+/* Save part (add or edit) */
 savePartBtn.addEventListener("click", () => {
   const name = newPartName.value.trim();
   const category = newPartCategory.value;
@@ -335,27 +501,132 @@ savePartBtn.addEventListener("click", () => {
     return;
   }
 
-  const newPart = {
-    name,
-    category,
-    section,
-    days,
-    tonInterval,
-    date: new Date().toISOString().split("T")[0],
-    lastTons: currentTons
-  };
+  if (editingPartIndex !== null && parts[editingPartIndex]) {
+    // Edit existing
+    const existing = parts[editingPartIndex];
+    parts[editingPartIndex] = {
+      ...existing,
+      name,
+      category,
+      section,
+      days,
+      tonInterval
+    };
+  } else {
+    // New part
+    const newPart = {
+      name,
+      category,
+      section,
+      days,
+      tonInterval,
+      date: new Date().toISOString().split("T")[0],
+      lastTons: currentTons
+    };
+    parts.push(newPart);
+  }
 
-  parts.push(newPart);
   saveState();
   renderParts();
+  renderDashboard();
 
-  // Close Panel After Save
   addPartPanel.classList.remove("show");
   setTimeout(() => addPartPanel.classList.add("hidden"), 250);
-
-  // Clear Inputs
-  newPartName.value = "";
-  newPartSection.value = "";
-  newPartDays.value = "";
-  newPartTons.value = "";
 });
+
+/* ---------------------------------------------------
+   INVENTORY – SLIDE-UP PANEL LOGIC
+--------------------------------------------------- */
+
+function openInventoryPanel(isEdit, index) {
+  editingInventoryIndex = isEdit ? index : null;
+  inventoryPanelTitle.textContent = isEdit ? "Edit Inventory Item" : "Add Inventory Item";
+
+  // Rebuild categories
+  buildInventoryCategoryDropdown();
+
+  if (isEdit && inventory[index]) {
+    const item = inventory[index];
+    invPartName.value = item.part;
+    invCategory.value = item.category;
+    invLocation.value = item.location || "";
+    invQty.value = item.qty;
+    invNotes.value = item.notes || "";
+  } else {
+    invPartName.value = "";
+    invLocation.value = "";
+    invQty.value = "";
+    invNotes.value = "";
+    if (categories.length) invCategory.value = categories[0];
+  }
+
+  inventoryPanel.classList.remove("hidden");
+  setTimeout(() => {
+    inventoryPanel.classList.add("show");
+  }, 20);
+}
+
+addInventoryBtn.addEventListener("click", () => {
+  openInventoryPanel(false, null);
+});
+
+function openInventoryForEdit(index) {
+  openInventoryPanel(true, index);
+}
+
+closeInventoryPanel.addEventListener("click", () => {
+  inventoryPanel.classList.remove("show");
+  setTimeout(() => {
+    inventoryPanel.classList.add("hidden");
+  }, 250);
+});
+
+/* Save inventory item */
+saveInventoryBtn.addEventListener("click", () => {
+  const part = invPartName.value.trim();
+  const category = invCategory.value;
+  const location = invLocation.value.trim();
+  const qty = Number(invQty.value);
+  const notes = invNotes.value.trim();
+
+  if (!part || !category || !location || !qty) {
+    alert("Please fill required fields (part, category, location, qty).");
+    return;
+  }
+
+  const itemData = { part, category, location, qty, notes };
+
+  if (editingInventoryIndex !== null && inventory[editingInventoryIndex]) {
+    inventory[editingInventoryIndex] = itemData;
+  } else {
+    inventory.push(itemData);
+  }
+
+  saveState();
+  renderInventory();
+
+  inventoryPanel.classList.remove("show");
+  setTimeout(() => inventoryPanel.classList.add("hidden"), 250);
+});
+
+/* Delete inventory item */
+function deleteInventoryItem(index) {
+  if (!confirm("Delete this inventory item?")) return;
+  inventory.splice(index, 1);
+  saveState();
+  renderInventory();
+}
+
+/* ---------------------------------------------------
+   INVENTORY NAME DATALIST (for syncing into parts)
+--------------------------------------------------- */
+
+function buildInventoryNameDatalist() {
+  if (!inventoryNameList) return;
+  inventoryNameList.innerHTML = "";
+  inventory.forEach(item => {
+    const option = document.createElement("option");
+    option.value = item.part;
+    inventoryNameList.appendChild(option);
+  });
+}
