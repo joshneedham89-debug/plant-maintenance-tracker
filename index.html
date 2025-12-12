@@ -55,6 +55,13 @@
       <h2 class="section-title">Maintenance</h2>
 
       <div class="card">
+        <label>Search Parts</label>
+        <input
+          id="searchPartsInput"
+          type="text"
+          placeholder="Search by name, category, or section"
+        >
+
         <label>Filter by Category</label>
         <select id="filterCategory"></select>
 
@@ -67,6 +74,10 @@
     <!-- ---------------- INVENTORY SCREEN ---------------- -->
     <section id="inventoryScreen" class="screen">
       <h2 class="section-title">Inventory</h2>
+
+      <div class="card">
+        <button id="addInventoryBtn" class="primary-btn full">+ Add Inventory Item</button>
+      </div>
 
       <div id="inventoryList"></div>
     </section>
@@ -123,18 +134,20 @@
   </div>
 
   <!-- ---------------------------------------------------------
-       ADD PART SLIDE-UP PANEL (Option C2 – Dark Theme)
+       ADD / EDIT PART SLIDE-UP PANEL
   ---------------------------------------------------------- -->
   <div id="addPartPanel" class="slide-panel hidden">
     <div class="slide-panel-header">
-      <h3>Add New Part</h3>
+      <h3 id="partPanelTitle">Add New Part</h3>
       <button id="closePartPanel" class="close-btn">✖</button>
     </div>
 
     <div class="slide-panel-body">
 
       <label>Part Name</label>
-      <input id="newPartName" type="text">
+      <input id="newPartName" type="text" list="inventoryNameList">
+
+      <datalist id="inventoryNameList"></datalist>
 
       <label>Category</label>
       <select id="newPartCategory"></select>
@@ -149,6 +162,36 @@
       <input id="newPartTons" type="number">
 
       <button id="savePartBtn" class="primary-btn full">Save Part</button>
+    </div>
+  </div>
+
+  <!-- ---------------------------------------------------------
+       ADD / EDIT INVENTORY SLIDE-UP PANEL
+  ---------------------------------------------------------- -->
+  <div id="inventoryPanel" class="slide-panel hidden">
+    <div class="slide-panel-header">
+      <h3 id="inventoryPanelTitle">Add Inventory Item</h3>
+      <button id="closeInventoryPanel" class="close-btn">✖</button>
+    </div>
+
+    <div class="slide-panel-body">
+
+      <label>Part Name</label>
+      <input id="invPartName" type="text">
+
+      <label>Category</label>
+      <select id="invCategory"></select>
+
+      <label>Location</label>
+      <input id="invLocation" type="text">
+
+      <label>Quantity</label>
+      <input id="invQty" type="number">
+
+      <label>Notes</label>
+      <input id="invNotes" type="text">
+
+      <button id="saveInventoryBtn" class="primary-btn full">Save Inventory Item</button>
     </div>
   </div>
 
