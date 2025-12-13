@@ -218,46 +218,54 @@
     </div>
   </div>
 
-  <!-- COMPLETE MAINTENANCE PANEL -->
-  <div id="completePanelOverlay" class="panel-overlay hidden">
-    <div id="completePanel" class="slide-panel">
-      <div class="slide-panel-header">
-        <h3>Complete Maintenance</h3>
-        <button id="closeCompletePanel" class="close-btn">✖</button>
-      </div>
+  <!-<!-- COMPLETE MAINTENANCE PANEL -->
+<div id="completePanelOverlay" class="panel-overlay hidden">
+  <div id="completePanel" class="slide-panel">
+    <div class="slide-panel-header">
+      <h3>Complete Maintenance</h3>
+      <button id="closeCompletePanel" class="close-btn">✖</button>
+    </div>
 
-      <div class="slide-panel-body">
-        <label>Completion Date</label>
-        <input id="compDate" type="date">
+    <div class="slide-panel-body">
+      <label>Completion Date</label>
+      <input id="compDate" type="date">
 
-        <label>Tons at Completion</label>
-        <input id="compTons" type="number">
+      <label>Tons at Completion</label>
+      <input id="compTons" type="number">
 
-        <label>Notes</label>
-        <input id="compNotes" type="text">
+      <label>Notes</label>
+      <input id="compNotes" type="text">
 
-        <h4 class="subheading">Inventory Used (optional)</h4>
+      <!-- ✅ PHASE 3 ADDITION -->
+      <button
+        id="addMaintenancePhotosBtn"
+        class="secondary-btn full"
+      >
+        📷 Add Photos (optional)
+      </button>
 
-        <label>Inventory Item</label>
-        <select id="compInvSelect"></select>
+      <h4 class="subheading">Inventory Used (optional)</h4>
 
-        <label>Quantity Used</label>
-        <input id="compInvQty" type="number" min="1" value="1">
+      <label>Inventory Item</label>
+      <select id="compInvSelect"></select>
 
-        <button id="compAddItemBtn" class="secondary-btn full">
-          + Add Used Item
+      <label>Quantity Used</label>
+      <input id="compInvQty" type="number" min="1" value="1">
+
+      <button id="compAddItemBtn" class="secondary-btn full">
+        + Add Used Item
+      </button>
+
+      <div id="compUsedList" class="used-items-list"></div>
+
+      <div class="panel-footer">
+        <button id="saveCompletionBtn" class="primary-btn full">
+          Save Maintenance
         </button>
-
-        <div id="compUsedList" class="used-items-list"></div>
-
-        <div class="panel-footer">
-          <button id="saveCompletionBtn" class="primary-btn full">
-            Save Maintenance
-          </button>
-        </div>
       </div>
     </div>
   </div>
+</div>
 
   <!-- TOAST -->
   <div id="toastContainer" class="toast"></div>
