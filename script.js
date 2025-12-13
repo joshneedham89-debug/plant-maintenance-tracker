@@ -771,11 +771,50 @@ const ENABLE_PHASE_3_PHOTOS = true;
 /* Extend completion save WITHOUT altering Phase 2 flow */
 if (ENABLE_PHASE_3_PHOTOS) {
 
-  const originalSaveCompletion = saveCompletionBtn.onclick;
+  /* ===================================================
+   PHASE 3A – STEP 1 (FIXED)
+   Photo support for maintenance history (DATA ONLY)
+=================================================== */
 
-  saveCompletionBtn.onclick = async () => {
+const ENABLE_PHASE_3_PHOTOS = true;
+
+if (ENABLE_PHASE_3_PHOTOS) {
+
+  saveCompletionBtn?.addEventListener("click", async () => {
     const p = parts[completingPartIndex];
-    if (!p) return;
+    if (!p || !Array.isArray(p.history) || !p.history.length) return;
+
+    let photos = [];
+
+    if (!confirm("Add photos to this maintenance?")) return;
+
+    const picker = document.createElement("input");
+    picker.type = "file";
+    picker.accept = "image/*";
+    picker.multiple = true;
+
+    await new Promise(resolve => {
+      picker.onchange = async () => {
+        for (const file of picker.files) {
+          const reader = new FileReader();
+          const base64 = await new Promise(r => {
+            reader.onload = e => r(e.target.result);
+            reader.readAsDataURL(file);
+          });
+          photos.push(base64);
+        }
+        resolve();
+      };
+      picker.click();
+    });
+
+    const last = p.history[p.history.length - 1];
+    last.photos = photos;
+
+    saveState();
+  });
+
+}
 
     /* Ask user ONLY after they complete maintenance */
     let photos = [];
