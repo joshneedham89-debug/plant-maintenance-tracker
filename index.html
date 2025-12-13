@@ -49,7 +49,6 @@
         </div>
       </div>
 
-      <!-- Tons Update -->
       <div class="card">
         <h3>Update Tons</h3>
         <input id="currentTonsInput" type="number" placeholder="Enter current tons" />
@@ -159,10 +158,8 @@
       </div>
 
       <div class="slide-panel-body">
-
         <label>Part Name</label>
         <input id="newPartName" type="text" list="inventoryNameList">
-
         <datalist id="inventoryNameList"></datalist>
 
         <label>Category</label>
@@ -193,7 +190,6 @@
       </div>
 
       <div class="slide-panel-body">
-
         <label>Part Name</label>
         <input id="invPartName" type="text">
 
@@ -236,6 +232,17 @@
         <label>Notes</label>
         <input id="compNotes" type="text">
 
+        <!-- ===== PHASE 3A PHOTOS ===== -->
+        <label>Photos (optional)</label>
+        <input
+          id="compPhotoInput"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          multiple
+        />
+        <div id="photoPreview" class="photo-preview"></div>
+
         <h4 class="subheading">Inventory Used (optional)</h4>
 
         <label>Inventory Item</label>
@@ -257,6 +264,11 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- PHOTO VIEWER -->
+  <div id="photoViewer" class="photo-viewer hidden">
+    <img id="photoViewerImg">
   </div>
 
   <!-- TOAST -->
