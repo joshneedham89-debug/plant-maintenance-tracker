@@ -1,5 +1,5 @@
 /* ---------------------------------------------------
-   GLOBAL THEME
+   Global Theme
 --------------------------------------------------- */
 :root {
   --bg: #0f1724;
@@ -7,6 +7,7 @@
   --card: #1a2537;
   --card-light: #f3f4f6;
   --accent: #4caf50;
+  --yellow: #fff7cd;
   --muted: #94a3b8;
   --danger: #cc3333;
 }
@@ -25,8 +26,9 @@ body {
 }
 
 /* ---------------------------------------------------
-   HEADER
+   Headers / Titles
 --------------------------------------------------- */
+
 .app-header {
   display: flex;
   align-items: center;
@@ -49,8 +51,9 @@ body {
 }
 
 /* ---------------------------------------------------
-   CARDS
+   Cards
 --------------------------------------------------- */
+
 .card {
   background: var(--card);
   padding: 14px;
@@ -63,6 +66,11 @@ body {
   color: #000;
 }
 
+.card h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
 label {
   font-size: 14px;
   margin-top: 8px;
@@ -70,6 +78,7 @@ label {
   color: var(--muted);
 }
 
+/* Inputs */
 input,
 select {
   width: 100%;
@@ -77,13 +86,19 @@ select {
   border-radius: 8px;
   border: none;
   margin-top: 4px;
+  background: #ffffff;
   font-size: 15px;
   box-sizing: border-box;
 }
 
+.card.light input {
+  background: var(--yellow);
+}
+
 /* ---------------------------------------------------
-   BUTTONS
+   Buttons
 --------------------------------------------------- */
+
 .primary-btn {
   background: var(--accent);
   color: #fff;
@@ -103,6 +118,7 @@ select {
   border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
+  margin-top: 10px;
 }
 
 .danger-btn {
@@ -111,6 +127,7 @@ select {
   padding: 12px;
   border-radius: 10px;
   font-weight: 700;
+  margin-top: 12px;
   border: none;
 }
 
@@ -119,11 +136,12 @@ select {
 }
 
 /* ---------------------------------------------------
-   STATS GRID
+   Stats Grid
 --------------------------------------------------- */
+
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   padding: 0 12px;
 }
@@ -148,8 +166,122 @@ select {
 }
 
 /* ---------------------------------------------------
-   SCREENS
+   Parts List
 --------------------------------------------------- */
+
+.part-card {
+  background: var(--card);
+  padding: 14px;
+  margin: 12px;
+  border-radius: 12px;
+  border-left: 5px solid transparent;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+/* Status colors */
+.part-card.status-ok {
+  border-left-color: #2ecc71;
+}
+
+.part-card.status-due {
+  border-left-color: #f1c40f;
+}
+
+.part-card.status-overdue {
+  border-left-color: #e74c3c;
+}
+
+.part-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.part-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.part-meta {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.expand-icon {
+  font-size: 18px;
+  margin-left: 10px;
+}
+
+/* Smooth expand/collapse */
+.part-details {
+  margin-top: 8px;
+  border-top: 1px solid #223049;
+  padding-top: 8px;
+
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.25s ease;
+}
+
+.part-details.expanded {
+  max-height: 260px;
+  opacity: 1;
+}
+
+.part-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.part-actions button {
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* History section */
+.part-history {
+  margin-top: 8px;
+}
+
+.part-history .part-meta {
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------
+   AC Calculator
+--------------------------------------------------- */
+
+.result-card {
+  background: #dff7df;
+  color: #000;
+  margin: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 6px solid var(--accent);
+  font-size: 16px;
+}
+
+.result-card h3 {
+  margin-top: 0;
+}
+
+.result-card span {
+  font-weight: 800;
+  color: #0a4f0a;
+}
+
+/* ---------------------------------------------------
+   Screens
+--------------------------------------------------- */
+
 .screen {
   display: none;
 }
@@ -159,8 +291,9 @@ select {
 }
 
 /* ---------------------------------------------------
-   BOTTOM NAV
+   Bottom Navigation
 --------------------------------------------------- */
+
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -190,13 +323,28 @@ select {
   font-weight: 700;
 }
 
+.nav-btn br {
+  line-height: 0;
+}
+
 /* ---------------------------------------------------
-   PANELS
+   Maintenance Sticky Header
 --------------------------------------------------- */
+
+.maintenance-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+
+/* ---------------------------------------------------
+   OVERLAYS + SLIDE PANELS
+--------------------------------------------------- */
+
 .panel-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -209,6 +357,7 @@ select {
   background: var(--card);
   border-top-left-radius: 18px;
   border-top-right-radius: 18px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
   padding: 18px;
   transform: translateY(110%);
   transition: transform 0.35s ease-out;
@@ -218,66 +367,118 @@ select {
   transform: translateY(0);
 }
 
-.hidden {
-  display: none;
+.slide-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-right: 8px;
+}
+
+.slide-panel-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.close-btn {
+  background: none;
+  color: var(--text);
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.slide-panel-body {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+/* Inputs inside panel should always fit */
+.slide-panel input,
+.slide-panel select {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* ---------------------------------------------------
-   TOAST
+   Sticky footer for slide panel save buttons
 --------------------------------------------------- */
+
+.panel-footer {
+  position: sticky;
+  bottom: 0;
+  padding-top: 12px;
+  background: linear-gradient(to top, rgba(15, 23, 36, 0.96), transparent);
+}
+
+.panel-footer .primary-btn {
+  margin-top: 0;
+  width: 100%;
+}
+
+/* ---------------------------------------------------
+   Inventory Adjustments
+--------------------------------------------------- */
+
+.part-card .edit-inv-btn,
+.part-card .delete-inv-btn {
+  font-size: 13px;
+}
+
+/* Complete panel extras */
+.subheading {
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.used-items-list {
+  margin-top: 8px;
+}
+
+.used-items-list .part-meta {
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------
+   TOAST NOTIFICATIONS
+--------------------------------------------------- */
+
 .toast {
   position: fixed;
   bottom: 90px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(20px);
   padding: 10px 18px;
   border-radius: 999px;
   background: #111827;
   color: #fff;
   font-size: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   opacity: 0;
-  transition: opacity 0.25s ease;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 2100;
 }
 
 .toast.show {
   opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
-/* ===================================================
-   PHASE 3 – PHOTOS (SAFE ADDITION)
-=================================================== */
-.part-history-photos {
-  display: flex;
-  gap: 8px;
-  margin-top: 6px;
-  flex-wrap: wrap;
+.toast.success {
+  background: var(--accent);
 }
 
-.part-history-photos img {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 2px solid #1f2937;
+.toast.error {
+  background: var(--danger);
 }
 
-.photo-viewer {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
+/* ---------------------------------------------------
+   Utility
+--------------------------------------------------- */
 
-.photo-viewer.hidden {
+.hidden {
   display: none;
-}
-
-.photo-viewer img {
-  max-width: 95%;
-  max-height: 95%;
-  border-radius: 10px;
 }
