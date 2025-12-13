@@ -759,3 +759,61 @@ resetAllBtn?.addEventListener("click", () => {
   showToast("Reset complete");
   location.reload();
 });
+
+/* ===================================================
+   PHASE 3A – STEP 1
+   Photo support for maintenance history (DATA ONLY)
+=================================================== */
+
+/* Feature flag (safety switch) */
+const ENABLE_PHASE_3_PHOTOS = true;
+
+/* Extend completion save WITHOUT altering Phase 2 flow */
+if (ENABLE_PHASE_3_PHOTOS) {
+
+  const originalSaveCompletion = saveCompletionBtn.onclick;
+
+  saveCompletionBtn.onclick = async () => {
+    const p = parts[completingPartIndex];
+    if (!p) return;
+
+    /* Ask user ONLY after they complete maintenance */
+    let photos = [];
+
+    if (confirm("Add photos to this maintenance?")) {
+      const picker = document.createElement("input");
+      picker.type = "file";
+      picker.accept = "image/*";
+      picker.multiple = true;
+
+      await new Promise(resolve => {
+        picker.onchange = async () => {
+          for (const file of picker.files) {
+            const img = new Image();
+            const reader = new FileReader();
+
+            const base64 = await new Promise(r => {
+              reader.onload = e => r(e.target.result);
+              reader.readAsDataURL(file);
+            });
+
+            photos.push(base64);
+          }
+          resolve();
+        };
+        picker.click();
+      });
+    }
+
+    /* Call original Phase 2 save */
+    originalSaveCompletion();
+
+    /* Attach photos to LAST history entry only */
+    const last = p.history?.[p.history.length - 1];
+    if (last) {
+      last.photos = photos;
+      saveState();
+    }
+  };
+
+}
