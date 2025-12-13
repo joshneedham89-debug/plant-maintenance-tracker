@@ -1,9 +1,251 @@
-/* --- existing styles unchanged above --- */
+/* ---------------------------------------------------
+   GLOBAL THEME
+--------------------------------------------------- */
+:root {
+  --bg: #0f1724;
+  --text: #ffffff;
+  --card: #1a2537;
+  --card-light: #f3f4f6;
+  --accent: #4caf50;
+  --muted: #94a3b8;
+  --danger: #cc3333;
+}
 
-/* ===============================
-   PHASE 3 – PHOTOS (SAFE)
-=============================== */
+body {
+  margin: 0;
+  font-family: system-ui, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
 
+.app-container {
+  padding-bottom: 80px;
+  max-width: 900px;
+  margin: auto;
+}
+
+/* ---------------------------------------------------
+   HEADER
+--------------------------------------------------- */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #08101f;
+  border-bottom: 1px solid #142034;
+}
+
+.app-header .logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+}
+
+.section-title {
+  margin: 18px 0 10px 12px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------
+   CARDS
+--------------------------------------------------- */
+.card {
+  background: var(--card);
+  padding: 14px;
+  margin: 12px;
+  border-radius: 12px;
+}
+
+.card.light {
+  background: var(--card-light);
+  color: #000;
+}
+
+label {
+  font-size: 14px;
+  margin-top: 8px;
+  display: block;
+  color: var(--muted);
+}
+
+input,
+select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  margin-top: 4px;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+/* ---------------------------------------------------
+   BUTTONS
+--------------------------------------------------- */
+.primary-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.secondary-btn {
+  background: #ffffff20;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.danger-btn {
+  background: var(--danger);
+  color: #fff;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: none;
+}
+
+.full {
+  width: 100%;
+}
+
+/* ---------------------------------------------------
+   STATS GRID
+--------------------------------------------------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 12px;
+}
+
+.stat-card {
+  background: var(--card);
+  padding: 10px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 6px;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------
+   SCREENS
+--------------------------------------------------- */
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* ---------------------------------------------------
+   BOTTOM NAV
+--------------------------------------------------- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  max-width: 900px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #08101f;
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0;
+  border-top: 1px solid #142034;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: #ffffff80;
+  font-size: 14px;
+  padding: 6px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.nav-btn.active {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------
+   PANELS
+--------------------------------------------------- */
+.panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1900;
+}
+
+.slide-panel {
+  width: 100%;
+  max-width: 480px;
+  background: var(--card);
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  padding: 18px;
+  transform: translateY(110%);
+  transition: transform 0.35s ease-out;
+}
+
+.slide-panel.show {
+  transform: translateY(0);
+}
+
+.hidden {
+  display: none;
+}
+
+/* ---------------------------------------------------
+   TOAST
+--------------------------------------------------- */
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+/* ===================================================
+   PHASE 3 – PHOTOS (SAFE ADDITION)
+=================================================== */
 .part-history-photos {
   display: flex;
   gap: 8px;
