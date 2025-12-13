@@ -759,3 +759,49 @@ resetAllBtn?.addEventListener("click", () => {
   showToast("Reset complete");
   location.reload();
 });
+
+/* ===================================================
+   PHASE 3A – STEP 1 (APPEND ONLY)
+   Attach photos to maintenance history (DATA ONLY)
+   Phase 2 code above is UNCHANGED
+=================================================== */
+
+const ENABLE_PHASE_3_PHOTOS = true;
+
+if (ENABLE_PHASE_3_PHOTOS) {
+
+  saveCompletionBtn?.addEventListener("click", async () => {
+    const p = parts[completingPartIndex];
+    if (!p || !Array.isArray(p.history) || !p.history.length) return;
+
+    if (!confirm("Add photos to this maintenance?")) return;
+
+    const photos = [];
+    const picker = document.createElement("input");
+    picker.type = "file";
+    picker.accept = "image/*";
+    picker.multiple = true;
+
+    await new Promise(resolve => {
+      picker.onchange = async () => {
+        for (const file of picker.files) {
+          const reader = new FileReader();
+          const base64 = await new Promise(r => {
+            reader.onload = e => r(e.target.result);
+            reader.readAsDataURL(file);
+          });
+          photos.push(base64);
+        }
+        resolve();
+      };
+      picker.click();
+    });
+
+    // Attach photos to LAST history entry only
+    const last = p.history[p.history.length - 1];
+    last.photos = photos;
+
+    saveState();
+  });
+
+}
