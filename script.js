@@ -42,15 +42,13 @@ const resetTonsBtn = document.getElementById("resetTonsBtn");
 /* Maintenance */
 const filterCategory = document.getElementById("filterCategory");
 const partsList = document.getElementById("partsList");
-const addPartBtn = document.getElementById("addPartBtn");
 const searchPartsInput = document.getElementById("searchPartsInput");
 
 /* Inventory */
 const inventoryList = document.getElementById("inventoryList");
-const addInventoryBtn = document.getElementById("addInventoryBtn");
 const searchInventoryInput = document.getElementById("searchInventoryInput");
 
-/* AC Calculator */
+/* AC */
 const ac_residual = document.getElementById("ac_residual");
 const ac_rapPct = document.getElementById("ac_rapPct");
 const ac_target = document.getElementById("ac_target");
@@ -59,10 +57,6 @@ const ac_totalTons = document.getElementById("ac_totalTons");
 const acCalcBtn = document.getElementById("acCalcBtn");
 const ac_pumpRate = document.getElementById("ac_pumpRate");
 const ac_totalAc = document.getElementById("ac_totalAc");
-
-/* Settings */
-const exportBtn = document.getElementById("exportBtn");
-const resetAllBtn = document.getElementById("resetAllBtn");
 
 /* Complete Maintenance Panel */
 const completePanelOverlay = document.getElementById("completePanelOverlay");
@@ -89,7 +83,7 @@ const toastContainer = document.getElementById("toastContainer");
 function showToast(msg) {
   toastContainer.textContent = msg;
   toastContainer.classList.add("show");
-  setTimeout(() => toastContainer.classList.remove("show"), 2000);
+  setTimeout(() => toastContainer.classList.remove("show"), 2500);
 }
 
 /* ---------------------------------------------------
@@ -138,15 +132,19 @@ photoViewer?.addEventListener("click", () => {
 });
 
 /* ---------------------------------------------------
-   COMPLETE PANEL OPEN / CLOSE (FIX)
+   COMPLETE PANEL OPEN / CLOSE (FIXED)
 --------------------------------------------------- */
 function openCompletePanel(index) {
   completingPartIndex = index;
+
   compDate.value = new Date().toISOString().split("T")[0];
   compTons.value = currentTons;
   compNotes.value = "";
+
   completionPhotos = [];
   photoPreview.innerHTML = "";
+
+  completionUsedItems = [];
 
   completePanelOverlay.classList.remove("hidden");
   setTimeout(() => completePanel.classList.add("show"), 10);
@@ -166,9 +164,12 @@ function loadState() {
   parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
   inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY)) || [];
   currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
+
   currentTonsInput.value = currentTons;
+
   renderDashboard();
   renderParts();
+  renderInventory();
 }
 
 function saveState() {
@@ -180,7 +181,7 @@ function saveState() {
 loadState();
 
 /* ---------------------------------------------------
-   RENDER PARTS (FIXED COMPLETE BUTTON)
+   RENDER PARTS (COMPLETE BUTTON FIXED)
 --------------------------------------------------- */
 function renderParts() {
   partsList.innerHTML = "";
@@ -232,16 +233,30 @@ function renderDashboard() {
    AC CALCULATOR (UNCHANGED)
 --------------------------------------------------- */
 acCalcBtn?.addEventListener("click", () => {
-  const pump = Number(ac_tph.value) *
+  const pump =
+    Number(ac_tph.value) *
     ((Number(ac_target.value) / 100) -
-    ((Number(ac_rapPct.value) / 100) *
-     (Number(ac_residual.value) / 100)));
+      ((Number(ac_rapPct.value) / 100) *
+        (Number(ac_residual.value) / 100)));
 
-  const needed = Number(ac_totalTons.value) *
+  const needed =
+    Number(ac_totalTons.value) *
     ((Number(ac_target.value) / 100) -
-    ((Number(ac_rapPct.value) / 100) *
-     (Number(ac_residual.value) / 100)));
+      ((Number(ac_rapPct.value) / 100) *
+        (Number(ac_residual.value) / 100)));
 
   ac_pumpRate.textContent = pump.toFixed(3);
   ac_totalAc.textContent = needed.toFixed(2);
+});
+
+/* ---------------------------------------------------
+   SAFETY: CLOSE ALL PANELS ON LOAD
+--------------------------------------------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  document
+    .querySelectorAll(".panel-overlay")
+    .forEach(o => o.classList.add("hidden"));
+  document
+    .querySelectorAll(".slide-panel")
+    .forEach(p => p.classList.remove("show"));
 });
