@@ -761,9 +761,8 @@ resetAllBtn?.addEventListener("click", () => {
 });
 
 /* ===================================================
-   PHASE 3A – STEP 1 (APPEND ONLY)
+   PHASE 3A – STEP 1 (PHOTOS OPTIONAL)
    Attach photos to maintenance history (DATA ONLY)
-   Phase 2 code above is UNCHANGED
 =================================================== */
 
 const ENABLE_PHASE_3_PHOTOS = true;
@@ -774,7 +773,9 @@ if (ENABLE_PHASE_3_PHOTOS) {
     const p = parts[completingPartIndex];
     if (!p || !Array.isArray(p.history) || !p.history.length) return;
 
-    if (!confirm("Add photos to this maintenance?")) return;
+    // User choice — completely optional
+    const wantsPhotos = confirm("Would you like to add photos to this maintenance?");
+    if (!wantsPhotos) return;
 
     const photos = [];
     const picker = document.createElement("input");
@@ -784,6 +785,12 @@ if (ENABLE_PHASE_3_PHOTOS) {
 
     await new Promise(resolve => {
       picker.onchange = async () => {
+        // If user opens picker but selects nothing → still optional
+        if (!picker.files || !picker.files.length) {
+          resolve();
+          return;
+        }
+
         for (const file of picker.files) {
           const reader = new FileReader();
           const base64 = await new Promise(r => {
@@ -797,7 +804,9 @@ if (ENABLE_PHASE_3_PHOTOS) {
       picker.click();
     });
 
-    // Attach photos to LAST history entry only
+    // Only attach photos if at least one exists
+    if (!photos.length) return;
+
     const last = p.history[p.history.length - 1];
     last.photos = photos;
 
