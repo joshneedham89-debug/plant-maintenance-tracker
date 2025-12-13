@@ -1,123 +1,201 @@
-/* ===============================
-   PHASE 3 – SAFE PHOTOS
-   (no overlays touched)
-=============================== */
 
+/* ===================================================
+   PHASE 2 BASELINE + PHASE 3 (SAFE PHOTOS)
+=================================================== */
+
+/* ---------------- STORAGE ---------------- */
+const PARTS_KEY = "pm_parts";
+const INVENTORY_KEY = "pm_inventory";
+const TONS_KEY = "pm_tons";
+
+/* ---------------- STATE ---------------- */
+let parts = [];
+let inventory = [];
+let currentTons = 0;
+let completingPartIndex = null;
+
+/* ---------------- ELEMENTS ---------------- */
+const screens = document.querySelectorAll(".screen");
+const navButtons = document.querySelectorAll(".nav-btn");
+
+const partsList = document.getElementById("partsList");
+const inventoryList = document.getElementById("inventoryList");
+
+const tonsRunEl = document.getElementById("tonsRun");
+const currentTonsInput = document.getElementById("currentTonsInput");
+
+const updateTonsBtn = document.getElementById("updateTonsBtn");
+const resetTonsBtn = document.getElementById("resetTonsBtn");
+
+/* Complete panel */
+const completePanelOverlay = document.getElementById("completePanelOverlay");
+const completePanel = document.getElementById("completePanel");
+const closeCompletePanelBtn = document.getElementById("closeCompletePanel");
+const saveCompletionBtn = document.getElementById("saveCompletionBtn");
+const compDate = document.getElementById("compDate");
+const compTons = document.getElementById("compTons");
+const compNotes = document.getElementById("compNotes");
+
+/* Toast */
+const toast = document.getElementById("toastContainer");
+
+/* ---------------- NAV ---------------- */
+function showScreen(id) {
+  screens.forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  navButtons.forEach(b =>
+    b.classList.toggle("active", b.dataset.screen === id)
+  );
+}
+
+navButtons.forEach(btn => {
+  btn.addEventListener("click", () => showScreen(btn.dataset.screen));
+});
+
+/* ---------------- LOAD / SAVE ---------------- */
+function saveState() {
+  localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
+  localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
+  localStorage.setItem(TONS_KEY, currentTons);
+}
+
+function loadState() {
+  parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
+  inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY)) || [];
+  currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
+  currentTonsInput.value = currentTons;
+  renderDashboard();
+  renderParts();
+  renderInventory();
+}
+
+/* ---------------- DASHBOARD ---------------- */
+function renderDashboard() {
+  tonsRunEl.textContent = currentTons;
+}
+
+/* ---------------- PARTS ---------------- */
+function renderParts() {
+  partsList.innerHTML = "";
+  parts.forEach((p, index) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <strong>${p.name || "Part"}</strong>
+      <button class="primary-btn full">Complete</button>
+    `;
+    card.querySelector("button").onclick = () => openCompletePanel(index);
+    partsList.appendChild(card);
+  });
+}
+
+/* ---------------- INVENTORY ---------------- */
+function renderInventory() {
+  inventoryList.innerHTML = "";
+  inventory.forEach(i => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.textContent = `${i.part} (${i.qty})`;
+    inventoryList.appendChild(div);
+  });
+}
+
+/* ---------------- TONS ---------------- */
+updateTonsBtn.onclick = () => {
+  currentTons = Number(currentTonsInput.value) || 0;
+  saveState();
+  renderDashboard();
+};
+
+resetTonsBtn.onclick = () => {
+  currentTons = 0;
+  currentTonsInput.value = 0;
+  saveState();
+  renderDashboard();
+};
+
+/* ---------------- COMPLETE PANEL ---------------- */
+function openCompletePanel(index) {
+  completingPartIndex = index;
+  compDate.value = new Date().toISOString().split("T")[0];
+  compTons.value = currentTons;
+  compNotes.value = "";
+  completePanelOverlay.classList.remove("hidden");
+  setTimeout(() => completePanel.classList.add("show"), 10);
+}
+
+function closeCompletePanel() {
+  completePanel.classList.remove("show");
+  completePanelOverlay.classList.add("hidden");
+}
+
+closeCompletePanelBtn.onclick = closeCompletePanel;
+
+/* ---------------- PHASE 3: PHOTOS (SAFE) ---------------- */
 let photoViewer;
 let photoViewerImg;
 
 document.addEventListener("DOMContentLoaded", () => {
-  // create viewer once
   photoViewer = document.createElement("div");
   photoViewer.className = "photo-viewer hidden";
-  photoViewer.innerHTML = `<img>`;
+  photoViewer.innerHTML = "<img>";
   document.body.appendChild(photoViewer);
   photoViewerImg = photoViewer.querySelector("img");
-
-  photoViewer.addEventListener("click", () => {
-    photoViewer.classList.add("hidden");
-  });
+  photoViewer.onclick = () => photoViewer.classList.add("hidden");
 });
 
-/* Image compression */
 function compressImage(file) {
   return new Promise(resolve => {
     const img = new Image();
-    const reader = new FileReader();
-
-    reader.onload = e => img.src = e.target.result;
+    const r = new FileReader();
+    r.onload = e => img.src = e.target.result;
     img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const scale = Math.min(1, 900 / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", 0.7));
+      const c = document.createElement("canvas");
+      const s = Math.min(1, 900 / img.width);
+      c.width = img.width * s;
+      c.height = img.height * s;
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      resolve(c.toDataURL("image/jpeg", 0.7));
     };
-
-    reader.readAsDataURL(file);
+    r.readAsDataURL(file);
   });
 }
 
-/* Hook into EXISTING saveCompletionBtn */
-saveCompletionBtn?.addEventListener("click", async () => {
+saveCompletionBtn.onclick = async () => {
   const p = parts[completingPartIndex];
   if (!p) return;
 
-  const date = compDate.value;
-  const tons = Number(compTons.value);
-  const notes = (compNotes.value || "").trim();
-
-  if (!date || isNaN(tons)) {
-    showToast("Enter date + tons", "error");
-    return;
-  }
-
-  // OPTIONAL photos
   let photos = [];
-  if (confirm("Add photos to this maintenance?")) {
+  if (confirm("Add photos?")) {
     const picker = document.createElement("input");
     picker.type = "file";
     picker.accept = "image/*";
     picker.multiple = true;
 
-    await new Promise(resolve => {
+    await new Promise(res => {
       picker.onchange = async () => {
-        for (const file of picker.files) {
-          const src = await compressImage(file);
-          photos.push(src);
+        for (const f of picker.files) {
+          photos.push(await compressImage(f));
         }
-        resolve();
+        res();
       };
       picker.click();
     });
   }
 
-  const historyEntry = {
-    date,
-    tons,
-    notes,
+  p.history = p.history || [];
+  p.history.push({
+    date: compDate.value,
+    tons: Number(compTons.value),
+    notes: compNotes.value,
     photos
-  };
-
-  if (!p.history) p.history = [];
-  p.history.push(historyEntry);
-
-  p.date = date;
-  p.lastTons = tons;
+  });
 
   saveState();
+  closeCompletePanel();
   renderParts();
   renderDashboard();
-  closeCompletePanel();
-  showToast("Maintenance logged");
-});
-
-/* Inject photos into history render */
-const _origRenderParts = renderParts;
-renderParts = function () {
-  _origRenderParts();
-
-  document.querySelectorAll(".part-details").forEach((details, idx) => {
-    const p = parts[idx];
-    if (!p || !Array.isArray(p.history)) return;
-
-    const last = p.history[p.history.length - 1];
-    if (!last || !last.photos || !last.photos.length) return;
-
-    const wrap = document.createElement("div");
-    wrap.className = "part-history-photos";
-
-    last.photos.forEach(src => {
-      const img = document.createElement("img");
-      img.src = src;
-      img.onclick = () => {
-        photoViewerImg.src = src;
-        photoViewer.classList.remove("hidden");
-      };
-      wrap.appendChild(img);
-    });
-
-    details.appendChild(wrap);
-  });
 };
+
+/* ---------------- INIT ---------------- */
+loadState();
