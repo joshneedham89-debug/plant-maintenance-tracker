@@ -761,23 +761,20 @@ resetAllBtn?.addEventListener("click", () => {
 });
 
 /* ===================================================
-   PHASE 3A – STEP 1 (PHOTOS OPTIONAL)
-   Attach photos to maintenance history (DATA ONLY)
+   PHASE 3A – OPTIONAL MAINTENANCE PHOTOS (BUTTON BASED)
 =================================================== */
 
 const ENABLE_PHASE_3_PHOTOS = true;
 
 if (ENABLE_PHASE_3_PHOTOS) {
 
-  saveCompletionBtn?.addEventListener("click", async () => {
-    const p = parts[completingPartIndex];
-    if (!p || !Array.isArray(p.history) || !p.history.length) return;
+  let pendingMaintenancePhotos = [];
 
-    // User choice — completely optional
-    const wantsPhotos = confirm("Would you like to add photos to this maintenance?");
-    if (!wantsPhotos) return;
+  const addPhotosBtn =
+    document.getElementById("addMaintenancePhotosBtn");
 
-    const photos = [];
+  // Button to add photos (optional)
+  addPhotosBtn?.addEventListener("click", async () => {
     const picker = document.createElement("input");
     picker.type = "file";
     picker.accept = "image/*";
@@ -785,7 +782,6 @@ if (ENABLE_PHASE_3_PHOTOS) {
 
     await new Promise(resolve => {
       picker.onchange = async () => {
-        // If user opens picker but selects nothing → still optional
         if (!picker.files || !picker.files.length) {
           resolve();
           return;
@@ -797,20 +793,31 @@ if (ENABLE_PHASE_3_PHOTOS) {
             reader.onload = e => r(e.target.result);
             reader.readAsDataURL(file);
           });
-          photos.push(base64);
+          pendingMaintenancePhotos.push(base64);
         }
         resolve();
       };
       picker.click();
     });
 
-    // Only attach photos if at least one exists
-    if (!photos.length) return;
+    showToast(`${pendingMaintenancePhotos.length} photo(s) added`);
+  });
 
-    const last = p.history[p.history.length - 1];
-    last.photos = photos;
+  // Attach photos AFTER maintenance is saved
+  saveCompletionBtn?.addEventListener("click", () => {
+    const p = parts[completingPartIndex];
+    if (!p || !Array.isArray(p.history) || !p.history.length) {
+      pendingMaintenancePhotos = [];
+      return;
+    }
 
-    saveState();
+    if (pendingMaintenancePhotos.length) {
+      const last = p.history[p.history.length - 1];
+      last.photos = pendingMaintenancePhotos.slice();
+      saveState();
+    }
+
+    pendingMaintenancePhotos = [];
   });
 
 }
