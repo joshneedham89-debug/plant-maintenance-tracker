@@ -53,35 +53,33 @@
       <div id="partsList"></div>
     </section>
 
-    <!-- INVENTORY -->
-    <section id="inventoryScreen" class="screen">
-      <h2 class="section-title">Inventory</h2>
-      <div class="card">
-        <input id="searchInventoryInput" type="text">
-        <button id="addInventoryBtn" class="primary-btn full">+ Add Inventory Item</button>
-      </div>
-      <div id="inventoryList"></div>
-    </section>
-
-    <!-- SETTINGS -->
-    <section id="settingsScreen" class="screen">
-      <h2 class="section-title">Settings</h2>
-      <div class="card">
-        <button id="exportBtn" class="primary-btn full">Export Data</button>
-        <button id="resetAllBtn" class="danger-btn full">Reset Entire App</button>
-      </div>
-    </section>
-
     <!-- NAV -->
     <nav class="bottom-nav">
       <button class="nav-btn active" data-screen="dashboardScreen">🏠</button>
       <button class="nav-btn" data-screen="maintenanceScreen">🛠️</button>
-      <button class="nav-btn" data-screen="inventoryScreen">📦</button>
-      <button class="nav-btn" data-screen="settingsScreen">⚙️</button>
     </nav>
   </div>
 
-  <!-- PHOTO VIEWER (PHASE 3B) -->
+  <!-- COMPLETE MAINTENANCE PANEL (PHASE 3A) -->
+  <div id="completePanelOverlay" class="panel-overlay hidden">
+    <div class="slide-panel show">
+      <h3>Complete Maintenance</h3>
+
+      <button id="addMaintenancePhotosBtn" class="secondary-btn full">
+        📷 Add Photos (optional)
+      </button>
+
+      <button id="saveCompletionBtn" class="primary-btn full">
+        Save Maintenance
+      </button>
+
+      <button id="cancelCompletionBtn" class="danger-btn full">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <!-- PHOTO VIEWER -->
   <div id="photoViewer" class="photo-viewer hidden">
     <img id="photoViewerImg">
     <button id="closePhotoViewer">✖</button>
