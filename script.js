@@ -767,13 +767,11 @@ resetAllBtn?.addEventListener("click", () => {
 const ENABLE_PHASE_3_PHOTOS = true;
 
 if (ENABLE_PHASE_3_PHOTOS) {
-
   let pendingMaintenancePhotos = [];
+  const addPhotosBtn = document.getElementById("addMaintenancePhotosBtn");
+  const saveBtn = document.getElementById("saveCompletionBtn");
 
-  const addPhotosBtn =
-    document.getElementById("addMaintenancePhotosBtn");
-
-  // Button to add photos (optional)
+  // --- Button to add photos (optional) ---
   addPhotosBtn?.addEventListener("click", async () => {
     const picker = document.createElement("input");
     picker.type = "file";
@@ -782,10 +780,7 @@ if (ENABLE_PHASE_3_PHOTOS) {
 
     await new Promise(resolve => {
       picker.onchange = async () => {
-        if (!picker.files || !picker.files.length) {
-          resolve();
-          return;
-        }
+        if (!picker.files?.length) return resolve();
 
         for (const file of picker.files) {
           const reader = new FileReader();
@@ -800,11 +795,12 @@ if (ENABLE_PHASE_3_PHOTOS) {
       picker.click();
     });
 
-    showToast(`${pendingMaintenancePhotos.length} photo(s) added`);
+    if (pendingMaintenancePhotos.length)
+      showToast(`${pendingMaintenancePhotos.length} photo(s) ready`);
   });
 
-  // Attach photos AFTER maintenance is saved
-  saveCompletionBtn?.addEventListener("click", () => {
+  // --- Attach photos AFTER maintenance save ---
+  saveBtn?.addEventListener("click", () => {
     const p = parts[completingPartIndex];
     if (!p || !Array.isArray(p.history) || !p.history.length) {
       pendingMaintenancePhotos = [];
@@ -813,11 +809,11 @@ if (ENABLE_PHASE_3_PHOTOS) {
 
     if (pendingMaintenancePhotos.length) {
       const last = p.history[p.history.length - 1];
-      last.photos = pendingMaintenancePhotos.slice();
+      last.photos = [...pendingMaintenancePhotos];
       saveState();
+      showToast(`Saved ${pendingMaintenancePhotos.length} photo(s)`);
     }
 
     pendingMaintenancePhotos = [];
   });
-
 }
