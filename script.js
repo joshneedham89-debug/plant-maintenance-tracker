@@ -152,7 +152,7 @@ function setPendingThumbs(photos) {
 }
 
 function openPhotoViewer(src) {
-  if (!photoViewer || !photoViewerImg) return;
+  if (!src || typeof src !== "string") return;
   photoViewerImg.src = src;
   photoViewer.classList.remove("hidden");
   photoViewer.setAttribute("aria-hidden", "false");
