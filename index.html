@@ -236,6 +236,12 @@
         <label>Notes</label>
         <input id="compNotes" type="text">
 
+        <button id="addMaintenancePhotosBtn" class="secondary-btn full">
+          📷 Add Photos (optional)
+        </button>
+
+        <div id="pendingPhotoThumbs" class="photo-thumbs pending-thumbs"></div>
+
         <h4 class="subheading">Inventory Used (optional)</h4>
 
         <label>Inventory Item</label>
@@ -261,6 +267,14 @@
 
   <!-- TOAST -->
   <div id="toastContainer" class="toast"></div>
+
+  <!-- PHASE 3: FULL-SCREEN PHOTO VIEWER -->
+  <div id="photoViewer" class="photo-viewer hidden" aria-hidden="true">
+    <div class="photo-viewer-inner">
+      <img id="photoViewerImg" alt="Maintenance photo" />
+      <button id="closePhotoViewer" class="close-photo-btn" aria-label="Close photo">✖</button>
+    </div>
+  </div>
 
   <script src="inventory.js"></script>
   <script src="script.js"></script>
