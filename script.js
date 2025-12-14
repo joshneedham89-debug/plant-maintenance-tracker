@@ -19,6 +19,8 @@ let editingInventoryIndex = null;
 let completingPartIndex = null;
 let completionUsedItems = []; // {invIndex, qty}
 
+let pendingMaintenancePhotos = [];
+
 /* ---------------------------------------------------
    ELEMENT REFERENCES
 --------------------------------------------------- */
@@ -104,6 +106,14 @@ const compAddItemBtn = document.getElementById("compAddItemBtn");
 const compUsedList = document.getElementById("compUsedList");
 const saveCompletionBtn = document.getElementById("saveCompletionBtn");
 
+/* Phase 3 – Photos */
+const addMaintenancePhotosBtn = document.getElementById("addMaintenancePhotosBtn");
+const pendingPhotoThumbs = document.getElementById("pendingPhotoThumbs");
+
+const photoViewer = document.getElementById("photoViewer");
+const photoViewerImg = document.getElementById("photoViewerImg");
+const closePhotoViewerBtn = document.getElementById("closePhotoViewer");
+
 /* Toast */
 const toastContainer = document.getElementById("toastContainer");
 let toastTimeoutId = null;
@@ -124,6 +134,53 @@ function showToast(message, type = "success") {
     toastContainer.classList.remove("show");
   }, 2500);
 }
+
+/* ===================================================
+   PHASE 3 – PHOTO HELPERS
+=================================================== */
+function setPendingThumbs(photos) {
+  if (!pendingPhotoThumbs) return;
+  pendingPhotoThumbs.innerHTML = "";
+  (photos || []).forEach((src, i) => {
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "Pending photo " + (i + 1);
+    img.dataset.viewerSrc = src;
+    img.dataset.viewerTitle = "Pending photo";
+    pendingPhotoThumbs.appendChild(img);
+  });
+}
+
+function openPhotoViewer(src) {
+  if (!photoViewer || !photoViewerImg) return;
+  photoViewerImg.src = src;
+  photoViewer.classList.remove("hidden");
+  photoViewer.setAttribute("aria-hidden", "false");
+}
+
+function closePhotoViewer() {
+  if (!photoViewer || !photoViewerImg) return;
+  photoViewerImg.src = "";
+  photoViewer.classList.add("hidden");
+  photoViewer.setAttribute("aria-hidden", "true");
+}
+
+closePhotoViewerBtn?.addEventListener("click", closePhotoViewer);
+photoViewer?.addEventListener("click", (e) => {
+  // close only if user clicks the dark backdrop
+  if (e.target === photoViewer) closePhotoViewer();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closePhotoViewer();
+});
+
+// delegated click for thumbnails (pending + history)
+document.addEventListener("click", (e) => {
+  const img = e.target.closest("img[data-viewer-src]");
+  if (!img) return;
+  openPhotoViewer(img.dataset.viewerSrc);
+});
 
 /* ---------------------------------------------------
    INIT
@@ -295,7 +352,29 @@ function renderParts() {
 
     const historyHtml = (p.history || [])
       .slice().reverse().slice(0, 2)
-      .map(h => `<div class="part-meta">• ${h.date} – ${h.tons} tons</div>`)
+      .map((h, hIdx) => {
+        const thumbs = Array.isArray(h.photos) && h.photos.length
+          ? `<div class="photo-thumbs">
+              ${h.photos.slice(0, 6).map((src, i) =>
+                `<img src="${src}" alt="Photo ${i + 1}" data-viewer-src="${src}">`
+              ).join("")}
+            </div>`
+          : "";
+
+        const notes = (h.notes || "").trim();
+        const notesHtml = notes ? `<div class="part-meta">Notes: ${notes}</div>` : "";
+
+        const used = Array.isArray(h.usedItems) && h.usedItems.length
+          ? `<div class="part-meta">Used: ${h.usedItems.map(u => `${u.part} (${u.qty})`).join(", ")}</div>`
+          : "";
+
+        return `
+          <div class="part-meta">• ${h.date} – ${h.tons} tons</div>
+          ${notesHtml}
+          ${used}
+          ${thumbs}
+        `;
+      })
       .join("") || `<div class="part-meta">No history</div>`;
 
     const card = document.createElement("div");
@@ -630,6 +709,9 @@ function openCompletePanel(i) {
   compTons.value = currentTons;
   compNotes.value = "";
 
+  pendingMaintenancePhotos = [];
+  setPendingThumbs(pendingMaintenancePhotos);
+
   buildCompleteInventorySelect();
   compUsedList.innerHTML = "";
 
@@ -638,6 +720,8 @@ function openCompletePanel(i) {
 }
 
 function closeCompletePanel() {
+  pendingMaintenancePhotos = [];
+  setPendingThumbs(pendingMaintenancePhotos);
   completePanel?.classList.remove("show");
   setTimeout(() => completePanelOverlay?.classList.add("hidden"), 250);
 }
@@ -645,6 +729,49 @@ function closeCompletePanel() {
 closeCompletePanelBtn?.addEventListener("click", closeCompletePanel);
 completePanelOverlay?.addEventListener("click", (e) => {
   if (e.target === completePanelOverlay) closeCompletePanel();
+});
+
+/* ---------------------------------------------------
+   PHASE 3 – ADD PHOTOS (optional)
+--------------------------------------------------- */
+addMaintenancePhotosBtn?.addEventListener("click", async () => {
+  const picker = document.createElement("input");
+  picker.type = "file";
+  picker.accept = "image/*";
+  picker.multiple = true;
+
+  await new Promise(resolve => {
+    picker.onchange = async () => {
+      // User canceled the picker
+      if (!picker.files || !picker.files.length) return resolve();
+
+      for (const file of picker.files) {
+        // Basic size guard (prevents massive localStorage blowups)
+        if (file.size > 3.5 * 1024 * 1024) {
+          showToast("Skip: photo too large (max ~3.5MB)", "error");
+          continue;
+        }
+
+        const reader = new FileReader();
+        const base64 = await new Promise(r => {
+          reader.onload = e => r(e.target.result);
+          reader.readAsDataURL(file);
+        });
+
+        // Only store if it looks like a data URL
+        if (typeof base64 === "string" && base64.startsWith("data:image/")) {
+          pendingMaintenancePhotos.push(base64);
+        }
+      }
+
+      resolve();
+    };
+
+    picker.click();
+  });
+
+  setPendingThumbs(pendingMaintenancePhotos);
+  if (pendingMaintenancePhotos.length) showToast(`${pendingMaintenancePhotos.length} photo(s) added`);
 });
 
 function buildCompleteInventorySelect() {
@@ -695,6 +822,10 @@ saveCompletionBtn?.addEventListener("click", () => {
     }))
   };
 
+  if (pendingMaintenancePhotos.length) {
+    historyEntry.photos = pendingMaintenancePhotos.slice();
+  }
+
   if (!p.history) p.history = [];
   p.history.push(historyEntry);
 
@@ -710,6 +841,9 @@ saveCompletionBtn?.addEventListener("click", () => {
   renderParts();
   renderInventory();
   renderDashboard();
+
+  pendingMaintenancePhotos = [];
+  setPendingThumbs(pendingMaintenancePhotos);
 
   showToast("Maintenance logged");
   closeCompletePanel();
