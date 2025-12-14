@@ -14,9 +14,9 @@ let categories = [];
 let inventory = [];
 
 let editingPartIndex = null;
-let editingInventoryIndex = null;
 let completingPartIndex = null;
 let completionUsedItems = [];
+let pendingMaintenancePhotos = [];
 
 /* ---------------------------------------------------
    ELEMENT REFERENCES
@@ -27,21 +27,15 @@ const partsList = document.getElementById("partsList");
 const filterCategory = document.getElementById("filterCategory");
 const searchPartsInput = document.getElementById("searchPartsInput");
 const toastContainer = document.getElementById("toastContainer");
-let toastTimeoutId = null;
 
 /* ---------------------------------------------------
    TOAST
 --------------------------------------------------- */
-function showToast(message, type = "success") {
+function showToast(msg) {
   if (!toastContainer) return;
-  toastContainer.textContent = message;
-  toastContainer.className = "toast " + type;
-  void toastContainer.offsetWidth;
+  toastContainer.textContent = msg;
   toastContainer.classList.add("show");
-  clearTimeout(toastTimeoutId);
-  toastTimeoutId = setTimeout(() => {
-    toastContainer.classList.remove("show");
-  }, 2500);
+  setTimeout(() => toastContainer.classList.remove("show"), 2500);
 }
 
 /* ---------------------------------------------------
@@ -50,30 +44,31 @@ function showToast(message, type = "success") {
 function loadState() {
   parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
   currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
-  categories = PRELOADED_CATEGORIES || [];
-  inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY)) || PRELOADED_INVENTORY || [];
+  inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY)) || PRELOADED_INVENTORY;
+  categories = PRELOADED_CATEGORIES;
+
   buildCategoryDropdown();
   renderParts();
 }
 
 function saveState() {
   localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
-  localStorage.setItem(TONS_KEY, String(currentTons));
+  localStorage.setItem(TONS_KEY, currentTons);
   localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
 }
 
 loadState();
 
 /* ---------------------------------------------------
-   CATEGORY DROPDOWN
+   CATEGORY FILTER
 --------------------------------------------------- */
 function buildCategoryDropdown() {
   filterCategory.innerHTML = `<option value="ALL">All Categories</option>`;
   categories.forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c;
-    opt.textContent = c;
-    filterCategory.appendChild(opt);
+    const o = document.createElement("option");
+    o.value = c;
+    o.textContent = c;
+    filterCategory.appendChild(o);
   });
 }
 
@@ -89,7 +84,7 @@ function calculateStatus(p) {
   let status = "ok";
   if (daysSince > p.days || tonsSince > p.tonInterval) status = "overdue";
   else if (p.days - daysSince < 5 || p.tonInterval - tonsSince < 500) status = "due";
-  return { status };
+  return status;
 }
 
 /* ---------------------------------------------------
@@ -104,7 +99,7 @@ function renderParts() {
     if ((sel !== "ALL" && p.category !== sel) ||
         !`${p.name} ${p.category} ${p.section}`.toLowerCase().includes(q)) return;
 
-    const st = calculateStatus(p);
+    const status = calculateStatus(p);
 
     const historyHtml = (p.history || []).slice().reverse().slice(0, 2).map(h => {
       const photos = h.photos?.length
@@ -114,7 +109,7 @@ function renderParts() {
     }).join("") || `<div class="part-meta">No history</div>`;
 
     const card = document.createElement("div");
-    card.className = `part-card status-${st.status}`;
+    card.className = `part-card status-${status}`;
     card.innerHTML = `
       <div class="part-main" data-idx="${idx}">
         <div>
@@ -124,28 +119,56 @@ function renderParts() {
         <div class="expand-icon">▼</div>
       </div>
       <div class="part-details" data-details="${idx}">
-        <div class="part-history"><b>History:</b>${historyHtml}</div>
+        <button class="complete-btn" data-idx="${idx}">Complete</button>
+        <div class="part-history">${historyHtml}</div>
       </div>`;
     partsList.appendChild(card);
   });
 }
 
 /* ---------------------------------------------------
-   EXPAND / COLLAPSE
+   EXPAND + COMPLETE
 --------------------------------------------------- */
 partsList.addEventListener("click", e => {
   const main = e.target.closest(".part-main");
   if (main) {
-    document.querySelector(`.part-details[data-details="${main.dataset.idx}"]`)
+    document.querySelector(`[data-details="${main.dataset.idx}"]`)
       ?.classList.toggle("expanded");
+  }
+
+  if (e.target.classList.contains("complete-btn")) {
+    completingPartIndex = Number(e.target.dataset.idx);
+    openCompletePanel();
   }
 });
 
 /* ---------------------------------------------------
-   PHASE 3A PHOTO UPLOAD (UNCHANGED)
+   COMPLETE MAINTENANCE
 --------------------------------------------------- */
-let pendingPhotos = [];
-document.getElementById("addMaintenancePhotosBtn")?.addEventListener("click", async () => {
+function openCompletePanel() {
+  const p = parts[completingPartIndex];
+  if (!p) return;
+
+  p.history = p.history || [];
+  p.history.push({
+    date: new Date().toISOString().split("T")[0],
+    tons: currentTons,
+    photos: pendingMaintenancePhotos.slice()
+  });
+
+  p.date = new Date().toISOString().split("T")[0];
+  p.lastTons = currentTons;
+
+  pendingMaintenancePhotos = [];
+  saveState();
+  renderParts();
+  showToast("Maintenance completed");
+}
+
+/* ---------------------------------------------------
+   PHASE 3A PHOTO UPLOAD
+--------------------------------------------------- */
+document.getElementById("addMaintenancePhotosBtn")?.addEventListener("click", () => {
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
@@ -153,13 +176,10 @@ document.getElementById("addMaintenancePhotosBtn")?.addEventListener("click", as
   input.onchange = async () => {
     for (const f of input.files) {
       const r = new FileReader();
-      const b64 = await new Promise(res => {
-        r.onload = e => res(e.target.result);
-        r.readAsDataURL(f);
-      });
-      pendingPhotos.push(b64);
+      r.onload = e => pendingMaintenancePhotos.push(e.target.result);
+      r.readAsDataURL(f);
     }
-    showToast(`${pendingPhotos.length} photo(s) ready`);
+    showToast("Photos added");
   };
   input.click();
 });
@@ -169,12 +189,14 @@ document.getElementById("addMaintenancePhotosBtn")?.addEventListener("click", as
 --------------------------------------------------- */
 const viewer = document.getElementById("photoViewer");
 const viewerImg = document.getElementById("photoViewerImg");
+
 document.addEventListener("click", e => {
   if (e.target.classList.contains("thumb")) {
     viewerImg.src = e.target.src;
     viewer.classList.remove("hidden");
   }
 });
+
 document.getElementById("closePhotoViewer")?.addEventListener("click", () => {
   viewer.classList.add("hidden");
   viewerImg.src = "";
