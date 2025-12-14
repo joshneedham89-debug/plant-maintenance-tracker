@@ -175,21 +175,11 @@ select {
   margin: 12px;
   border-radius: 12px;
   border-left: 5px solid transparent;
-  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-/* Status colors */
-.part-card.status-ok {
-  border-left-color: #2ecc71;
-}
-
-.part-card.status-due {
-  border-left-color: #f1c40f;
-}
-
-.part-card.status-overdue {
-  border-left-color: #e74c3c;
-}
+.part-card.status-ok { border-left-color: #2ecc71; }
+.part-card.status-due { border-left-color: #f1c40f; }
+.part-card.status-overdue { border-left-color: #e74c3c; }
 
 .part-main {
   display: flex;
@@ -210,15 +200,13 @@ select {
 
 .expand-icon {
   font-size: 18px;
-  margin-left: 10px;
 }
 
-/* Smooth expand/collapse */
+/* Expand */
 .part-details {
   margin-top: 8px;
   border-top: 1px solid #223049;
   padding-top: 8px;
-
   max-height: 0;
   overflow: hidden;
   opacity: 0;
@@ -231,7 +219,7 @@ select {
 }
 
 .part-actions {
-  margin-top: 12px;
+  margin-top: 10px;
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
@@ -246,7 +234,7 @@ select {
   font-size: 13px;
 }
 
-/* History section */
+/* History */
 .part-history {
   margin-top: 8px;
 }
@@ -256,39 +244,62 @@ select {
 }
 
 /* ---------------------------------------------------
-   AC Calculator
+   PHASE 3B – PHOTO THUMBNAILS
 --------------------------------------------------- */
 
-.result-card {
-  background: #dff7df;
-  color: #000;
-  margin: 12px;
-  padding: 16px;
-  border-radius: 12px;
-  border-left: 6px solid var(--accent);
-  font-size: 16px;
+.photo-thumbs {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
 }
 
-.result-card h3 {
-  margin-top: 0;
+.photo-thumbs img {
+  width: 54px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.15);
 }
 
-.result-card span {
-  font-weight: 800;
-  color: #0a4f0a;
+/* ---------------------------------------------------
+   PHASE 3B – FULLSCREEN PHOTO VIEWER
+--------------------------------------------------- */
+
+.photo-viewer {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+}
+
+.photo-viewer img {
+  max-width: 92%;
+  max-height: 92%;
+  border-radius: 10px;
+}
+
+.photo-viewer button {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  font-size: 26px;
+  background: none;
+  color: white;
+  border: none;
+  cursor: pointer;
 }
 
 /* ---------------------------------------------------
    Screens
 --------------------------------------------------- */
 
-.screen {
-  display: none;
-}
-
-.screen.active {
-  display: block;
-}
+.screen { display: none; }
+.screen.active { display: block; }
 
 /* ---------------------------------------------------
    Bottom Navigation
@@ -315,7 +326,6 @@ select {
   font-size: 14px;
   padding: 6px;
   cursor: pointer;
-  text-align: center;
 }
 
 .nav-btn.active {
@@ -323,28 +333,14 @@ select {
   font-weight: 700;
 }
 
-.nav-btn br {
-  line-height: 0;
-}
-
 /* ---------------------------------------------------
-   Maintenance Sticky Header
---------------------------------------------------- */
-
-.maintenance-header {
-  position: sticky;
-  top: 0;
-  z-index: 60;
-}
-
-/* ---------------------------------------------------
-   OVERLAYS + SLIDE PANELS
+   Overlays & Panels
 --------------------------------------------------- */
 
 .panel-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0,0,0,0.45);
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -355,9 +351,7 @@ select {
   width: 100%;
   max-width: 480px;
   background: var(--card);
-  border-top-left-radius: 18px;
-  border-top-right-radius: 18px;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+  border-radius: 18px 18px 0 0;
   padding: 18px;
   transform: translateY(110%);
   transition: transform 0.35s ease-out;
@@ -367,82 +361,8 @@ select {
   transform: translateY(0);
 }
 
-.slide-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-  padding-right: 8px;
-}
-
-.slide-panel-header h3 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.close-btn {
-  background: none;
-  color: var(--text);
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
-}
-
-.slide-panel-body {
-  max-height: 65vh;
-  overflow-y: auto;
-  padding-bottom: 20px;
-}
-
-/* Inputs inside panel should always fit */
-.slide-panel input,
-.slide-panel select {
-  width: 100%;
-  box-sizing: border-box;
-}
-
 /* ---------------------------------------------------
-   Sticky footer for slide panel save buttons
---------------------------------------------------- */
-
-.panel-footer {
-  position: sticky;
-  bottom: 0;
-  padding-top: 12px;
-  background: linear-gradient(to top, rgba(15, 23, 36, 0.96), transparent);
-}
-
-.panel-footer .primary-btn {
-  margin-top: 0;
-  width: 100%;
-}
-
-/* ---------------------------------------------------
-   Inventory Adjustments
---------------------------------------------------- */
-
-.part-card .edit-inv-btn,
-.part-card .delete-inv-btn {
-  font-size: 13px;
-}
-
-/* Complete panel extras */
-.subheading {
-  margin-top: 14px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.used-items-list {
-  margin-top: 8px;
-}
-
-.used-items-list .part-meta {
-  font-size: 13px;
-}
-
-/* ---------------------------------------------------
-   TOAST NOTIFICATIONS
+   Toast
 --------------------------------------------------- */
 
 .toast {
@@ -455,9 +375,7 @@ select {
   background: #111827;
   color: #fff;
   font-size: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   opacity: 0;
-  pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
   z-index: 2100;
 }
@@ -467,18 +385,11 @@ select {
   transform: translateX(-50%) translateY(0);
 }
 
-.toast.success {
-  background: var(--accent);
-}
-
-.toast.error {
-  background: var(--danger);
-}
+.toast.success { background: var(--accent); }
+.toast.error { background: var(--danger); }
 
 /* ---------------------------------------------------
    Utility
 --------------------------------------------------- */
 
-.hidden {
-  display: none;
-}
+.hidden { display: none; }
