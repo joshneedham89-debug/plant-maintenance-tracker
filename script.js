@@ -759,7 +759,7 @@ addMaintenancePhotosBtn?.addEventListener("click", async () => {
 
       for (const file of picker.files) {
         // Basic size guard (prevents massive localStorage blowups)
-        if (file.size > 3.5 * 1024 * 1024) {
+        if (file.size > 1.2 * 1024 * 1024) {
           showToast("Skip: photo too large (max ~3.5MB)", "error");
           continue;
         }
