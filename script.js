@@ -179,7 +179,19 @@ document.addEventListener("keydown", (e) => {
 document.addEventListener("click", (e) => {
   const img = e.target.closest("img[data-viewer-src]");
   if (!img) return;
-  openPhotoViewer(img.dataset.viewerSrc);
+
+  const src = img.dataset.viewerSrc;
+
+  // Guard: only open if it looks like a valid image
+  if (
+    typeof src !== "string" ||
+    (!src.startsWith("data:image/") && !src.startsWith("http"))
+  ) {
+    showToast("Photo unavailable", "error");
+    return;
+  }
+
+  openPhotoViewer(src);
 });
 
 /* ---------------------------------------------------
@@ -759,9 +771,15 @@ addMaintenancePhotosBtn?.addEventListener("click", async () => {
         });
 
         // Only store if it looks like a data URL
-        if (typeof base64 === "string" && base64.startsWith("data:image/")) {
-          pendingMaintenancePhotos.push(base64);
-        }
+        if (
+  typeof base64 === "string" &&
+  base64.startsWith("data:image/") &&
+  base64.length < 1_500_000 // ~1.5MB safety limit
+) {
+  pendingMaintenancePhotos.push(base64);
+} else {
+  showToast("Skipped photo (too large)", "error");
+}
       }
 
       resolve();
