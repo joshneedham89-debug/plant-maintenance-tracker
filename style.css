@@ -78,57 +78,60 @@ label {
   color: var(--muted);
 }
 
-/* Inputs */
 input,
 select {
   width: 100%;
   padding: 10px;
-  border-radius: 8px;
-  border: none;
-  margin-top: 4px;
-  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #2a3a55;
+  margin-top: 6px;
+  background: #0b1220;
+  color: var(--text);
   font-size: 15px;
-  box-sizing: border-box;
 }
 
-.card.light input {
-  background: var(--yellow);
+.card.light input,
+.card.light select {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #000;
 }
 
 /* ---------------------------------------------------
    Buttons
 --------------------------------------------------- */
 
+.primary-btn,
+.secondary-btn,
+.danger-btn,
+.complete-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
 .primary-btn {
   background: var(--accent);
   color: #fff;
-  border: none;
-  padding: 12px;
-  border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 12px;
 }
 
 .secondary-btn {
-  background: #ffffff20;
+  background: #22314a;
   color: #fff;
-  border: none;
-  padding: 12px;
-  border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 10px;
 }
 
 .danger-btn {
   background: var(--danger);
   color: #fff;
-  padding: 12px;
-  border-radius: 10px;
-  font-weight: 700;
-  margin-top: 12px;
-  border: none;
+}
+
+.complete-btn {
+  background: #fbbf24;
+  color: #000;
 }
 
 .full {
@@ -141,141 +144,58 @@ select {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  padding: 0 12px;
+  padding: 12px;
 }
 
 .stat-card {
-  background: var(--card);
-  padding: 10px;
-  border-radius: 12px;
+  background: #111c2d;
+  border-radius: 14px;
+  padding: 14px;
   text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
 }
 
 .stat-value {
-  font-size: 20px;
-  font-weight: 700;
-  margin-top: 6px;
-  color: var(--accent);
-}
-
-/* ---------------------------------------------------
-   Parts List
---------------------------------------------------- */
-
-.part-card {
-  background: var(--card);
-  padding: 14px;
-  margin: 12px;
-  border-radius: 12px;
-  border-left: 5px solid transparent;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-/* Status colors */
-.part-card.status-ok {
-  border-left-color: #2ecc71;
-}
-
-.part-card.status-due {
-  border-left-color: #f1c40f;
-}
-
-.part-card.status-overdue {
-  border-left-color: #e74c3c;
-}
-
-.part-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-}
-
-.part-name {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.part-meta {
-  font-size: 14px;
-  color: var(--muted);
-}
-
-.expand-icon {
-  font-size: 18px;
-  margin-left: 10px;
-}
-
-/* Smooth expand/collapse */
-.part-details {
-  margin-top: 8px;
-  border-top: 1px solid #223049;
-  padding-top: 8px;
-
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height 0.25s ease, opacity 0.25s ease;
-}
-
-.part-details.expanded {
-  max-height: 260px;
-  opacity: 1;
-}
-
-.part-actions {
-  margin-top: 12px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.part-actions button {
-  padding: 8px 12px;
-  background: #fff;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-/* History section */
-.part-history {
-  margin-top: 8px;
-}
-
-.part-history .part-meta {
-  font-size: 13px;
-}
-
-/* ---------------------------------------------------
-   AC Calculator
---------------------------------------------------- */
-
-.result-card {
-  background: #dff7df;
-  color: #000;
-  margin: 12px;
-  padding: 16px;
-  border-radius: 12px;
-  border-left: 6px solid var(--accent);
-  font-size: 16px;
-}
-
-.result-card h3 {
-  margin-top: 0;
-}
-
-.result-card span {
+  font-size: 28px;
   font-weight: 800;
-  color: #0a4f0a;
+  margin-top: 4px;
+}
+
+/* ---------------------------------------------------
+   Bottom Nav
+--------------------------------------------------- */
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background: #08101f;
+  border-top: 1px solid #142034;
+  z-index: 2000;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  padding: 10px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.nav-btn.active {
+  color: #fff;
+  font-weight: 700;
 }
 
 /* ---------------------------------------------------
@@ -291,76 +211,118 @@ select {
 }
 
 /* ---------------------------------------------------
-   Bottom Navigation
+   Part Cards
 --------------------------------------------------- */
 
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  max-width: 900px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #08101f;
+.part-card {
+  background: #111c2d;
+  margin: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.part-main {
   display: flex;
-  justify-content: space-around;
-  padding: 8px 0;
-  border-top: 1px solid #142034;
-}
-
-.nav-btn {
-  background: none;
-  border: none;
-  color: #ffffff80;
-  font-size: 14px;
-  padding: 6px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px;
   cursor: pointer;
-  text-align: center;
 }
 
-.nav-btn.active {
-  color: var(--accent);
+.part-name {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.part-meta {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.expand-icon {
+  font-size: 18px;
+  color: #cbd5e1;
+}
+
+.part-details {
+  display: none;
+  padding: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0b1220;
+}
+
+.part-details.expanded {
+  display: block;
+}
+
+.part-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.part-actions button {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
   font-weight: 700;
 }
 
-.nav-btn br {
-  line-height: 0;
+/* Status coloring */
+.status-ok {
+  border-left: 6px solid #4caf50;
+}
+
+.status-due {
+  border-left: 6px solid #fbbf24;
+}
+
+.status-overdue {
+  border-left: 6px solid #ef4444;
 }
 
 /* ---------------------------------------------------
-   Maintenance Sticky Header
+   Inventory
 --------------------------------------------------- */
 
-.maintenance-header {
-  position: sticky;
-  top: 0;
-  z-index: 60;
+.used-items-list {
+  margin-top: 10px;
+}
+
+.subheading {
+  margin: 14px 0 4px;
+  font-size: 15px;
+  color: #fff;
 }
 
 /* ---------------------------------------------------
-   OVERLAYS + SLIDE PANELS
+   Slide Panels (Overlay)
 --------------------------------------------------- */
 
 .panel-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
-  justify-content: center;
   align-items: flex-end;
-  z-index: 1900;
+  justify-content: center;
+  z-index: 3000;
 }
 
 .slide-panel {
   width: 100%;
-  max-width: 480px;
-  background: var(--card);
-  border-top-left-radius: 18px;
-  border-top-right-radius: 18px;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
-  padding: 18px;
-  transform: translateY(110%);
-  transition: transform 0.35s ease-out;
+  max-width: 700px;
+  background: #0b1220;
+  border-radius: 18px 18px 0 0;
+  transform: translateY(100%);
+  transition: transform 0.25s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .slide-panel.show {
@@ -371,78 +333,50 @@ select {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
-  padding-right: 8px;
+  padding: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .slide-panel-header h3 {
   margin: 0;
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .close-btn {
   background: none;
-  color: var(--text);
   border: none;
-  font-size: 22px;
+  color: #cbd5e1;
+  font-size: 18px;
   cursor: pointer;
 }
 
 .slide-panel-body {
-  max-height: 65vh;
-  overflow-y: auto;
-  padding-bottom: 20px;
+  padding: 14px;
 }
-
-/* Inputs inside panel should always fit */
-.slide-panel input,
-.slide-panel select {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* ---------------------------------------------------
-   Sticky footer for slide panel save buttons
---------------------------------------------------- */
 
 .panel-footer {
-  position: sticky;
-  bottom: 0;
-  padding-top: 12px;
-  background: linear-gradient(to top, rgba(15, 23, 36, 0.96), transparent);
-}
-
-.panel-footer .primary-btn {
-  margin-top: 0;
-  width: 100%;
+  margin-top: 14px;
 }
 
 /* ---------------------------------------------------
-   Inventory Adjustments
+   Maintenance Header Card
 --------------------------------------------------- */
 
-.part-card .edit-inv-btn,
-.part-card .delete-inv-btn {
-  font-size: 13px;
-}
-
-/* Complete panel extras */
-.subheading {
-  margin-top: 14px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.used-items-list {
-  margin-top: 8px;
-}
-
-.used-items-list .part-meta {
-  font-size: 13px;
+.maintenance-header {
+  display: grid;
+  gap: 8px;
 }
 
 /* ---------------------------------------------------
-   TOAST NOTIFICATIONS
+   Result Card
+--------------------------------------------------- */
+
+.result-card {
+  background: #111c2d;
+}
+
+/* ---------------------------------------------------
+   Toast
 --------------------------------------------------- */
 
 .toast {
@@ -481,4 +415,70 @@ select {
 
 .hidden {
   display: none;
+}
+
+/* ===================================================
+   PHASE 3 – MAINTENANCE PHOTOS
+   (thumbnails + full-screen viewer)
+=================================================== */
+
+.photo-thumbs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.photo-thumbs img {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+}
+
+.pending-thumbs:empty {
+  display: none;
+}
+
+/* Full-screen viewer overlay */
+.photo-viewer {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+}
+
+.photo-viewer-inner {
+  position: relative;
+  width: min(960px, 94vw);
+  height: min(92vh, 820px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-viewer img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 14px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+}
+
+.close-photo-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(17, 24, 39, 0.92);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
 }
