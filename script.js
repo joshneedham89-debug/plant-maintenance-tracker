@@ -762,6 +762,7 @@ resetAllBtn?.addEventListener("click", () => {
 
 /* ===================================================
    PHASE 3A – OPTIONAL MAINTENANCE PHOTOS (BUTTON BASED)
+   FIXED: attaches immediately after Phase 2 save
 =================================================== */
 
 const ENABLE_PHASE_3_PHOTOS = true;
@@ -769,9 +770,8 @@ const ENABLE_PHASE_3_PHOTOS = true;
 if (ENABLE_PHASE_3_PHOTOS) {
   let pendingMaintenancePhotos = [];
   const addPhotosBtn = document.getElementById("addMaintenancePhotosBtn");
-  const saveBtn = document.getElementById("saveCompletionBtn");
 
-  // --- Button to add photos (optional) ---
+  // --- Add Photos button ---
   addPhotosBtn?.addEventListener("click", async () => {
     const picker = document.createElement("input");
     picker.type = "file";
@@ -795,12 +795,16 @@ if (ENABLE_PHASE_3_PHOTOS) {
       picker.click();
     });
 
-    if (pendingMaintenancePhotos.length)
+    if (pendingMaintenancePhotos.length) {
       showToast(`${pendingMaintenancePhotos.length} photo(s) ready`);
+    }
   });
 
-  // --- Attach photos AFTER maintenance save ---
-  saveBtn?.addEventListener("click", () => {
+  // --- Hook AFTER Phase 2 saveState ---
+  const originalSaveState = saveState;
+  saveState = function () {
+    originalSaveState();
+
     const p = parts[completingPartIndex];
     if (!p || !Array.isArray(p.history) || !p.history.length) {
       pendingMaintenancePhotos = [];
@@ -810,10 +814,10 @@ if (ENABLE_PHASE_3_PHOTOS) {
     if (pendingMaintenancePhotos.length) {
       const last = p.history[p.history.length - 1];
       last.photos = [...pendingMaintenancePhotos];
-      saveState();
+      localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
       showToast(`Saved ${pendingMaintenancePhotos.length} photo(s)`);
     }
 
     pendingMaintenancePhotos = [];
-  });
+  };
 }
