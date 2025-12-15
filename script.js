@@ -14,7 +14,7 @@ if (photoViewer) {
 function openPhotoViewer(src) {
   if (!src) return;
   photoViewerImg.src = src;
-  photoViewer.style.pointerEvents = "auto"; // ✅ allow taps
+  photoViewer.style.pointerEvents = "auto";
   photoViewer.classList.remove("hidden");
 }
 
@@ -22,7 +22,7 @@ function openPhotoViewer(src) {
 function closePhotoViewer() {
   photoViewerImg.src = "";
   photoViewer.classList.add("hidden");
-  photoViewer.style.pointerEvents = "none"; // ✅ unblock app
+  photoViewer.style.pointerEvents = "none";
 }
 
 closePhotoViewerBtn?.addEventListener("click", closePhotoViewer);
