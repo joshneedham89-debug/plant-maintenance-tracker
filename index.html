@@ -10,95 +10,84 @@
 </head>
 
 <body>
-<div class="app-container">
+  <div class="app-container">
 
-<header class="app-header">
-  <img src="icons/icon-192.png" class="logo">
-  <h1>Plant Maintenance Tracker</h1>
-</header>
+    <!-- HEADER -->
+    <header class="app-header">
+      <img src="icons/icon-192.png" class="logo" alt="Logo">
+      <h1>Plant Maintenance Tracker</h1>
+    </header>
 
-<!-- ================= DASHBOARD ================= -->
-<section id="dashboardScreen" class="screen active">
-  <h2 class="section-title">Dashboard</h2>
+    <!-- DASHBOARD -->
+    <section id="dashboardScreen" class="screen active">
+      <h2 class="section-title">Dashboard</h2>
 
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-label">OK</div><div id="okCount" class="stat-value">0</div></div>
-    <div class="stat-card"><div class="stat-label">Due Soon</div><div id="dueCount" class="stat-value">0</div></div>
-    <div class="stat-card"><div class="stat-label">Overdue</div><div id="overCount" class="stat-value">0</div></div>
-    <div class="stat-card"><div class="stat-label">Open Problems</div><div id="openProblemsCount" class="stat-value danger">0</div></div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">OK</div><div id="okCount" class="stat-value">0</div></div>
+        <div class="stat-card"><div class="stat-label">Due Soon</div><div id="dueCount" class="stat-value">0</div></div>
+        <div class="stat-card"><div class="stat-label">Overdue</div><div id="overCount" class="stat-value">0</div></div>
+        <div class="stat-card"><div class="stat-label">Open Problems</div><div id="openProblemsCount" class="stat-value">0</div></div>
+        <div class="stat-card"><div class="stat-label">Tons Run</div><div id="tonsRun" class="stat-value">0</div></div>
+      </div>
+    </section>
+
+    <!-- MAINTENANCE -->
+    <section id="maintenanceScreen" class="screen">
+      <h2 class="section-title">Maintenance</h2>
+
+      <div class="card">
+        <button id="reportProblemBtn" class="danger-btn full">⚠️ Report a Problem</button>
+      </div>
+
+      <div id="partsList"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settingsScreen" class="screen">
+      <h2 class="section-title">Settings</h2>
+      <div class="card">
+        <button id="exportBtn" class="primary-btn full">Export Data</button>
+        <button id="resetAllBtn" class="danger-btn full">Reset Entire App</button>
+      </div>
+    </section>
+
+    <!-- NAV -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-screen="dashboardScreen">🏠<br>Home</button>
+      <button class="nav-btn" data-screen="maintenanceScreen">🛠️<br>Maint</button>
+      <button class="nav-btn" data-screen="settingsScreen">⚙️<br>Settings</button>
+    </nav>
   </div>
-</section>
 
-<!-- ================= MAINTENANCE ================= -->
-<section id="maintenanceScreen" class="screen">
-  <h2 class="section-title">Maintenance</h2>
+  <!-- REPORT PROBLEM PANEL -->
+  <div id="problemOverlay" class="panel-overlay hidden">
+    <div id="problemPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3>Report a Problem</h3>
+        <button id="closeProblemPanel" class="close-btn">✖</button>
+      </div>
 
-  <div class="card maintenance-header">
-    <button id="addProblemBtn" class="danger-btn full">⚠ Report a Problem</button>
-  </div>
+      <div class="slide-panel-body">
+        <label>Description</label>
+        <input id="problemDesc" type="text">
 
-  <div id="partsList"></div>
-</section>
+        <label>Severity</label>
+        <select id="problemSeverity">
+          <option>Low</option>
+          <option>Medium</option>
+          <option>High</option>
+        </select>
 
-<!-- ================= BOTTOM NAV ================= -->
-<nav class="bottom-nav">
-  <button class="nav-btn active" data-screen="dashboardScreen">🏠<br>Home</button>
-  <button class="nav-btn" data-screen="maintenanceScreen">🛠️<br>Maint</button>
-</nav>
-
-</div>
-
-<!-- ========== REPORT PROBLEM PANEL ========== -->
-<div id="problemPanelOverlay" class="panel-overlay hidden">
-  <div id="problemPanel" class="slide-panel">
-    <div class="slide-panel-header">
-      <h3>Report a Problem</h3>
-      <button id="closeProblemPanel" class="close-btn">✖</button>
-    </div>
-
-    <div class="slide-panel-body">
-      <label>Title</label>
-      <input id="problemTitle">
-
-      <label>Severity</label>
-      <select id="problemSeverity">
-        <option>Low</option>
-        <option>Medium</option>
-        <option>High</option>
-        <option>Critical</option>
-      </select>
-
-      <label>Status</label>
-      <select id="problemStatus">
-        <option>Open</option>
-        <option>In Progress</option>
-        <option>Resolved</option>
-      </select>
-
-      <label>Description</label>
-      <input id="problemNotes">
-
-      <button id="problemAddPhotoBtn" class="secondary-btn full">+ Add Photos</button>
-      <input id="problemPhotoInput" type="file" multiple accept="image/*" class="hidden">
-      <div id="problemPhotoPreview"></div>
-
-      <div class="panel-footer">
-        <button id="saveProblemBtn" class="primary-btn full">Save Problem</button>
+        <div class="panel-footer">
+          <button id="saveProblemBtn" class="primary-btn full">Save Problem</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ========== LIGHTBOX ========== -->
-<div id="lightboxOverlay" class="lightbox-overlay hidden">
-  <button id="lightboxClose" class="lightbox-close">✖</button>
-  <button id="lightboxPrev" class="lightbox-nav left">◀</button>
-  <img id="lightboxImg">
-  <button id="lightboxNext" class="lightbox-nav right">▶</button>
-  <div id="lightboxCounter"></div>
-</div>
+  <div id="toastContainer" class="toast"></div>
 
-<script src="inventory.js"></script>
-<script src="script.js"></script>
+  <script src="inventory.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
