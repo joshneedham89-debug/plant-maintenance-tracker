@@ -274,7 +274,21 @@
 
   <!-- TOAST -->
   <div id="toastContainer" class="toast"></div>
+  
+<!-- ===== Phase 3.1: Photo Lightbox ===== -->
+<div id="photoLightbox" class="lightbox hidden">
+  <div class="lightbox-header">
+    <span id="lightboxCounter">1 / 1</span>
+    <button id="lightboxClose">✖</button>
+  </div>
 
+  <button class="lightbox-nav left" id="lightboxPrev">◀</button>
+
+  <img id="lightboxImage" src="" alt="Maintenance Photo">
+
+  <button class="lightbox-nav right" id="lightboxNext">▶</button>
+</div>
+<!-- ===== End Phase 3.1 ===== -->
   <script src="inventory.js"></script>
   <script src="script.js"></script>
 </body>
