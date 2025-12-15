@@ -73,6 +73,41 @@ const photoViewer = document.getElementById("photoViewer");
 const photoViewerImg = document.getElementById("photoViewerImg");
 const closePhotoViewerBtn = document.getElementById("closePhotoViewer");
 
+/* FORCE CLOSED ON LOAD */
+if (photoViewer) {
+  photoViewer.classList.add("hidden");
+  photoViewer.style.pointerEvents = "none";
+  photoViewerImg.src = "";
+}
+
+/* OPEN VIEWER */
+function openPhotoViewer(src) {
+  if (!src || typeof src !== "string") return;
+
+  photoViewerImg.src = src;
+  photoViewer.style.pointerEvents = "auto";   // ✅ enable clicks
+  photoViewer.classList.remove("hidden");
+}
+
+/* CLOSE VIEWER */
+function closePhotoViewer() {
+  photoViewerImg.src = "";
+  photoViewer.classList.add("hidden");
+  photoViewer.style.pointerEvents = "none";   // ✅ unblock app
+}
+
+closePhotoViewerBtn?.addEventListener("click", closePhotoViewer);
+
+photoViewer?.addEventListener("click", (e) => {
+  if (e.target === photoViewer) closePhotoViewer();
+});
+
+document.addEventListener("click", (e) => {
+  const img = e.target.closest("img[data-viewer-src]");
+  if (!img) return;
+  openPhotoViewer(img.dataset.viewerSrc);
+});
+
 /* 🔒 FIX: force photo viewer CLOSED on app load (MOBILE REQUIRED) */
 if (photoViewer) {
   photoViewer.classList.add("hidden");
