@@ -496,6 +496,7 @@ select {
   border-radius: 10px;
   object-fit: cover;
   border: 1px solid #223049;
+  cursor: pointer;
 }
 
 .history-photo-more {
@@ -510,6 +511,40 @@ select {
   font-size: 13px;
 }
 /* ===== End Phase 3 ===== */
+
+/* ===== Phase 3.1: Lightbox ===== */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000; /* above panels + toast */
+  padding: 18px;
+}
+
+.lightbox-img {
+  max-width: 92vw;
+  max-height: 88vh;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.65);
+}
+
+.lightbox-close {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  border: none;
+  border-radius: 999px;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  font-size: 18px;
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+}
+/* ===== End Phase 3.1 ===== */
 
 /* ---------------------------------------------------
    TOAST NOTIFICATIONS
@@ -551,4 +586,4 @@ select {
 
 .hidden {
   display: none;
-}
+   }
