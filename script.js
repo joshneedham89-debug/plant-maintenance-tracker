@@ -114,6 +114,12 @@ const compPhotoInput = document.getElementById("compPhotoInput");
 const compPhotoPreview = document.getElementById("compPhotoPreview");
 /* ===== End Phase 3 ===== */
 
+/* ===== Phase 3.1: Lightbox refs ===== */
+const lightboxOverlay = document.getElementById("lightboxOverlay");
+const lightboxImg = document.getElementById("lightboxImg");
+const lightboxClose = document.getElementById("lightboxClose");
+/* ===== End Phase 3.1 ===== */
+
 /* Toast */
 const toastContainer = document.getElementById("toastContainer");
 let toastTimeoutId = null;
@@ -134,6 +140,36 @@ function showToast(message, type = "success") {
     toastContainer.classList.remove("show");
   }, 2500);
 }
+
+/* ---------------------------------------------------
+   Phase 3.1: LIGHTBOX
+--------------------------------------------------- */
+function openLightbox(src) {
+  if (!lightboxOverlay || !lightboxImg) return;
+  lightboxImg.src = src;
+  lightboxOverlay.classList.remove("hidden");
+  lightboxOverlay.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+  if (!lightboxOverlay || !lightboxImg) return;
+  lightboxOverlay.classList.add("hidden");
+  lightboxOverlay.setAttribute("aria-hidden", "true");
+  lightboxImg.src = "";
+  document.body.style.overflow = "";
+}
+
+lightboxClose?.addEventListener("click", closeLightbox);
+lightboxOverlay?.addEventListener("click", (e) => {
+  if (e.target === lightboxOverlay) closeLightbox();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && lightboxOverlay && !lightboxOverlay.classList.contains("hidden")) {
+    closeLightbox();
+  }
+});
 
 /* ---------------------------------------------------
    INIT
@@ -356,8 +392,15 @@ function renderParts() {
   });
 }
 
-/* Expand/collapse + part actions */
+/* Expand/collapse + part actions + photo lightbox */
 partsList?.addEventListener("click", (e) => {
+  // Phase 3.1: history thumbnail -> lightbox
+  const historyImg = e.target?.tagName === "IMG" ? e.target.closest(".history-photo-strip img") : null;
+  if (historyImg && historyImg.src) {
+    openLightbox(historyImg.src);
+    return;
+  }
+
   const main = e.target.closest(".part-main");
   if (main) {
     const idx = main.dataset.idx;
@@ -411,7 +454,6 @@ function openPartPanel(isEdit, index) {
     if (categories.length) newPartCategory.value = categories[0];
   }
 
-  // show overlay + slide panel
   partPanelOverlay?.classList.remove("hidden");
   setTimeout(() => addPartPanel?.classList.add("show"), 10);
 }
@@ -725,7 +767,6 @@ function renderCompletionPhotoPreview() {
 }
 
 compAddPhotoBtn?.addEventListener("click", () => {
-  // button-based only
   compPhotoInput?.click();
 });
 
@@ -733,7 +774,6 @@ compPhotoInput?.addEventListener("change", () => {
   const files = Array.from(compPhotoInput.files || []);
   if (!files.length) return; // user cancelled picker -> Phase 2 behavior
 
-  // keep it reasonable for localStorage (still optional)
   const MAX_ADD = 8;
   const toAdd = files.slice(0, MAX_ADD);
 
@@ -753,19 +793,25 @@ compPhotoInput?.addEventListener("change", () => {
     reader.readAsDataURL(file);
   });
 
-  // allow re-selecting same file later
   compPhotoInput.value = "";
 });
 
+// Phase 3.1: tap preview thumb to open lightbox (remove button still works)
 compPhotoPreview?.addEventListener("click", (e) => {
   const btn = e.target.closest(".photo-remove");
-  if (!btn) return;
-  const idx = Number(btn.dataset.idx);
-  if (!Number.isFinite(idx)) return;
+  if (btn) {
+    const idx = Number(btn.dataset.idx);
+    if (!Number.isFinite(idx)) return;
+    completionPhotos.splice(idx, 1);
+    renderCompletionPhotoPreview();
+    showToast("Photo removed");
+    return;
+  }
 
-  completionPhotos.splice(idx, 1);
-  renderCompletionPhotoPreview();
-  showToast("Photo removed");
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img && img.src) {
+    openLightbox(img.src);
+  }
 });
 /* ===== End Phase 3 ===== */
 
@@ -787,9 +833,7 @@ saveCompletionBtn?.addEventListener("click", () => {
       part: inventory[u.invIndex]?.part || "Unknown",
       qty: u.qty
     })),
-    /* ===== Phase 3: store photos with the history entry ===== */
     photos: completionPhotos.slice()
-    /* ===== End Phase 3 ===== */
   };
 
   if (!p.history) p.history = [];
