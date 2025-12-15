@@ -1063,7 +1063,9 @@ probPhotoPreview?.addEventListener("click", (e) => {
   if (img && img.src) openLightbox(img.src);
 });
 
-saveProblemBtn?.addEventListener("click", () => {
+saveProblemBtn?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
   const title = (probTitle?.value || "").trim();
   const category = probCategory?.value || "";
   const location = (probLocation?.value || "").trim();
