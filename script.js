@@ -30,6 +30,12 @@ let completionPhotos = []; // array of dataURL strings
 /* ===== Phase 3.2: Problems ===== */
 let problems = [];
 let problemPhotos = []; // array of dataURL strings
+
+/* ===== Phase 3.3: Problems list UI state ===== */
+let currentProblemFilter = "ALL";
+let viewingProblemId = null;
+/* ===== End Phase 3.3 ===== */
+
 /* ===== End Phase 3.2 ===== */
 
 /* ---------------------------------------------------
@@ -153,6 +159,22 @@ const probPhotoPreview = document.getElementById("probPhotoPreview");
 const saveProblemBtn = document.getElementById("saveProblemBtn");
 /* ===== End Phase 3.2 ===== */
 
+/* ===== Phase 3.3: Problems list + detail refs ===== */
+const openProblemPanelBtn2 = document.getElementById("openProblemPanelBtn2");
+const problemsListEl = document.getElementById("problemsList");
+const problemFilterBtns = document.querySelectorAll(".prob-filter");
+
+const problemDetailOverlay = document.getElementById("problemDetailOverlay");
+const problemDetailPanel = document.getElementById("problemDetailPanel");
+const closeProblemDetailBtn = document.getElementById("closeProblemDetail");
+const problemDetailTitle = document.getElementById("problemDetailTitle");
+const problemDetailMeta = document.getElementById("problemDetailMeta");
+const problemDetailStatus = document.getElementById("problemDetailStatus");
+const problemDetailPhotos = document.getElementById("problemDetailPhotos");
+const resolveLogBtn = document.getElementById("resolveLogBtn");
+const deleteProblemBtn = document.getElementById("deleteProblemBtn");
+/* ===== End Phase 3.3 ===== */
+
 /* Toast */
 const toastContainer = document.getElementById("toastContainer");
 let toastTimeoutId = null;
@@ -235,6 +257,9 @@ function loadState() {
   renderDashboard();
   renderParts();
   renderInventory();
+  /* ===== Phase 3.3: render problems list ===== */
+  renderProblemsList();
+  /* ===== End Phase 3.3 ===== */
 }
 
 function saveState() {
@@ -261,7 +286,7 @@ function showScreen(screenId) {
   });
 
   if (screenId === "dashboardScreen") renderDashboard();
-  if (screenId === "maintenanceScreen") renderParts();
+  if (screenId === "maintenanceScreen") { renderParts(); renderProblemsList(); }
   if (screenId === "inventoryScreen") renderInventory();
 }
 
@@ -737,7 +762,7 @@ function buildInventoryNameDatalist() {
 /* ---------------------------------------------------
    COMPLETE MAINTENANCE PANEL
 --------------------------------------------------- */
-function openCompletePanel(i) {
+function openCompletePanel(i, prefill) {
   completingPartIndex = i;
   completionUsedItems = [];
 
@@ -751,6 +776,15 @@ function openCompletePanel(i) {
   compDate.value = today;
   compTons.value = currentTons;
   compNotes.value = "";
+
+  // Phase 3.3: optional prefill (from resolved problem)
+  if (prefill && typeof prefill === "object") {
+    if (prefill.notes && compNotes) compNotes.value = String(prefill.notes);
+    if (Array.isArray(prefill.photos)) {
+      completionPhotos = prefill.photos.slice();
+      renderCompletionPhotoPreview();
+    }
+  }
 
   buildCompleteInventorySelect();
   compUsedList.innerHTML = "";
@@ -992,6 +1026,7 @@ function closeProblemPanel() {
 }
 
 openProblemPanelBtn?.addEventListener("click", openProblemPanel);
+openProblemPanelBtn2?.addEventListener("click", openProblemPanel);
 closeProblemPanelBtn?.addEventListener("click", closeProblemPanel);
 problemPanelOverlay?.addEventListener("click", (e) => {
   if (e.target === problemPanelOverlay) closeProblemPanel();
@@ -1093,7 +1128,227 @@ saveProblemBtn?.addEventListener("click", (e) => {
   problems.unshift(item);
   saveState();
   renderDashboard();
+  renderProblemsList();
 
   showToast("Problem saved");
   closeProblemPanel();
 });
+
+/* ===================================================
+   Phase 3.3: PROBLEMS LIST (inside Maintenance)
+   - status pills
+   - tap -> slide detail panel
+   - Resolve & Log Maintenance (auto-create part + log)
+=================================================== */
+
+function getProblemStatusClass(status) {
+  const s = String(status || "Open");
+  if (s === "Resolved") return "status-resolved";
+  if (s === "In Progress") return "status-inprogress";
+  return "status-open";
+}
+
+function renderProblemsList() {
+  if (!problemsListEl) return;
+
+  // keep filters in sync
+  problemFilterBtns?.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.filter === currentProblemFilter);
+  });
+
+  const filtered = (problems || []).filter(p => {
+    if (currentProblemFilter === "ALL") return true;
+    return (p.status || "Open") === currentProblemFilter;
+  });
+
+  if (!filtered.length) {
+    problemsListEl.innerHTML = `<div class="part-meta">No problems yet.</div>`;
+    return;
+  }
+
+  problemsListEl.innerHTML = filtered.map(p => {
+    const status = p.status || "Open";
+    const pillClass = getProblemStatusClass(status);
+    const created = (p.createdAt || "").split("T")[0] || "";
+    return `
+      <div class="problem-card" data-probid="${p.id}">
+        <div class="problem-card-top">
+          <div>
+            <div class="problem-title">${escapeHtml(p.title || "Problem")}</div>
+            <div class="problem-sub">${escapeHtml(p.category || "")} — ${escapeHtml(p.location || "")}</div>
+            <div class="problem-sub">${created ? `Created: ${created}` : ""}</div>
+          </div>
+          <span class="status-pill ${pillClass}">${escapeHtml(status)}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function openProblemDetail(problemId) {
+  const p = (problems || []).find(x => x.id === problemId);
+  if (!p) return;
+
+  viewingProblemId = problemId;
+
+  if (problemDetailTitle) problemDetailTitle.textContent = p.title || "Problem";
+
+  const created = (p.createdAt || "").split("T")[0] || "";
+  const metaLines = [
+    created ? `Created: <b>${escapeHtml(created)}</b>` : "",
+    `Category: <b>${escapeHtml(p.category || "")}</b>`,
+    `Location: <b>${escapeHtml(p.location || "")}</b>`,
+    `Severity: <b>${escapeHtml(p.severity || "Medium")}</b>`,
+    p.notes ? `Notes: <b>${escapeHtml(p.notes)}</b>` : ""
+  ].filter(Boolean);
+
+  if (problemDetailMeta) problemDetailMeta.innerHTML = metaLines.join("<br>");
+
+  // Status pills (clickable)
+  if (problemDetailStatus) {
+    const statuses = ["Open", "In Progress", "Resolved"];
+    problemDetailStatus.innerHTML = statuses.map(s => {
+      const cls = getProblemStatusClass(s);
+      const active = (p.status || "Open") === s ? "style=\"outline:2px solid var(--accent);\"" : "";
+      return `<button class="status-pill ${cls}" data-setstatus="${escapeHtml(s)}" ${active}>${escapeHtml(s)}</button>`;
+    }).join("");
+  }
+
+  // Photos
+  if (problemDetailPhotos) {
+    const photos = Array.isArray(p.photos) ? p.photos : [];
+    if (!photos.length) {
+      problemDetailPhotos.innerHTML = `<div class="part-meta">No photos</div>`;
+    } else {
+      problemDetailPhotos.innerHTML = `
+        <div class="photo-preview-grid">
+          ${photos.map((src, idx) => `
+            <div class="photo-thumb">
+              <img src="${src}" alt="Problem Photo ${idx + 1}">
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+  }
+
+  problemDetailOverlay?.classList.remove("hidden");
+  setTimeout(() => problemDetailPanel?.classList.add("show"), 10);
+}
+
+function closeProblemDetail() {
+  problemDetailPanel?.classList.remove("show");
+  setTimeout(() => problemDetailOverlay?.classList.add("hidden"), 250);
+  viewingProblemId = null;
+}
+
+closeProblemDetailBtn?.addEventListener("click", closeProblemDetail);
+problemDetailOverlay?.addEventListener("click", (e) => {
+  if (e.target === problemDetailOverlay) closeProblemDetail();
+});
+
+// Filter buttons
+problemFilterBtns?.forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentProblemFilter = btn.dataset.filter || "ALL";
+    renderProblemsList();
+  });
+});
+
+// Tap a problem card -> open detail
+problemsListEl?.addEventListener("click", (e) => {
+  const card = e.target.closest(".problem-card");
+  if (!card) return;
+  const id = card.dataset.probid;
+  if (id) openProblemDetail(id);
+});
+
+// Inside detail: change status pill + photo tap
+problemDetailStatus?.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-setstatus]");
+  if (!btn || !viewingProblemId) return;
+
+  const p = (problems || []).find(x => x.id === viewingProblemId);
+  if (!p) return;
+
+  p.status = btn.dataset.setstatus || "Open";
+  saveState();
+  renderDashboard();
+  renderProblemsList();
+  openProblemDetail(viewingProblemId); // re-render detail
+});
+
+problemDetailPhotos?.addEventListener("click", (e) => {
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img?.src) openLightbox(img.src);
+});
+
+// Resolve & Log Maintenance -> mark resolved + create/open maintenance log
+resolveLogBtn?.addEventListener("click", () => {
+  if (!viewingProblemId) return;
+  const p = (problems || []).find(x => x.id === viewingProblemId);
+  if (!p) return;
+
+  // mark resolved
+  p.status = "Resolved";
+  saveState();
+  renderDashboard();
+  renderProblemsList();
+
+  // Auto-create maintenance "task" as a Part (one-time log container)
+  const name = p.title || "Problem Fix";
+  const category = p.category || (categories[0] || "Other");
+  const section = p.location || "Plant";
+
+  let partIndex = parts.findIndex(x =>
+    (x.name || "").trim() === name.trim() &&
+    (x.category || "") === category &&
+    (x.section || "").trim() === section.trim()
+  );
+
+  if (partIndex === -1) {
+    parts.push({
+      name,
+      category,
+      section,
+      // long intervals so it doesn't become an annoying overdue recurring PM
+      days: 3650,
+      tonInterval: 9999999,
+      date: new Date().toISOString().split("T")[0],
+      lastTons: currentTons,
+      history: []
+    });
+    partIndex = parts.length - 1;
+  }
+
+  // Open Complete Maintenance panel prefilled
+  openCompletePanel(partIndex, {
+    notes: `Resolved problem: ${name}${p.notes ? " — " + p.notes : ""}`,
+    photos: Array.isArray(p.photos) ? p.photos.slice() : []
+  });
+
+  closeProblemDetail();
+  showToast("Problem resolved + ready to log maintenance");
+});
+
+// Delete problem
+deleteProblemBtn?.addEventListener("click", () => {
+  if (!viewingProblemId) return;
+  if (!confirm("Delete this problem?")) return;
+  problems = (problems || []).filter(p => p.id !== viewingProblemId);
+  saveState();
+  renderDashboard();
+  renderProblemsList();
+  closeProblemDetail();
+  showToast("Problem deleted");
+});
+
+/* Tiny helper to avoid breaking HTML when rendering user text */
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
