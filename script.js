@@ -1,37 +1,64 @@
-/* Phase 3 – Photos */
+/* ---------------- PHASE 3 PHOTOS ---------------- */
+
+const addMaintenancePhotosBtn = document.getElementById("addMaintenancePhotosBtn");
+const pendingPhotoThumbs = document.getElementById("pendingPhotoThumbs");
 const photoViewer = document.getElementById("photoViewer");
 const photoViewerImg = document.getElementById("photoViewerImg");
-const closePhotoViewerBtn = document.getElementById("closePhotoViewer");
+const closePhotoViewer = document.getElementById("closePhotoViewer");
 
-/* FORCE CLOSED ON LOAD */
-if (photoViewer) {
-  photoViewer.classList.add("hidden");
-  photoViewer.style.pointerEvents = "none";
-  photoViewerImg.src = "";
+let pendingPhotos = [];
+
+/* Add photos */
+addMaintenancePhotosBtn?.addEventListener("click", () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.multiple = true;
+
+  input.onchange = () => {
+    [...input.files].forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        pendingPhotos.push(e.target.result);
+        renderPendingPhotos();
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  input.click();
+});
+
+function renderPendingPhotos() {
+  pendingPhotoThumbs.innerHTML = "";
+  pendingPhotos.forEach(src => {
+    const img = document.createElement("img");
+    img.src = src;
+    img.onclick = () => openPhotoViewer(src);
+    pendingPhotoThumbs.appendChild(img);
+  });
 }
 
-/* OPEN VIEWER */
 function openPhotoViewer(src) {
-  if (!src) return;
   photoViewerImg.src = src;
-  photoViewer.style.pointerEvents = "auto";
   photoViewer.classList.remove("hidden");
+  photoViewer.classList.add("show");
 }
 
-/* CLOSE VIEWER */
-function closePhotoViewer() {
-  photoViewerImg.src = "";
+closePhotoViewer?.addEventListener("click", () => {
   photoViewer.classList.add("hidden");
-  photoViewer.style.pointerEvents = "none";
-}
-
-closePhotoViewerBtn?.addEventListener("click", closePhotoViewer);
-photoViewer?.addEventListener("click", e => {
-  if (e.target === photoViewer) closePhotoViewer();
+  photoViewer.classList.remove("show");
 });
 
-document.addEventListener("click", e => {
-  const img = e.target.closest("img[data-viewer-src]");
-  if (!img) return;
-  openPhotoViewer(img.dataset.viewerSrc);
-});
+/* Hook into save maintenance */
+const originalSave = saveCompletionBtn.onclick;
+saveCompletionBtn.onclick = () => {
+  if (pendingPhotos.length) {
+    const p = parts[completingPartIndex];
+    if (!p.history) p.history = [];
+    p.history[p.history.length - 1].photos = [...pendingPhotos];
+  }
+  pendingPhotos = [];
+  renderPendingPhotos();
+  originalSave();
+};
