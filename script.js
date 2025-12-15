@@ -1100,7 +1100,6 @@ probPhotoPreview?.addEventListener("click", (e) => {
 
 saveProblemBtn?.addEventListener("click", (e) => {
   e.preventDefault();
-  e.stopPropagation();
   const title = (probTitle?.value || "").trim();
   const category = probCategory?.value || "";
   const location = (probLocation?.value || "").trim();
