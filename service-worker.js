@@ -1,9 +1,9 @@
 /* =======================================================
-   SERVICE WORKER – Plant Maintenance v9
+   SERVICE WORKER – Plant Maintenance v10
    Offline caching + auto update
 ======================================================= */
 
-const CACHE_NAME = "pm_v9_cache";
+const CACHE_NAME = "pm_v10_cache";
 const APP_FILES = [
   "./",
   "index.html",
