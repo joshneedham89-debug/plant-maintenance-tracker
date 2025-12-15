@@ -1,24 +1,3 @@
-/* ===================================================
-   PHASE 3 – MAINTENANCE PHOTOS
-=================================================== */
-
-.photo-thumbs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-
-.photo-thumbs img {
-  width: 58px;
-  height: 58px;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  cursor: pointer;
-}
-
-/* Full-screen viewer overlay */
 .photo-viewer {
   position: fixed;
   inset: 0;
@@ -28,7 +7,7 @@
   justify-content: center;
   z-index: 5000;
 
-  /* 🔑 CRITICAL FIX */
+  /* 🔑 REQUIRED FIX */
   pointer-events: none;
 }
 
@@ -61,7 +40,6 @@
   cursor: pointer;
 }
 
-/* Utility */
 .hidden {
   display: none;
 }
