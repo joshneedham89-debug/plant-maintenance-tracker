@@ -148,8 +148,11 @@ select {
    Utility
 --------------------------------------------------- */
 
+/* ✅ FIX — fully disable hidden overlays on mobile */
 .hidden {
-  display: none;
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
 
 /* ===================================================
@@ -171,7 +174,7 @@ select {
   cursor: pointer;
 }
 
-/* 🔑 FULL-SCREEN PHOTO VIEWER */
+/* FULL-SCREEN PHOTO VIEWER */
 .photo-viewer {
   position: fixed;
   inset: 0;
@@ -181,7 +184,7 @@ select {
   justify-content: center;
   z-index: 5000;
 
-  /* ✅ CRITICAL FIX */
+  /* stays disabled unless opened */
   pointer-events: none;
 }
 
