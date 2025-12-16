@@ -30,12 +30,6 @@ let completionPhotos = []; // array of dataURL strings
 /* ===== Phase 3.2: Problems ===== */
 let problems = [];
 let problemPhotos = []; // array of dataURL strings
-
-/* ===== Phase 3.3: Problems list UI state ===== */
-let currentProblemFilter = "ALL";
-let viewingProblemId = null;
-/* ===== End Phase 3.3 ===== */
-
 /* ===== End Phase 3.2 ===== */
 
 /* ---------------------------------------------------
@@ -159,22 +153,6 @@ const probPhotoPreview = document.getElementById("probPhotoPreview");
 const saveProblemBtn = document.getElementById("saveProblemBtn");
 /* ===== End Phase 3.2 ===== */
 
-/* ===== Phase 3.3: Problems list + detail refs ===== */
-const openProblemPanelBtn2 = document.getElementById("openProblemPanelBtn2");
-const problemsListEl = document.getElementById("problemsList");
-const problemFilterBtns = document.querySelectorAll(".prob-filter");
-
-const problemDetailOverlay = document.getElementById("problemDetailOverlay");
-const problemDetailPanel = document.getElementById("problemDetailPanel");
-const closeProblemDetailBtn = document.getElementById("closeProblemDetail");
-const problemDetailTitle = document.getElementById("problemDetailTitle");
-const problemDetailMeta = document.getElementById("problemDetailMeta");
-const problemDetailStatus = document.getElementById("problemDetailStatus");
-const problemDetailPhotos = document.getElementById("problemDetailPhotos");
-const resolveLogBtn = document.getElementById("resolveLogBtn");
-const deleteProblemBtn = document.getElementById("deleteProblemBtn");
-/* ===== End Phase 3.3 ===== */
-
 /* Toast */
 const toastContainer = document.getElementById("toastContainer");
 let toastTimeoutId = null;
@@ -243,7 +221,7 @@ function loadState() {
   problems = JSON.parse(localStorage.getItem(PROBLEMS_KEY)) || [];
   /* ===== End Phase 3.2 ===== */
 
-  if (currentTonsInput) currentTonsInput.value = currentTons;
+  if (currentTonsInput) currentTonsInput.value = "";
 
   buildCategoryDropdown();
   buildInventoryCategoryDropdown();
@@ -257,19 +235,24 @@ function loadState() {
   renderDashboard();
   renderParts();
   renderInventory();
-  /* ===== Phase 3.3: render problems list ===== */
-  renderProblemsList();
-  /* ===== End Phase 3.3 ===== */
 }
 
 function saveState() {
-  localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
-  localStorage.setItem(TONS_KEY, String(currentTons));
-  localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
+  try {
+    localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
+    localStorage.setItem(TONS_KEY, String(currentTons));
+    localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
 
-  /* ===== Phase 3.2: save problems ===== */
-  localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
-  /* ===== End Phase 3.2 ===== */
+    /* ===== Phase 3.2: save problems ===== */
+    localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
+    /* ===== End Phase 3.2 ===== */
+
+    return true;
+  } catch (err) {
+    console.warn("Save failed:", err);
+    showToast("Storage full — try fewer photos (or export + reset)", "error");
+    return false;
+  }
 }
 
 loadState();
@@ -286,7 +269,7 @@ function showScreen(screenId) {
   });
 
   if (screenId === "dashboardScreen") renderDashboard();
-  if (screenId === "maintenanceScreen") { renderParts(); renderProblemsList(); }
+  if (screenId === "maintenanceScreen") renderParts();
   if (screenId === "inventoryScreen") renderInventory();
 }
 
@@ -298,18 +281,27 @@ navButtons.forEach(btn => {
    TONS
 --------------------------------------------------- */
 updateTonsBtn?.addEventListener("click", () => {
-  currentTons = Number(currentTonsInput.value) || 0;
-  saveState();
+  const add = Number(currentTonsInput?.value);
+  if (!Number.isFinite(add) || add <= 0) {
+    showToast("Enter tons to add", "error");
+    return;
+  }
+
+  currentTons = Number(currentTons) + add;
+
+  if (currentTonsInput) currentTonsInput.value = "";
+  if (!saveState()) return;
+
   renderDashboard();
-  showToast("Tons updated");
+  showToast(`Added ${add} tons`);
 });
 
 resetTonsBtn?.addEventListener("click", () => {
   currentTons = 0;
-  if (currentTonsInput) currentTonsInput.value = 0;
-  saveState();
+  if (currentTonsInput) currentTonsInput.value = "";
+  if (!saveState()) return;
   renderDashboard();
-  showToast("Tons reset");
+  showToast("Tons reset to 0");
 });
 
 /* ---------------------------------------------------
@@ -583,7 +575,8 @@ savePartBtn?.addEventListener("click", () => {
     });
   }
 
-  saveState();
+  if (!saveState()) return;
+
   renderParts();
   renderDashboard();
   closePartPanel();
@@ -596,7 +589,7 @@ savePartBtn?.addEventListener("click", () => {
 function deletePart(i) {
   if (!confirm("Delete this part?")) return;
   parts.splice(i, 1);
-  saveState();
+  if (!saveState()) return;
   renderParts();
   renderDashboard();
   showToast("Part deleted");
@@ -613,7 +606,8 @@ function duplicatePart(i) {
     lastTons: currentTons,
   });
 
-  saveState();
+  if (!saveState()) return;
+
   renderParts();
   showToast("Part duplicated");
 }
@@ -732,7 +726,8 @@ saveInventoryBtn?.addEventListener("click", () => {
     inventory.push(itemData);
   }
 
-  saveState();
+  if (!saveState()) return;
+
   renderInventory();
   closeInventoryPanel();
   showToast(editingInventoryIndex !== null ? "Inventory updated" : "Inventory added");
@@ -741,7 +736,7 @@ saveInventoryBtn?.addEventListener("click", () => {
 function deleteInventoryItem(i) {
   if (!confirm("Delete this item?")) return;
   inventory.splice(i, 1);
-  saveState();
+  if (!saveState()) return;
   renderInventory();
   showToast("Inventory item deleted");
 }
@@ -762,7 +757,7 @@ function buildInventoryNameDatalist() {
 /* ---------------------------------------------------
    COMPLETE MAINTENANCE PANEL
 --------------------------------------------------- */
-function openCompletePanel(i, prefill) {
+function openCompletePanel(i) {
   completingPartIndex = i;
   completionUsedItems = [];
 
@@ -776,15 +771,6 @@ function openCompletePanel(i, prefill) {
   compDate.value = today;
   compTons.value = currentTons;
   compNotes.value = "";
-
-  // Phase 3.3: optional prefill (from resolved problem)
-  if (prefill && typeof prefill === "object") {
-    if (prefill.notes && compNotes) compNotes.value = String(prefill.notes);
-    if (Array.isArray(prefill.photos)) {
-      completionPhotos = prefill.photos.slice();
-      renderCompletionPhotoPreview();
-    }
-  }
 
   buildCompleteInventorySelect();
   compUsedList.innerHTML = "";
@@ -831,6 +817,46 @@ compAddItemBtn?.addEventListener("click", () => {
   compInvQty.value = 1;
 });
 
+/* ---------------------------------------------------
+   PHOTO UTIL (resize/compress for localStorage safety)
+--------------------------------------------------- */
+function fileToCompressedDataURL(file, maxDim = 1280, quality = 0.82) {
+  return new Promise((resolve) => {
+    if (!file || !file.type || !file.type.startsWith("image/")) return resolve("");
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || "");
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width || 0;
+        let h = img.height || 0;
+
+        if (!w || !h) return resolve(dataUrl);
+
+        const scale = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.max(1, Math.round(w * scale));
+        h = Math.max(1, Math.round(h * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, w, h);
+
+        // JPEG is much smaller than PNG for photos
+        const out = canvas.toDataURL("image/jpeg", quality);
+        resolve(out);
+      };
+      img.onerror = () => resolve(dataUrl); // fallback
+      img.src = dataUrl;
+    };
+    reader.onerror = () => resolve("");
+    reader.readAsDataURL(file);
+  });
+}
+
 /* ===== Phase 3: Photo handlers (button-based, optional) ===== */
 function renderCompletionPhotoPreview() {
   if (!compPhotoPreview) return;
@@ -856,28 +882,18 @@ compAddPhotoBtn?.addEventListener("click", () => {
   compPhotoInput?.click();
 });
 
-compPhotoInput?.addEventListener("change", () => {
+compPhotoInput?.addEventListener("change", async () => {
   const files = Array.from(compPhotoInput.files || []);
   if (!files.length) return; // user cancelled picker -> Phase 2 behavior
 
   const MAX_ADD = 8;
-  const toAdd = files.slice(0, MAX_ADD);
+  const toAdd = files.slice(0, MAX_ADD).filter(f => f.type?.startsWith("image/"));
 
-  let added = 0;
-  toAdd.forEach(file => {
-    if (!file.type.startsWith("image/")) return;
+  const urls = (await Promise.all(toAdd.map(f => fileToCompressedDataURL(f)))).filter(Boolean);
+  completionPhotos.push(...urls);
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      completionPhotos.push(String(reader.result || ""));
-      added++;
-      if (added === toAdd.length) {
-        renderCompletionPhotoPreview();
-        showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
-      }
-    };
-    reader.readAsDataURL(file);
-  });
+  renderCompletionPhotoPreview();
+  showToast(`Added ${urls.length} photo${urls.length !== 1 ? "s" : ""}`);
 
   compPhotoInput.value = "";
 });
@@ -911,6 +927,15 @@ saveCompletionBtn?.addEventListener("click", () => {
 
   if (!date || isNaN(tons)) return showToast("Enter date + tons", "error");
 
+  // backups (so we can roll back if storage is full)
+  const prevDate = p.date;
+  const prevLastTons = p.lastTons;
+  const prevHistoryLen = Array.isArray(p.history) ? p.history.length : 0;
+  const prevInvQty = completionUsedItems.map(u => ({
+    invIndex: u.invIndex,
+    qty: inventory[u.invIndex]?.qty
+  }));
+
   const historyEntry = {
     date,
     tons,
@@ -933,7 +958,20 @@ saveCompletionBtn?.addEventListener("click", () => {
     inventory[u.invIndex].qty = Math.max(0, Number(inventory[u.invIndex].qty) - u.qty);
   });
 
-  saveState();
+  if (!saveState()) {
+    // roll back
+    p.date = prevDate;
+    p.lastTons = prevLastTons;
+    if (Array.isArray(p.history)) p.history = p.history.slice(0, prevHistoryLen);
+
+    prevInvQty.forEach(b => {
+      if (!inventory[b.invIndex]) return;
+      inventory[b.invIndex].qty = b.qty;
+    });
+
+    return; // toast already shown by saveState()
+  }
+
   renderParts();
   renderInventory();
   renderDashboard();
@@ -1026,7 +1064,6 @@ function closeProblemPanel() {
 }
 
 openProblemPanelBtn?.addEventListener("click", openProblemPanel);
-openProblemPanelBtn2?.addEventListener("click", openProblemPanel);
 closeProblemPanelBtn?.addEventListener("click", closeProblemPanel);
 problemPanelOverlay?.addEventListener("click", (e) => {
   if (e.target === problemPanelOverlay) closeProblemPanel();
@@ -1056,28 +1093,18 @@ probAddPhotoBtn?.addEventListener("click", () => {
   probPhotoInput?.click();
 });
 
-probPhotoInput?.addEventListener("change", () => {
+probPhotoInput?.addEventListener("change", async () => {
   const files = Array.from(probPhotoInput.files || []);
   if (!files.length) return;
 
   const MAX_ADD = 8;
-  const toAdd = files.slice(0, MAX_ADD);
+  const toAdd = files.slice(0, MAX_ADD).filter(f => f.type?.startsWith("image/"));
 
-  let added = 0;
-  toAdd.forEach(file => {
-    if (!file.type.startsWith("image/")) return;
+  const urls = (await Promise.all(toAdd.map(f => fileToCompressedDataURL(f)))).filter(Boolean);
+  problemPhotos.push(...urls);
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      problemPhotos.push(String(reader.result || ""));
-      added++;
-      if (added === toAdd.length) {
-        renderProblemPhotoPreview();
-        showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
-      }
-    };
-    reader.readAsDataURL(file);
-  });
+  renderProblemPhotoPreview();
+  showToast(`Added ${urls.length} photo${urls.length !== 1 ? "s" : ""}`);
 
   probPhotoInput.value = "";
 });
@@ -1100,6 +1127,8 @@ probPhotoPreview?.addEventListener("click", (e) => {
 
 saveProblemBtn?.addEventListener("click", (e) => {
   e.preventDefault();
+  e.stopPropagation();
+
   const title = (probTitle?.value || "").trim();
   const category = probCategory?.value || "";
   const location = (probLocation?.value || "").trim();
@@ -1125,229 +1154,14 @@ saveProblemBtn?.addEventListener("click", (e) => {
   };
 
   problems.unshift(item);
-  saveState();
+
+  if (!saveState()) {
+    problems.shift(); // roll back
+    return;
+  }
+
   renderDashboard();
-  renderProblemsList();
 
   showToast("Problem saved");
   closeProblemPanel();
 });
-
-/* ===================================================
-   Phase 3.3: PROBLEMS LIST (inside Maintenance)
-   - status pills
-   - tap -> slide detail panel
-   - Resolve & Log Maintenance (auto-create part + log)
-=================================================== */
-
-function getProblemStatusClass(status) {
-  const s = String(status || "Open");
-  if (s === "Resolved") return "status-resolved";
-  if (s === "In Progress") return "status-inprogress";
-  return "status-open";
-}
-
-function renderProblemsList() {
-  if (!problemsListEl) return;
-
-  // keep filters in sync
-  problemFilterBtns?.forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.filter === currentProblemFilter);
-  });
-
-  const filtered = (problems || []).filter(p => {
-    if (currentProblemFilter === "ALL") return true;
-    return (p.status || "Open") === currentProblemFilter;
-  });
-
-  if (!filtered.length) {
-    problemsListEl.innerHTML = `<div class="part-meta">No problems yet.</div>`;
-    return;
-  }
-
-  problemsListEl.innerHTML = filtered.map(p => {
-    const status = p.status || "Open";
-    const pillClass = getProblemStatusClass(status);
-    const created = (p.createdAt || "").split("T")[0] || "";
-    return `
-      <div class="problem-card" data-probid="${p.id}">
-        <div class="problem-card-top">
-          <div>
-            <div class="problem-title">${escapeHtml(p.title || "Problem")}</div>
-            <div class="problem-sub">${escapeHtml(p.category || "")} — ${escapeHtml(p.location || "")}</div>
-            <div class="problem-sub">${created ? `Created: ${created}` : ""}</div>
-          </div>
-          <span class="status-pill ${pillClass}">${escapeHtml(status)}</span>
-        </div>
-      </div>
-    `;
-  }).join("");
-}
-
-function openProblemDetail(problemId) {
-  const p = (problems || []).find(x => x.id === problemId);
-  if (!p) return;
-
-  viewingProblemId = problemId;
-
-  if (problemDetailTitle) problemDetailTitle.textContent = p.title || "Problem";
-
-  const created = (p.createdAt || "").split("T")[0] || "";
-  const metaLines = [
-    created ? `Created: <b>${escapeHtml(created)}</b>` : "",
-    `Category: <b>${escapeHtml(p.category || "")}</b>`,
-    `Location: <b>${escapeHtml(p.location || "")}</b>`,
-    `Severity: <b>${escapeHtml(p.severity || "Medium")}</b>`,
-    p.notes ? `Notes: <b>${escapeHtml(p.notes)}</b>` : ""
-  ].filter(Boolean);
-
-  if (problemDetailMeta) problemDetailMeta.innerHTML = metaLines.join("<br>");
-
-  // Status pills (clickable)
-  if (problemDetailStatus) {
-    const statuses = ["Open", "In Progress", "Resolved"];
-    problemDetailStatus.innerHTML = statuses.map(s => {
-      const cls = getProblemStatusClass(s);
-      const active = (p.status || "Open") === s ? "style=\"outline:2px solid var(--accent);\"" : "";
-      return `<button class="status-pill ${cls}" data-setstatus="${escapeHtml(s)}" ${active}>${escapeHtml(s)}</button>`;
-    }).join("");
-  }
-
-  // Photos
-  if (problemDetailPhotos) {
-    const photos = Array.isArray(p.photos) ? p.photos : [];
-    if (!photos.length) {
-      problemDetailPhotos.innerHTML = `<div class="part-meta">No photos</div>`;
-    } else {
-      problemDetailPhotos.innerHTML = `
-        <div class="photo-preview-grid">
-          ${photos.map((src, idx) => `
-            <div class="photo-thumb">
-              <img src="${src}" alt="Problem Photo ${idx + 1}">
-            </div>
-          `).join("")}
-        </div>
-      `;
-    }
-  }
-
-  problemDetailOverlay?.classList.remove("hidden");
-  setTimeout(() => problemDetailPanel?.classList.add("show"), 10);
-}
-
-function closeProblemDetail() {
-  problemDetailPanel?.classList.remove("show");
-  setTimeout(() => problemDetailOverlay?.classList.add("hidden"), 250);
-  viewingProblemId = null;
-}
-
-closeProblemDetailBtn?.addEventListener("click", closeProblemDetail);
-problemDetailOverlay?.addEventListener("click", (e) => {
-  if (e.target === problemDetailOverlay) closeProblemDetail();
-});
-
-// Filter buttons
-problemFilterBtns?.forEach(btn => {
-  btn.addEventListener("click", () => {
-    currentProblemFilter = btn.dataset.filter || "ALL";
-    renderProblemsList();
-  });
-});
-
-// Tap a problem card -> open detail
-problemsListEl?.addEventListener("click", (e) => {
-  const card = e.target.closest(".problem-card");
-  if (!card) return;
-  const id = card.dataset.probid;
-  if (id) openProblemDetail(id);
-});
-
-// Inside detail: change status pill + photo tap
-problemDetailStatus?.addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-setstatus]");
-  if (!btn || !viewingProblemId) return;
-
-  const p = (problems || []).find(x => x.id === viewingProblemId);
-  if (!p) return;
-
-  p.status = btn.dataset.setstatus || "Open";
-  saveState();
-  renderDashboard();
-  renderProblemsList();
-  openProblemDetail(viewingProblemId); // re-render detail
-});
-
-problemDetailPhotos?.addEventListener("click", (e) => {
-  const img = e.target?.tagName === "IMG" ? e.target : null;
-  if (img?.src) openLightbox(img.src);
-});
-
-// Resolve & Log Maintenance -> mark resolved + create/open maintenance log
-resolveLogBtn?.addEventListener("click", () => {
-  if (!viewingProblemId) return;
-  const p = (problems || []).find(x => x.id === viewingProblemId);
-  if (!p) return;
-
-  // mark resolved
-  p.status = "Resolved";
-  saveState();
-  renderDashboard();
-  renderProblemsList();
-
-  // Auto-create maintenance "task" as a Part (one-time log container)
-  const name = p.title || "Problem Fix";
-  const category = p.category || (categories[0] || "Other");
-  const section = p.location || "Plant";
-
-  let partIndex = parts.findIndex(x =>
-    (x.name || "").trim() === name.trim() &&
-    (x.category || "") === category &&
-    (x.section || "").trim() === section.trim()
-  );
-
-  if (partIndex === -1) {
-    parts.push({
-      name,
-      category,
-      section,
-      // long intervals so it doesn't become an annoying overdue recurring PM
-      days: 3650,
-      tonInterval: 9999999,
-      date: new Date().toISOString().split("T")[0],
-      lastTons: currentTons,
-      history: []
-    });
-    partIndex = parts.length - 1;
-  }
-
-  // Open Complete Maintenance panel prefilled
-  openCompletePanel(partIndex, {
-    notes: `Resolved problem: ${name}${p.notes ? " — " + p.notes : ""}`,
-    photos: Array.isArray(p.photos) ? p.photos.slice() : []
-  });
-
-  closeProblemDetail();
-  showToast("Problem resolved + ready to log maintenance");
-});
-
-// Delete problem
-deleteProblemBtn?.addEventListener("click", () => {
-  if (!viewingProblemId) return;
-  if (!confirm("Delete this problem?")) return;
-  problems = (problems || []).filter(p => p.id !== viewingProblemId);
-  saveState();
-  renderDashboard();
-  renderProblemsList();
-  closeProblemDetail();
-  showToast("Problem deleted");
-});
-
-/* Tiny helper to avoid breaking HTML when rendering user text */
-function escapeHtml(str) {
-  return String(str || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
