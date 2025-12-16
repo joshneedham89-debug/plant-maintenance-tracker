@@ -12,47 +12,89 @@
 <body>
   <div class="app-container">
 
-    <!-- HEADER -->
+    <!-- ---------------- HEADER ---------------- -->
     <header class="app-header">
       <img src="icons/icon-192.png" class="logo" alt="Logo">
       <h1>Plant Maintenance Tracker</h1>
     </header>
 
-    <!-- ================= DASHBOARD ================= -->
+    <!-- ---------------- DASHBOARD ---------------- -->
     <section id="dashboardScreen" class="screen active">
       <h2 class="section-title">Dashboard</h2>
 
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-label">OK</div><div id="okCount" class="stat-value">0</div></div>
-        <div class="stat-card"><div class="stat-label">Due Soon</div><div id="dueCount" class="stat-value">0</div></div>
-        <div class="stat-card"><div class="stat-label">Overdue</div><div id="overCount" class="stat-value">0</div></div>
-        <div class="stat-card"><div class="stat-label">Tons Run</div><div id="tonsRun" class="stat-value">0</div></div>
-        <div class="stat-card"><div class="stat-label">Completed Today</div><div id="completedTodayCount" class="stat-value">0</div></div>
-        <div class="stat-card"><div class="stat-label">Completed Month</div><div id="completedMonthCount" class="stat-value">0</div></div>
-        <div class="stat-card stat-problems"><div class="stat-label">Open Problems</div><div id="openProblemsCount" class="stat-value">0</div></div>
+        <div class="stat-card">
+          <div class="stat-label">OK</div>
+          <div id="okCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Due Soon</div>
+          <div id="dueCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Overdue</div>
+          <div id="overCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tons Run</div>
+          <div id="tonsRun" class="stat-value">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Completed Today</div>
+          <div id="completedTodayCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed This Month</div>
+          <div id="completedMonthCount" class="stat-value">0</div>
+        </div>
+
+        <!-- ===== Phase 3.2: Open Problems count ===== -->
+        <div class="stat-card stat-problems">
+          <div class="stat-label">Open Problems</div>
+          <div id="openProblemsCount" class="stat-value">0</div>
+        </div>
+        <!-- ===== End Phase 3.2 ===== -->
       </div>
 
+      <!-- Tons Update -->
       <div class="card">
         <h3>Update Tons</h3>
-        <input id="currentTonsInput" type="number">
+        <input id="currentTonsInput" type="number" placeholder="Enter current tons" />
         <button id="updateTonsBtn" class="primary-btn">Update</button>
-        <button id="resetTonsBtn" class="secondary-btn">Reset</button>
+        <button id="resetTonsBtn" class="secondary-btn">Reset Tons</button>
       </div>
 
+      <!-- ===== Phase 3.2: Report a Problem button on Home ===== -->
       <div class="card">
         <h3>Problems</h3>
         <button id="openProblemPanelBtn" class="primary-btn full">⚠️ Report a Problem</button>
       </div>
+      <!-- ===== End Phase 3.2 ===== -->
     </section>
 
-    <!-- ================= MAINTENANCE ================= -->
+    <!-- ---------------- MAINTENANCE SCREEN ---------------- -->
     <section id="maintenanceScreen" class="screen">
       <h2 class="section-title">Maintenance</h2>
 
-      <!-- Problems -->
-      <div class="card section-card">
-        <div class="section-header">
-          <h3>Problems (Reactive)</h3>
+      <div class="card maintenance-header">
+        <label>Search Parts</label>
+        <input
+          id="searchPartsInput"
+          type="text"
+          placeholder="Search by name, category, or section"
+        >
+
+        <label>Filter by Category</label>
+        <select id="filterCategory"></select>
+
+        <button id="addPartBtn" class="primary-btn full">+ Add Part</button>
+      </div>
+
+      <!-- ===== Phase 3.3: Problems list inside Maintenance ===== -->
+      <div class="card">
+        <div class="problems-header-row">
+          <h3>Problems</h3>
           <button id="openProblemPanelBtn2" class="secondary-btn">+ Report</button>
         </div>
 
@@ -65,59 +107,290 @@
 
         <div id="problemsList" class="problems-list"></div>
       </div>
+      <!-- ===== End Phase 3.3 ===== -->
 
-      <!-- PM Setup -->
-      <div class="card section-card">
-        <div class="section-header">
-          <h3>Preventive Maintenance (Setup)</h3>
-        </div>
-
-        <label>Search Parts</label>
-        <input id="searchPartsInput" type="text">
-
-        <label>Filter by Category</label>
-        <select id="filterCategory"></select>
-
-        <button id="addPartBtn" class="primary-btn full">+ Add Part</button>
-      </div>
-
-      <div class="section-divider"></div>
-
-      <!-- PM List -->
       <div id="partsList"></div>
     </section>
 
-    <!-- ================= INVENTORY ================= -->
+    <!-- ---------------- INVENTORY SCREEN ---------------- -->
     <section id="inventoryScreen" class="screen">
       <h2 class="section-title">Inventory</h2>
+
       <div class="card">
-        <label>Search</label>
-        <input id="searchInventoryInput" type="text">
-        <button id="addInventoryBtn" class="primary-btn full">+ Add Item</button>
+        <label>Search Inventory</label>
+        <input
+          id="searchInventoryInput"
+          type="text"
+          placeholder="Search by name, category, or location"
+        />
+
+        <button id="addInventoryBtn" class="primary-btn full">
+          + Add Inventory Item
+        </button>
       </div>
+
       <div id="inventoryList"></div>
     </section>
 
-    <!-- ================= SETTINGS ================= -->
-    <section id="settingsScreen" class="screen">
-      <h2 class="section-title">Settings</h2>
-      <div class="card">
-        <button id="exportBtn" class="primary-btn full">Export Data</button>
-        <button id="resetAllBtn" class="danger-btn full">Reset App</button>
+    <!-- ---------------- AC CALCULATOR SCREEN ---------------- -->
+    <section id="acScreen" class="screen">
+      <h2 class="section-title">Virgin AC Calculator</h2>
+
+      <div class="card light">
+        <label>Residual AC in RAP (%)</label>
+        <input id="ac_residual" type="number" step="0.1" value="4.9">
+
+        <label>% RAP in Mix (%)</label>
+        <input id="ac_rapPct" type="number" step="1" value="30">
+
+        <label>AC Target of Mix (%)</label>
+        <input id="ac_target" type="number" step="0.1" value="5.4">
+
+        <label>TPH Running Plant</label>
+        <input id="ac_tph" type="number" value="180">
+
+        <label>Total Tons Needed</label>
+        <input id="ac_totalTons" type="number" value="1200">
+
+        <button id="acCalcBtn" class="primary-btn full">Calculate</button>
+      </div>
+
+      <div class="card result-card">
+        <h3>Results</h3>
+        <p>Pump Rate (TPH): <span id="ac_pumpRate">0.00</span></p>
+        <p>Total AC Needed (Tons): <span id="ac_totalAc">0.00</span></p>
       </div>
     </section>
 
-    <!-- NAV -->
+    <!-- ---------------- SETTINGS SCREEN ---------------- -->
+    <section id="settingsScreen" class="screen">
+      <h2 class="section-title">Settings</h2>
+
+      <div class="card">
+        <button id="exportBtn" class="primary-btn full">Export Data</button>
+        <button id="resetAllBtn" class="danger-btn full">Reset Entire App</button>
+      </div>
+    </section>
+
+    <!-- ---------------- BOTTOM NAV ---------------- -->
     <nav class="bottom-nav">
-      <button class="nav-btn active" data-screen="dashboardScreen">🏠</button>
-      <button class="nav-btn" data-screen="maintenanceScreen">🛠️</button>
-      <button class="nav-btn" data-screen="inventoryScreen">📦</button>
-      <button class="nav-btn" data-screen="settingsScreen">⚙️</button>
+      <button class="nav-btn active" data-screen="dashboardScreen">🏠<br>Home</button>
+      <button class="nav-btn" data-screen="maintenanceScreen">🛠️<br>Maint</button>
+      <button class="nav-btn" data-screen="inventoryScreen">📦<br>Inventory</button>
+      <button class="nav-btn" data-screen="acScreen">📊<br>AC Calc</button>
+      <button class="nav-btn" data-screen="settingsScreen">⚙️<br>Settings</button>
     </nav>
+
   </div>
 
-  <!-- PANELS / OVERLAYS -->
-  <!-- (unchanged from Phase 3.2, omitted here for brevity note) -->
+  <!-- ADD / EDIT PART PANEL -->
+  <div id="partPanelOverlay" class="panel-overlay hidden">
+    <div id="addPartPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="partPanelTitle">Add New Part</h3>
+        <button id="closePartPanel" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+
+        <label>Part Name</label>
+        <input id="newPartName" type="text" list="inventoryNameList">
+
+        <datalist id="inventoryNameList"></datalist>
+
+        <label>Category</label>
+        <select id="newPartCategory"></select>
+
+        <label>Section / Location</label>
+        <input id="newPartSection" type="text">
+
+        <label>Days Interval</label>
+        <input id="newPartDays" type="number">
+
+        <label>Ton Interval</label>
+        <input id="newPartTons" type="number">
+
+        <div class="panel-footer">
+          <button id="savePartBtn" class="primary-btn full">Save Part</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT INVENTORY PANEL -->
+  <div id="inventoryPanelOverlay" class="panel-overlay hidden">
+    <div id="inventoryPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="inventoryPanelTitle">Add Inventory Item</h3>
+        <button id="closeInventoryPanel" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+
+        <label>Part Name</label>
+        <input id="invPartName" type="text">
+
+        <label>Category</label>
+        <select id="invCategory"></select>
+
+        <label>Location</label>
+        <input id="invLocation" type="text">
+
+        <label>Quantity</label>
+        <input id="invQty" type="number">
+
+        <label>Notes</label>
+        <input id="invNotes" type="text">
+
+        <div class="panel-footer">
+          <button id="saveInventoryBtn" class="primary-btn full">
+            Save Inventory Item
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLETE MAINTENANCE PANEL -->
+  <div id="completePanelOverlay" class="panel-overlay hidden">
+    <div id="completePanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3>Complete Maintenance</h3>
+        <button id="closeCompletePanel" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <label>Completion Date</label>
+        <input id="compDate" type="date">
+
+        <label>Tons at Completion</label>
+        <input id="compTons" type="number">
+
+        <label>Notes</label>
+        <input id="compNotes" type="text">
+
+        <!-- ===== Phase 3: Maintenance Photos (optional, button-based) ===== -->
+        <h4 class="subheading">Photos (optional)</h4>
+        <button id="compAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <input
+          id="compPhotoInput"
+          type="file"
+          accept="image/*"
+          multiple
+          class="hidden"
+        >
+        <div id="compPhotoPreview" class="photo-preview"></div>
+        <!-- ===== End Phase 3 ===== -->
+
+        <h4 class="subheading">Inventory Used (optional)</h4>
+
+        <label>Inventory Item</label>
+        <select id="compInvSelect"></select>
+
+        <label>Quantity Used</label>
+        <input id="compInvQty" type="number" min="1" value="1">
+
+        <button id="compAddItemBtn" class="secondary-btn full">
+          + Add Used Item
+        </button>
+
+        <div id="compUsedList" class="used-items-list"></div>
+
+        <div class="panel-footer">
+          <button id="saveCompletionBtn" class="primary-btn full">
+            Save Maintenance
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Phase 3.2: REPORT PROBLEM PANEL (Home) ===== -->
+  <div id="problemPanelOverlay" class="panel-overlay hidden">
+    <div id="problemPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3>Report a Problem</h3>
+        <button id="closeProblemPanel" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+
+        <label>Title</label>
+        <input id="probTitle" type="text" placeholder="Short issue name (ex: Slat conveyor squeal)">
+
+        <label>Category</label>
+        <select id="probCategory"></select>
+
+        <label>Area / Location</label>
+        <input id="probLocation" type="text" placeholder="Where is it?">
+
+        <label>Severity</label>
+        <select id="probSeverity">
+          <option value="Low">Low</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+
+        <label>Status</label>
+        <select id="probStatus">
+          <option value="Open" selected>Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+
+        <label>Notes</label>
+        <input id="probNotes" type="text" placeholder="Extra details (optional)">
+
+        <h4 class="subheading">Photos (optional)</h4>
+        <button id="probAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <input id="probPhotoInput" type="file" accept="image/*" multiple class="hidden">
+        <div id="probPhotoPreview" class="photo-preview"></div>
+
+        <div class="panel-footer">
+          <button id="saveProblemBtn" type="button" class="primary-btn full">Save Problem</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- ===== End Phase 3.2 ===== -->
+
+  <!-- ===== Phase 3.3: PROBLEM DETAIL PANEL (tap from list) ===== -->
+  <div id="problemDetailOverlay" class="panel-overlay hidden">
+    <div id="problemDetailPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="problemDetailTitle">Problem</h3>
+        <button id="closeProblemDetail" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <div id="problemDetailMeta" class="problem-detail-meta"></div>
+
+        <h4 class="subheading">Status</h4>
+        <div id="problemDetailStatus" class="status-pill-row"></div>
+
+        <h4 class="subheading">Photos</h4>
+        <div id="problemDetailPhotos" class="photo-preview"></div>
+
+        <div class="panel-footer">
+          <button id="resolveLogBtn" class="primary-btn full">Resolve &amp; Log Maintenance</button>
+          <button id="deleteProblemBtn" class="danger-btn full">Delete Problem</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== End Phase 3.3 ===== -->
+
+  <!-- ===== Phase 3.1: Lightbox (full-screen photo viewer) ===== -->
+  <div id="lightboxOverlay" class="lightbox-overlay hidden" aria-hidden="true">
+    <button id="lightboxClose" class="lightbox-close" aria-label="Close">✖</button>
+    <img id="lightboxImg" class="lightbox-img" alt="Full size photo">
+  </div>
+  <!-- ===== End Phase 3.1 ===== -->
+
+  <!-- TOAST -->
+  <div id="toastContainer" class="toast"></div>
 
   <script src="inventory.js"></script>
   <script src="script.js"></script>
