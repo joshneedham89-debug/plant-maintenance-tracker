@@ -60,9 +60,8 @@
       <!-- Tons Update -->
       <div class="card">
         <h3>Update Tons</h3>
-        <input id="currentTonsInput" type="number" placeholder="Enter current tons" />
+        <input id="currentTonsInput" type="number" placeholder="Enter tons to add" />
         <button id="updateTonsBtn" class="primary-btn">Update</button>
-        <button id="resetTonsBtn" class="secondary-btn">Reset Tons</button>
       </div>
 
       <!-- ===== Phase 3.2: Report a Problem button on Home ===== -->
@@ -90,24 +89,6 @@
 
         <button id="addPartBtn" class="primary-btn full">+ Add Part</button>
       </div>
-
-      <!-- ===== Phase 3.3: Problems list inside Maintenance ===== -->
-      <div class="card">
-        <div class="problems-header-row">
-          <h3>Problems</h3>
-          <button id="openProblemPanelBtn2" class="secondary-btn">+ Report</button>
-        </div>
-
-        <div class="problem-filters">
-          <button class="prob-filter active" data-filter="ALL">All</button>
-          <button class="prob-filter" data-filter="Open">Open</button>
-          <button class="prob-filter" data-filter="In Progress">In Progress</button>
-          <button class="prob-filter" data-filter="Resolved">Resolved</button>
-        </div>
-
-        <div id="problemsList" class="problems-list"></div>
-      </div>
-      <!-- ===== End Phase 3.3 ===== -->
 
       <div id="partsList"></div>
     </section>
@@ -168,6 +149,7 @@
 
       <div class="card">
         <button id="exportBtn" class="primary-btn full">Export Data</button>
+        <button id="resetTonsBtn" class="secondary-btn full">Reset Tons to 0</button>
         <button id="resetAllBtn" class="danger-btn full">Reset Entire App</button>
       </div>
     </section>
@@ -348,39 +330,13 @@
         <div id="probPhotoPreview" class="photo-preview"></div>
 
         <div class="panel-footer">
-          <button id="saveProblemBtn" type="button" class="primary-btn full">Save Problem</button>
+          <button id="saveProblemBtn" class="primary-btn full">Save Problem</button>
         </div>
 
       </div>
     </div>
   </div>
   <!-- ===== End Phase 3.2 ===== -->
-
-  <!-- ===== Phase 3.3: PROBLEM DETAIL PANEL (tap from list) ===== -->
-  <div id="problemDetailOverlay" class="panel-overlay hidden">
-    <div id="problemDetailPanel" class="slide-panel">
-      <div class="slide-panel-header">
-        <h3 id="problemDetailTitle">Problem</h3>
-        <button id="closeProblemDetail" class="close-btn">✖</button>
-      </div>
-
-      <div class="slide-panel-body">
-        <div id="problemDetailMeta" class="problem-detail-meta"></div>
-
-        <h4 class="subheading">Status</h4>
-        <div id="problemDetailStatus" class="status-pill-row"></div>
-
-        <h4 class="subheading">Photos</h4>
-        <div id="problemDetailPhotos" class="photo-preview"></div>
-
-        <div class="panel-footer">
-          <button id="resolveLogBtn" class="primary-btn full">Resolve &amp; Log Maintenance</button>
-          <button id="deleteProblemBtn" class="danger-btn full">Delete Problem</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- ===== End Phase 3.3 ===== -->
 
   <!-- ===== Phase 3.1: Lightbox (full-screen photo viewer) ===== -->
   <div id="lightboxOverlay" class="lightbox-overlay hidden" aria-hidden="true">
