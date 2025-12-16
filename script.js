@@ -9,6 +9,12 @@ const INVENTORY_KEY = "pm_inventory";
 const PROBLEMS_KEY = "pm_problems";
 /* ===== End Phase 3.2 ===== */
 
+/** =====================================================================
+ * Phase 3.2 GOLD (Frozen) — Task 1: Code cleanup only
+ * - No feature/UI/storage behavior changes intended.
+ * - This file is organized into clear sections for safer edits.
+ * ===================================================================== */
+
 /* ---------------------------------------------------
    GLOBAL STATE
 --------------------------------------------------- */
@@ -36,8 +42,6 @@ let currentProblemFilter = "ALL";
 let viewingProblemId = null;
 /* ===== End Phase 3.3 ===== */
 
-/* ===== End Phase 3.2 ===== */
-
 /* ---------------------------------------------------
    ELEMENT REFERENCES
 --------------------------------------------------- */
@@ -52,9 +56,8 @@ const tonsRunEl = document.getElementById("tonsRun");
 const completedTodayEl = document.getElementById("completedTodayCount");
 const completedMonthEl = document.getElementById("completedMonthCount");
 
-/* ===== Phase 3.2: Open problems count ===== */
+/* Open problems count */
 const openProblemsCountEl = document.getElementById("openProblemsCount");
-/* ===== End Phase 3.2 ===== */
 
 /* Tons */
 const currentTonsInput = document.getElementById("currentTonsInput");
@@ -86,7 +89,7 @@ const ac_totalAc = document.getElementById("ac_totalAc");
 const exportBtn = document.getElementById("exportBtn");
 const resetAllBtn = document.getElementById("resetAllBtn");
 
-/* Add/Edit Part Panel (overlay version in your HTML) */
+/* Add/Edit Part Panel */
 const partPanelOverlay = document.getElementById("partPanelOverlay");
 const addPartPanel = document.getElementById("addPartPanel");
 const closePartPanelBtn = document.getElementById("closePartPanel");
@@ -100,7 +103,7 @@ const newPartTons = document.getElementById("newPartTons");
 const savePartBtn = document.getElementById("savePartBtn");
 const inventoryNameList = document.getElementById("inventoryNameList");
 
-/* Inventory Panel (overlay version in your HTML) */
+/* Inventory Panel */
 const inventoryPanelOverlay = document.getElementById("inventoryPanelOverlay");
 const inventoryPanel = document.getElementById("inventoryPanel");
 const closeInventoryPanelBtn = document.getElementById("closeInventoryPanel");
@@ -127,19 +130,17 @@ const compAddItemBtn = document.getElementById("compAddItemBtn");
 const compUsedList = document.getElementById("compUsedList");
 const saveCompletionBtn = document.getElementById("saveCompletionBtn");
 
-/* ===== Phase 3: Photo UI references ===== */
+/* Photos (maintenance) */
 const compAddPhotoBtn = document.getElementById("compAddPhotoBtn");
 const compPhotoInput = document.getElementById("compPhotoInput");
 const compPhotoPreview = document.getElementById("compPhotoPreview");
-/* ===== End Phase 3 ===== */
 
-/* ===== Phase 3.1: Lightbox refs ===== */
+/* Lightbox */
 const lightboxOverlay = document.getElementById("lightboxOverlay");
 const lightboxImg = document.getElementById("lightboxImg");
 const lightboxClose = document.getElementById("lightboxClose");
-/* ===== End Phase 3.1 ===== */
 
-/* ===== Phase 3.2: Problem Panel refs ===== */
+/* Problem Panel */
 const openProblemPanelBtn = document.getElementById("openProblemPanelBtn");
 const problemPanelOverlay = document.getElementById("problemPanelOverlay");
 const problemPanel = document.getElementById("problemPanel");
@@ -157,9 +158,8 @@ const probPhotoInput = document.getElementById("probPhotoInput");
 const probPhotoPreview = document.getElementById("probPhotoPreview");
 
 const saveProblemBtn = document.getElementById("saveProblemBtn");
-/* ===== End Phase 3.2 ===== */
 
-/* ===== Phase 3.3: Problems list + detail refs ===== */
+/* Problems list + detail */
 const openProblemPanelBtn2 = document.getElementById("openProblemPanelBtn2");
 const problemsListEl = document.getElementById("problemsList");
 const problemFilterBtns = document.querySelectorAll(".prob-filter");
@@ -173,7 +173,6 @@ const problemDetailStatus = document.getElementById("problemDetailStatus");
 const problemDetailPhotos = document.getElementById("problemDetailPhotos");
 const resolveLogBtn = document.getElementById("resolveLogBtn");
 const deleteProblemBtn = document.getElementById("deleteProblemBtn");
-/* ===== End Phase 3.3 ===== */
 
 /* Toast */
 const toastContainer = document.getElementById("toastContainer");
@@ -197,7 +196,7 @@ function showToast(message, type = "success") {
 }
 
 /* ---------------------------------------------------
-   Phase 3.1: LIGHTBOX
+   LIGHTBOX
 --------------------------------------------------- */
 function openLightbox(src) {
   if (!lightboxOverlay || !lightboxImg) return;
@@ -227,21 +226,18 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* ---------------------------------------------------
-   INIT
+   INIT / LOAD / SAVE
 --------------------------------------------------- */
 function loadState() {
   parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
   currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
 
-  // categories + default inventory come from inventory.js
   categories = Array.isArray(PRELOADED_CATEGORIES) ? PRELOADED_CATEGORIES : [];
 
   const storedInventory = JSON.parse(localStorage.getItem(INVENTORY_KEY));
   inventory = storedInventory?.length ? storedInventory : (PRELOADED_INVENTORY?.slice?.() || []);
 
-  /* ===== Phase 3.2: load problems ===== */
   problems = JSON.parse(localStorage.getItem(PROBLEMS_KEY)) || [];
-  /* ===== End Phase 3.2 ===== */
 
   if (currentTonsInput) currentTonsInput.value = currentTons;
 
@@ -249,27 +245,19 @@ function loadState() {
   buildInventoryCategoryDropdown();
   buildInventoryNameDatalist();
   buildCompleteInventorySelect();
-
-  /* ===== Phase 3.2: build problem category dropdown ===== */
   buildProblemCategoryDropdown();
-  /* ===== End Phase 3.2 ===== */
 
   renderDashboard();
   renderParts();
   renderInventory();
-  /* ===== Phase 3.3: render problems list ===== */
   renderProblemsList();
-  /* ===== End Phase 3.3 ===== */
 }
 
 function saveState() {
   localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
   localStorage.setItem(TONS_KEY, String(currentTons));
   localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
-
-  /* ===== Phase 3.2: save problems ===== */
   localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
-  /* ===== End Phase 3.2 ===== */
 }
 
 loadState();
@@ -348,12 +336,10 @@ function renderDashboard() {
   if (completedTodayEl) completedTodayEl.textContent = completedToday;
   if (completedMonthEl) completedMonthEl.textContent = completedMonth;
 
-  /* ===== Phase 3.2: open problems count ===== */
   if (openProblemsCountEl) {
     const openCount = (problems || []).filter(p => (p.status || "Open") === "Open").length;
     openProblemsCountEl.textContent = openCount;
   }
-  /* ===== End Phase 3.2 ===== */
 }
 
 /* ---------------------------------------------------
@@ -469,9 +455,7 @@ function renderParts() {
   });
 }
 
-/* Expand/collapse + part actions + photo lightbox */
 partsList?.addEventListener("click", (e) => {
-  // Phase 3.1: history thumbnail -> lightbox
   const historyImg = e.target?.tagName === "IMG" ? e.target.closest(".history-photo-strip img") : null;
   if (historyImg && historyImg.src) {
     openLightbox(historyImg.src);
@@ -501,14 +485,13 @@ partsList?.addEventListener("click", (e) => {
 });
 
 /* ---------------------------------------------------
-   PART: ADD/EDIT PANEL (overlay)
+   PART: ADD/EDIT PANEL
 --------------------------------------------------- */
 function openPartPanel(isEdit, index) {
   editingPartIndex = isEdit ? index : null;
 
   if (partPanelTitle) partPanelTitle.textContent = isEdit ? "Edit Part" : "Add New Part";
 
-  // categories dropdown for the panel
   if (newPartCategory) {
     newPartCategory.innerHTML = "";
     categories.forEach(c => {
@@ -548,7 +531,6 @@ partPanelOverlay?.addEventListener("click", (e) => {
   if (e.target === partPanelOverlay) closePartPanel();
 });
 
-// If user selects an inventory name, auto-set category
 newPartName?.addEventListener("change", () => {
   const name = newPartName.value.toLowerCase().trim();
   const match = inventory.find(item => (item.part || "").toLowerCase() === name);
@@ -590,9 +572,6 @@ savePartBtn?.addEventListener("click", () => {
   showToast(editingPartIndex !== null ? "Part updated" : "Part added");
 });
 
-/* ---------------------------------------------------
-   DELETE / DUPLICATE PART
---------------------------------------------------- */
 function deletePart(i) {
   if (!confirm("Delete this part?")) return;
   parts.splice(i, 1);
@@ -668,9 +647,7 @@ inventoryList?.addEventListener("click", (e) => {
     deleteInventoryItem(Number(e.target.dataset.idx));
 });
 
-/* ---------------------------------------------------
-   INVENTORY: ADD/EDIT PANEL (overlay)
---------------------------------------------------- */
+/* Inventory panel */
 function openInventoryPanel(isEdit, index) {
   editingInventoryIndex = isEdit ? index : null;
 
@@ -746,9 +723,6 @@ function deleteInventoryItem(i) {
   showToast("Inventory item deleted");
 }
 
-/* ---------------------------------------------------
-   INVENTORY NAME DATALIST (sync into parts)
---------------------------------------------------- */
 function buildInventoryNameDatalist() {
   if (!inventoryNameList) return;
   inventoryNameList.innerHTML = "";
@@ -766,18 +740,15 @@ function openCompletePanel(i, prefill) {
   completingPartIndex = i;
   completionUsedItems = [];
 
-  /* ===== Phase 3: reset photos each time panel opens ===== */
   completionPhotos = [];
   if (compPhotoPreview) compPhotoPreview.innerHTML = "";
   if (compPhotoInput) compPhotoInput.value = "";
-  /* ===== End Phase 3 ===== */
 
   const today = new Date().toISOString().split("T")[0];
   compDate.value = today;
   compTons.value = currentTons;
   compNotes.value = "";
 
-  // Phase 3.3: optional prefill (from resolved problem)
   if (prefill && typeof prefill === "object") {
     if (prefill.notes && compNotes) compNotes.value = String(prefill.notes);
     if (Array.isArray(prefill.photos)) {
@@ -831,7 +802,6 @@ compAddItemBtn?.addEventListener("click", () => {
   compInvQty.value = 1;
 });
 
-/* ===== Phase 3: Photo handlers (button-based, optional) ===== */
 function renderCompletionPhotoPreview() {
   if (!compPhotoPreview) return;
 
@@ -858,7 +828,7 @@ compAddPhotoBtn?.addEventListener("click", () => {
 
 compPhotoInput?.addEventListener("change", () => {
   const files = Array.from(compPhotoInput.files || []);
-  if (!files.length) return; // user cancelled picker -> Phase 2 behavior
+  if (!files.length) return;
 
   const MAX_ADD = 8;
   const toAdd = files.slice(0, MAX_ADD);
@@ -882,7 +852,6 @@ compPhotoInput?.addEventListener("change", () => {
   compPhotoInput.value = "";
 });
 
-// Phase 3.1: tap preview thumb to open lightbox (remove button still works)
 compPhotoPreview?.addEventListener("click", (e) => {
   const btn = e.target.closest(".photo-remove");
   if (btn) {
@@ -899,7 +868,6 @@ compPhotoPreview?.addEventListener("click", (e) => {
     openLightbox(img.src);
   }
 });
-/* ===== End Phase 3 ===== */
 
 saveCompletionBtn?.addEventListener("click", () => {
   const p = parts[completingPartIndex];
@@ -962,7 +930,7 @@ acCalcBtn?.addEventListener("click", () => {
 });
 
 /* ---------------------------------------------------
-   EXPORT DATA
+   EXPORT / RESET
 --------------------------------------------------- */
 exportBtn?.addEventListener("click", () => {
   const data = { parts, currentTons, inventory, problems };
@@ -977,9 +945,6 @@ exportBtn?.addEventListener("click", () => {
   showToast("Exported");
 });
 
-/* ---------------------------------------------------
-   RESET ALL
---------------------------------------------------- */
 resetAllBtn?.addEventListener("click", () => {
   if (!confirm("Reset ALL data?")) return;
   localStorage.clear();
@@ -988,9 +953,8 @@ resetAllBtn?.addEventListener("click", () => {
 });
 
 /* ===================================================
-   Phase 3.2: REPORT A PROBLEM (Home + slide panel)
+   REPORT A PROBLEM
 =================================================== */
-
 function buildProblemCategoryDropdown() {
   if (!probCategory) return;
   probCategory.innerHTML = "";
@@ -1000,7 +964,6 @@ function buildProblemCategoryDropdown() {
 }
 
 function openProblemPanel() {
-  // reset form each open
   if (probTitle) probTitle.value = "";
   if (probLocation) probLocation.value = "";
   if (probNotes) probNotes.value = "";
@@ -1011,7 +974,6 @@ function openProblemPanel() {
   buildProblemCategoryDropdown();
   if (probCategory && categories.length) probCategory.value = categories[0];
 
-  // reset photos
   problemPhotos = [];
   if (probPhotoPreview) probPhotoPreview.innerHTML = "";
   if (probPhotoInput) probPhotoInput.value = "";
@@ -1082,7 +1044,6 @@ probPhotoInput?.addEventListener("change", () => {
   probPhotoInput.value = "";
 });
 
-// tap thumb to view full-screen + remove
 probPhotoPreview?.addEventListener("click", (e) => {
   const btn = e.target.closest(".photo-remove");
   if (btn) {
@@ -1100,6 +1061,7 @@ probPhotoPreview?.addEventListener("click", (e) => {
 
 saveProblemBtn?.addEventListener("click", (e) => {
   e.preventDefault();
+
   const title = (probTitle?.value || "").trim();
   const category = probCategory?.value || "";
   const location = (probLocation?.value || "").trim();
@@ -1134,12 +1096,8 @@ saveProblemBtn?.addEventListener("click", (e) => {
 });
 
 /* ===================================================
-   Phase 3.3: PROBLEMS LIST (inside Maintenance)
-   - status pills
-   - tap -> slide detail panel
-   - Resolve & Log Maintenance (auto-create part + log)
+   PROBLEMS LIST + DETAIL + RESOLVE
 =================================================== */
-
 function getProblemStatusClass(status) {
   const s = String(status || "Open");
   if (s === "Resolved") return "status-resolved";
@@ -1150,7 +1108,6 @@ function getProblemStatusClass(status) {
 function renderProblemsList() {
   if (!problemsListEl) return;
 
-  // keep filters in sync
   problemFilterBtns?.forEach(btn => {
     btn.classList.toggle("active", btn.dataset.filter === currentProblemFilter);
   });
@@ -1203,7 +1160,6 @@ function openProblemDetail(problemId) {
 
   if (problemDetailMeta) problemDetailMeta.innerHTML = metaLines.join("<br>");
 
-  // Status pills (clickable)
   if (problemDetailStatus) {
     const statuses = ["Open", "In Progress", "Resolved"];
     problemDetailStatus.innerHTML = statuses.map(s => {
@@ -1213,7 +1169,6 @@ function openProblemDetail(problemId) {
     }).join("");
   }
 
-  // Photos
   if (problemDetailPhotos) {
     const photos = Array.isArray(p.photos) ? p.photos : [];
     if (!photos.length) {
@@ -1246,7 +1201,6 @@ problemDetailOverlay?.addEventListener("click", (e) => {
   if (e.target === problemDetailOverlay) closeProblemDetail();
 });
 
-// Filter buttons
 problemFilterBtns?.forEach(btn => {
   btn.addEventListener("click", () => {
     currentProblemFilter = btn.dataset.filter || "ALL";
@@ -1254,7 +1208,6 @@ problemFilterBtns?.forEach(btn => {
   });
 });
 
-// Tap a problem card -> open detail
 problemsListEl?.addEventListener("click", (e) => {
   const card = e.target.closest(".problem-card");
   if (!card) return;
@@ -1262,7 +1215,6 @@ problemsListEl?.addEventListener("click", (e) => {
   if (id) openProblemDetail(id);
 });
 
-// Inside detail: change status pill + photo tap
 problemDetailStatus?.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-setstatus]");
   if (!btn || !viewingProblemId) return;
@@ -1274,7 +1226,7 @@ problemDetailStatus?.addEventListener("click", (e) => {
   saveState();
   renderDashboard();
   renderProblemsList();
-  openProblemDetail(viewingProblemId); // re-render detail
+  openProblemDetail(viewingProblemId);
 });
 
 problemDetailPhotos?.addEventListener("click", (e) => {
@@ -1282,19 +1234,16 @@ problemDetailPhotos?.addEventListener("click", (e) => {
   if (img?.src) openLightbox(img.src);
 });
 
-// Resolve & Log Maintenance -> mark resolved + create/open maintenance log
 resolveLogBtn?.addEventListener("click", () => {
   if (!viewingProblemId) return;
   const p = (problems || []).find(x => x.id === viewingProblemId);
   if (!p) return;
 
-  // mark resolved
   p.status = "Resolved";
   saveState();
   renderDashboard();
   renderProblemsList();
 
-  // Auto-create maintenance "task" as a Part (one-time log container)
   const name = p.title || "Problem Fix";
   const category = p.category || (categories[0] || "Other");
   const section = p.location || "Plant";
@@ -1310,7 +1259,6 @@ resolveLogBtn?.addEventListener("click", () => {
       name,
       category,
       section,
-      // long intervals so it doesn't become an annoying overdue recurring PM
       days: 3650,
       tonInterval: 9999999,
       date: new Date().toISOString().split("T")[0],
@@ -1320,7 +1268,6 @@ resolveLogBtn?.addEventListener("click", () => {
     partIndex = parts.length - 1;
   }
 
-  // Open Complete Maintenance panel prefilled
   openCompletePanel(partIndex, {
     notes: `Resolved problem: ${name}${p.notes ? " — " + p.notes : ""}`,
     photos: Array.isArray(p.photos) ? p.photos.slice() : []
@@ -1330,7 +1277,6 @@ resolveLogBtn?.addEventListener("click", () => {
   showToast("Problem resolved + ready to log maintenance");
 });
 
-// Delete problem
 deleteProblemBtn?.addEventListener("click", () => {
   if (!viewingProblemId) return;
   if (!confirm("Delete this problem?")) return;
@@ -1342,7 +1288,6 @@ deleteProblemBtn?.addEventListener("click", () => {
   showToast("Problem deleted");
 });
 
-/* Tiny helper to avoid breaking HTML when rendering user text */
 function escapeHtml(str) {
   return String(str || "")
     .replaceAll("&", "&amp;")
@@ -1350,4 +1295,4 @@ function escapeHtml(str) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
-}
+     }
