@@ -211,6 +211,9 @@ function loadState() {
   parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
   currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
 
+  // everything else that was already inside loadState stays here
+}
+
   // categories + default inventory come from inventory.js
   categories = Array.isArray(PRELOADED_CATEGORIES) ? PRELOADED_CATEGORIES : [];
 
