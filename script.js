@@ -31,8 +31,11 @@ let completionPhotos = []; // array of dataURL strings
 let problems = [];
 let problemPhotos = []; // array of dataURL strings
 
-// ✅ prevents “save doesn’t work when photo uploaded” (saving while files still loading)
-let problemPhotoLoadsInProgress = 0;
+/* ===== Phase 3.3: Problems list UI state ===== */
+let currentProblemFilter = "ALL";
+let viewingProblemId = null;
+/* ===== End Phase 3.3 ===== */
+
 /* ===== End Phase 3.2 ===== */
 
 /* ---------------------------------------------------
@@ -56,7 +59,7 @@ const openProblemsCountEl = document.getElementById("openProblemsCount");
 /* Tons */
 const currentTonsInput = document.getElementById("currentTonsInput");
 const updateTonsBtn = document.getElementById("updateTonsBtn");
-const resetTonsBtn = document.getElementById("resetTonsBtn"); // ✅ now lives in Settings, same id
+const resetTonsBtn = document.getElementById("resetTonsBtn");
 
 /* Maintenance UI */
 const filterCategory = document.getElementById("filterCategory");
@@ -138,7 +141,6 @@ const lightboxClose = document.getElementById("lightboxClose");
 
 /* ===== Phase 3.2: Problem Panel refs ===== */
 const openProblemPanelBtn = document.getElementById("openProblemPanelBtn");
-const openProblemPanelBtn2 = document.getElementById("openProblemPanelBtn2"); // ✅ new (Maintenance)
 const problemPanelOverlay = document.getElementById("problemPanelOverlay");
 const problemPanel = document.getElementById("problemPanel");
 const closeProblemPanelBtn = document.getElementById("closeProblemPanel");
@@ -156,6 +158,22 @@ const probPhotoPreview = document.getElementById("probPhotoPreview");
 
 const saveProblemBtn = document.getElementById("saveProblemBtn");
 /* ===== End Phase 3.2 ===== */
+
+/* ===== Phase 3.3: Problems list + detail refs ===== */
+const openProblemPanelBtn2 = document.getElementById("openProblemPanelBtn2");
+const problemsListEl = document.getElementById("problemsList");
+const problemFilterBtns = document.querySelectorAll(".prob-filter");
+
+const problemDetailOverlay = document.getElementById("problemDetailOverlay");
+const problemDetailPanel = document.getElementById("problemDetailPanel");
+const closeProblemDetailBtn = document.getElementById("closeProblemDetail");
+const problemDetailTitle = document.getElementById("problemDetailTitle");
+const problemDetailMeta = document.getElementById("problemDetailMeta");
+const problemDetailStatus = document.getElementById("problemDetailStatus");
+const problemDetailPhotos = document.getElementById("problemDetailPhotos");
+const resolveLogBtn = document.getElementById("resolveLogBtn");
+const deleteProblemBtn = document.getElementById("deleteProblemBtn");
+/* ===== End Phase 3.3 ===== */
 
 /* Toast */
 const toastContainer = document.getElementById("toastContainer");
@@ -225,8 +243,7 @@ function loadState() {
   problems = JSON.parse(localStorage.getItem(PROBLEMS_KEY)) || [];
   /* ===== End Phase 3.2 ===== */
 
-  // ✅ Update Tons is additive now, so keep this input blank
-  if (currentTonsInput) currentTonsInput.value = "";
+  if (currentTonsInput) currentTonsInput.value = currentTons;
 
   buildCategoryDropdown();
   buildInventoryCategoryDropdown();
@@ -240,6 +257,9 @@ function loadState() {
   renderDashboard();
   renderParts();
   renderInventory();
+  /* ===== Phase 3.3: render problems list ===== */
+  renderProblemsList();
+  /* ===== End Phase 3.3 ===== */
 }
 
 function saveState() {
@@ -266,7 +286,7 @@ function showScreen(screenId) {
   });
 
   if (screenId === "dashboardScreen") renderDashboard();
-  if (screenId === "maintenanceScreen") renderParts();
+  if (screenId === "maintenanceScreen") { renderParts(); renderProblemsList(); }
   if (screenId === "inventoryScreen") renderInventory();
 }
 
@@ -277,34 +297,19 @@ navButtons.forEach(btn => {
 /* ---------------------------------------------------
    TONS
 --------------------------------------------------- */
-// ✅ now ADDS to currentTons (does not overwrite)
 updateTonsBtn?.addEventListener("click", () => {
-  const add = Number(currentTonsInput?.value);
-
-  if (!Number.isFinite(add)) {
-    showToast("Enter a number to add", "error");
-    return;
-  }
-
-  currentTons = Math.max(0, currentTons + add);
-
-  if (currentTonsInput) currentTonsInput.value = "";
-
+  currentTons = Number(currentTonsInput.value) || 0;
   saveState();
   renderDashboard();
-  showToast(`Added ${add} tons`);
+  showToast("Tons updated");
 });
 
-// ✅ ONLY reset to 0 via this button (now in Settings)
 resetTonsBtn?.addEventListener("click", () => {
-  if (!confirm("Reset tons back to 0?")) return;
-
   currentTons = 0;
-  if (currentTonsInput) currentTonsInput.value = "";
-
+  if (currentTonsInput) currentTonsInput.value = 0;
   saveState();
   renderDashboard();
-  showToast("Tons reset to 0");
+  showToast("Tons reset");
 });
 
 /* ---------------------------------------------------
@@ -757,7 +762,7 @@ function buildInventoryNameDatalist() {
 /* ---------------------------------------------------
    COMPLETE MAINTENANCE PANEL
 --------------------------------------------------- */
-function openCompletePanel(i) {
+function openCompletePanel(i, prefill) {
   completingPartIndex = i;
   completionUsedItems = [];
 
@@ -771,6 +776,15 @@ function openCompletePanel(i) {
   compDate.value = today;
   compTons.value = currentTons;
   compNotes.value = "";
+
+  // Phase 3.3: optional prefill (from resolved problem)
+  if (prefill && typeof prefill === "object") {
+    if (prefill.notes && compNotes) compNotes.value = String(prefill.notes);
+    if (Array.isArray(prefill.photos)) {
+      completionPhotos = prefill.photos.slice();
+      renderCompletionPhotoPreview();
+    }
+  }
 
   buildCompleteInventorySelect();
   compUsedList.innerHTML = "";
@@ -844,7 +858,7 @@ compAddPhotoBtn?.addEventListener("click", () => {
 
 compPhotoInput?.addEventListener("change", () => {
   const files = Array.from(compPhotoInput.files || []);
-  if (!files.length) return;
+  if (!files.length) return; // user cancelled picker -> Phase 2 behavior
 
   const MAX_ADD = 8;
   const toAdd = files.slice(0, MAX_ADD);
@@ -868,6 +882,7 @@ compPhotoInput?.addEventListener("change", () => {
   compPhotoInput.value = "";
 });
 
+// Phase 3.1: tap preview thumb to open lightbox (remove button still works)
 compPhotoPreview?.addEventListener("click", (e) => {
   const btn = e.target.closest(".photo-remove");
   if (btn) {
@@ -984,12 +999,6 @@ function buildProblemCategoryDropdown() {
   });
 }
 
-function setProblemSaveEnabled(isEnabled) {
-  if (!saveProblemBtn) return;
-  saveProblemBtn.disabled = !isEnabled;
-  saveProblemBtn.style.opacity = isEnabled ? "" : "0.65";
-}
-
 function openProblemPanel() {
   // reset form each open
   if (probTitle) probTitle.value = "";
@@ -1004,9 +1013,6 @@ function openProblemPanel() {
 
   // reset photos
   problemPhotos = [];
-  problemPhotoLoadsInProgress = 0;
-  setProblemSaveEnabled(true);
-
   if (probPhotoPreview) probPhotoPreview.innerHTML = "";
   if (probPhotoInput) probPhotoInput.value = "";
 
@@ -1020,8 +1026,7 @@ function closeProblemPanel() {
 }
 
 openProblemPanelBtn?.addEventListener("click", openProblemPanel);
-openProblemPanelBtn2?.addEventListener("click", openProblemPanel); // ✅ Maintenance button uses same panel
-
+openProblemPanelBtn2?.addEventListener("click", openProblemPanel);
 closeProblemPanelBtn?.addEventListener("click", closeProblemPanel);
 problemPanelOverlay?.addEventListener("click", (e) => {
   if (e.target === problemPanelOverlay) closeProblemPanel();
@@ -1058,31 +1063,18 @@ probPhotoInput?.addEventListener("change", () => {
   const MAX_ADD = 8;
   const toAdd = files.slice(0, MAX_ADD);
 
-  problemPhotoLoadsInProgress += toAdd.length;
-  setProblemSaveEnabled(false);
-
+  let added = 0;
   toAdd.forEach(file => {
-    if (!file.type.startsWith("image/")) {
-      problemPhotoLoadsInProgress = Math.max(0, problemPhotoLoadsInProgress - 1);
-      return;
-    }
+    if (!file.type.startsWith("image/")) return;
 
     const reader = new FileReader();
     reader.onload = () => {
       problemPhotos.push(String(reader.result || ""));
-      problemPhotoLoadsInProgress = Math.max(0, problemPhotoLoadsInProgress - 1);
-
-      renderProblemPhotoPreview();
-
-      if (problemPhotoLoadsInProgress === 0) {
-        setProblemSaveEnabled(true);
+      added++;
+      if (added === toAdd.length) {
+        renderProblemPhotoPreview();
         showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
       }
-    };
-    reader.onerror = () => {
-      problemPhotoLoadsInProgress = Math.max(0, problemPhotoLoadsInProgress - 1);
-      if (problemPhotoLoadsInProgress === 0) setProblemSaveEnabled(true);
-      showToast("Photo failed to load", "error");
     };
     reader.readAsDataURL(file);
   });
@@ -1108,13 +1100,6 @@ probPhotoPreview?.addEventListener("click", (e) => {
 
 saveProblemBtn?.addEventListener("click", (e) => {
   e.preventDefault();
-  e.stopPropagation();
-
-  if (problemPhotoLoadsInProgress > 0) {
-    showToast("Photos still loading… try again in a sec", "error");
-    return;
-  }
-
   const title = (probTitle?.value || "").trim();
   const category = probCategory?.value || "";
   const location = (probLocation?.value || "").trim();
@@ -1140,24 +1125,229 @@ saveProblemBtn?.addEventListener("click", (e) => {
   };
 
   problems.unshift(item);
-
-  // ✅ If localStorage fails due to big photos, still save the problem (without photos)
-  try {
-    saveState();
-  } catch (err) {
-    try {
-      problems[0] = { ...problems[0], photos: [] };
-      saveState();
-      showToast("Saved problem (photos too large to store)", "error");
-    } catch (err2) {
-      problems.shift(); // rollback
-      showToast("Could not save problem (storage full)", "error");
-      return;
-    }
-  }
-
+  saveState();
   renderDashboard();
+  renderProblemsList();
 
   showToast("Problem saved");
   closeProblemPanel();
 });
+
+/* ===================================================
+   Phase 3.3: PROBLEMS LIST (inside Maintenance)
+   - status pills
+   - tap -> slide detail panel
+   - Resolve & Log Maintenance (auto-create part + log)
+=================================================== */
+
+function getProblemStatusClass(status) {
+  const s = String(status || "Open");
+  if (s === "Resolved") return "status-resolved";
+  if (s === "In Progress") return "status-inprogress";
+  return "status-open";
+}
+
+function renderProblemsList() {
+  if (!problemsListEl) return;
+
+  // keep filters in sync
+  problemFilterBtns?.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.filter === currentProblemFilter);
+  });
+
+  const filtered = (problems || []).filter(p => {
+    if (currentProblemFilter === "ALL") return true;
+    return (p.status || "Open") === currentProblemFilter;
+  });
+
+  if (!filtered.length) {
+    problemsListEl.innerHTML = `<div class="part-meta">No problems yet.</div>`;
+    return;
+  }
+
+  problemsListEl.innerHTML = filtered.map(p => {
+    const status = p.status || "Open";
+    const pillClass = getProblemStatusClass(status);
+    const created = (p.createdAt || "").split("T")[0] || "";
+    return `
+      <div class="problem-card" data-probid="${p.id}">
+        <div class="problem-card-top">
+          <div>
+            <div class="problem-title">${escapeHtml(p.title || "Problem")}</div>
+            <div class="problem-sub">${escapeHtml(p.category || "")} — ${escapeHtml(p.location || "")}</div>
+            <div class="problem-sub">${created ? `Created: ${created}` : ""}</div>
+          </div>
+          <span class="status-pill ${pillClass}">${escapeHtml(status)}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function openProblemDetail(problemId) {
+  const p = (problems || []).find(x => x.id === problemId);
+  if (!p) return;
+
+  viewingProblemId = problemId;
+
+  if (problemDetailTitle) problemDetailTitle.textContent = p.title || "Problem";
+
+  const created = (p.createdAt || "").split("T")[0] || "";
+  const metaLines = [
+    created ? `Created: <b>${escapeHtml(created)}</b>` : "",
+    `Category: <b>${escapeHtml(p.category || "")}</b>`,
+    `Location: <b>${escapeHtml(p.location || "")}</b>`,
+    `Severity: <b>${escapeHtml(p.severity || "Medium")}</b>`,
+    p.notes ? `Notes: <b>${escapeHtml(p.notes)}</b>` : ""
+  ].filter(Boolean);
+
+  if (problemDetailMeta) problemDetailMeta.innerHTML = metaLines.join("<br>");
+
+  // Status pills (clickable)
+  if (problemDetailStatus) {
+    const statuses = ["Open", "In Progress", "Resolved"];
+    problemDetailStatus.innerHTML = statuses.map(s => {
+      const cls = getProblemStatusClass(s);
+      const active = (p.status || "Open") === s ? "style=\"outline:2px solid var(--accent);\"" : "";
+      return `<button class="status-pill ${cls}" data-setstatus="${escapeHtml(s)}" ${active}>${escapeHtml(s)}</button>`;
+    }).join("");
+  }
+
+  // Photos
+  if (problemDetailPhotos) {
+    const photos = Array.isArray(p.photos) ? p.photos : [];
+    if (!photos.length) {
+      problemDetailPhotos.innerHTML = `<div class="part-meta">No photos</div>`;
+    } else {
+      problemDetailPhotos.innerHTML = `
+        <div class="photo-preview-grid">
+          ${photos.map((src, idx) => `
+            <div class="photo-thumb">
+              <img src="${src}" alt="Problem Photo ${idx + 1}">
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+  }
+
+  problemDetailOverlay?.classList.remove("hidden");
+  setTimeout(() => problemDetailPanel?.classList.add("show"), 10);
+}
+
+function closeProblemDetail() {
+  problemDetailPanel?.classList.remove("show");
+  setTimeout(() => problemDetailOverlay?.classList.add("hidden"), 250);
+  viewingProblemId = null;
+}
+
+closeProblemDetailBtn?.addEventListener("click", closeProblemDetail);
+problemDetailOverlay?.addEventListener("click", (e) => {
+  if (e.target === problemDetailOverlay) closeProblemDetail();
+});
+
+// Filter buttons
+problemFilterBtns?.forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentProblemFilter = btn.dataset.filter || "ALL";
+    renderProblemsList();
+  });
+});
+
+// Tap a problem card -> open detail
+problemsListEl?.addEventListener("click", (e) => {
+  const card = e.target.closest(".problem-card");
+  if (!card) return;
+  const id = card.dataset.probid;
+  if (id) openProblemDetail(id);
+});
+
+// Inside detail: change status pill + photo tap
+problemDetailStatus?.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-setstatus]");
+  if (!btn || !viewingProblemId) return;
+
+  const p = (problems || []).find(x => x.id === viewingProblemId);
+  if (!p) return;
+
+  p.status = btn.dataset.setstatus || "Open";
+  saveState();
+  renderDashboard();
+  renderProblemsList();
+  openProblemDetail(viewingProblemId); // re-render detail
+});
+
+problemDetailPhotos?.addEventListener("click", (e) => {
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img?.src) openLightbox(img.src);
+});
+
+// Resolve & Log Maintenance -> mark resolved + create/open maintenance log
+resolveLogBtn?.addEventListener("click", () => {
+  if (!viewingProblemId) return;
+  const p = (problems || []).find(x => x.id === viewingProblemId);
+  if (!p) return;
+
+  // mark resolved
+  p.status = "Resolved";
+  saveState();
+  renderDashboard();
+  renderProblemsList();
+
+  // Auto-create maintenance "task" as a Part (one-time log container)
+  const name = p.title || "Problem Fix";
+  const category = p.category || (categories[0] || "Other");
+  const section = p.location || "Plant";
+
+  let partIndex = parts.findIndex(x =>
+    (x.name || "").trim() === name.trim() &&
+    (x.category || "") === category &&
+    (x.section || "").trim() === section.trim()
+  );
+
+  if (partIndex === -1) {
+    parts.push({
+      name,
+      category,
+      section,
+      // long intervals so it doesn't become an annoying overdue recurring PM
+      days: 3650,
+      tonInterval: 9999999,
+      date: new Date().toISOString().split("T")[0],
+      lastTons: currentTons,
+      history: []
+    });
+    partIndex = parts.length - 1;
+  }
+
+  // Open Complete Maintenance panel prefilled
+  openCompletePanel(partIndex, {
+    notes: `Resolved problem: ${name}${p.notes ? " — " + p.notes : ""}`,
+    photos: Array.isArray(p.photos) ? p.photos.slice() : []
+  });
+
+  closeProblemDetail();
+  showToast("Problem resolved + ready to log maintenance");
+});
+
+// Delete problem
+deleteProblemBtn?.addEventListener("click", () => {
+  if (!viewingProblemId) return;
+  if (!confirm("Delete this problem?")) return;
+  problems = (problems || []).filter(p => p.id !== viewingProblemId);
+  saveState();
+  renderDashboard();
+  renderProblemsList();
+  closeProblemDetail();
+  showToast("Problem deleted");
+});
+
+/* Tiny helper to avoid breaking HTML when rendering user text */
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
