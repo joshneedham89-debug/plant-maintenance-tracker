@@ -1,10 +1,22 @@
 /* ---------------------------------------------------
-   STORAGE KEYS
+   Plant Maintenance Tracker – Gold Baseline (Local)
+   Minimal required changes + requested add-ons
+
+   ✅ Tons: Update adds only
+   ✅ Reset Tons moved to Settings
+   ✅ Problems: Save works with photos (async FileReader fix)
+   ✅ PMs: Daily/Weekly by area, history by day, optional photo
+   ✅ Supervisor mode: toggle (PM editing + problem status tools)
+--------------------------------------------------- */
+
+/* ---------------------------------------------------
+   STORAGE KEYS (existing keys kept)
 --------------------------------------------------- */
 const PARTS_KEY = "pm_parts";
 const TONS_KEY = "pm_tons";
 const INVENTORY_KEY = "pm_inventory";
 
+// NEW (isolated – requested)
 const PROBLEMS_KEY = "pm_problems";
 const PMS_KEY = "pm_pms";
 const SETTINGS_KEY = "pm_settings";
@@ -17,8 +29,8 @@ let currentTons = 0;
 let categories = [];
 let inventory = [];
 
-let problems = [];   // {id, area, severity, title, notes, status, createdAt, photos[], history[]}
-let pms = [];        // {id, area, frequency, title, notes, history[]}
+let problems = [];
+let pms = [];
 let settings = { supervisor: false };
 
 let editingPartIndex = null;
@@ -27,12 +39,10 @@ let editingInventoryIndex = null;
 let completingPartIndex = null;
 let completionUsedItems = []; // {invIndex, qty}
 
-/* PM / Problems editing */
+// Maintenance sub-tabs
 let activeMaintTab = "parts"; // parts | pms | problems
 let editingPmId = null;
 let loggingPmId = null;
-
-let editingProblemId = null;
 
 /* ---------------------------------------------------
    ELEMENT REFERENCES
@@ -47,12 +57,11 @@ const overCountEl = document.getElementById("overCount");
 const tonsRunEl = document.getElementById("tonsRun");
 const completedTodayEl = document.getElementById("completedTodayCount");
 const completedMonthEl = document.getElementById("completedMonthCount");
-const openProblemsCountEl = document.getElementById("openProblemsCount");
 
 /* Tons */
 const currentTonsInput = document.getElementById("currentTonsInput");
 const updateTonsBtn = document.getElementById("updateTonsBtn");
-const resetTonsBtn = document.getElementById("resetTonsBtn"); // now in settings
+const resetTonsBtn = document.getElementById("resetTonsBtn"); // moved to Settings
 
 /* Maintenance UI */
 const filterCategory = document.getElementById("filterCategory");
@@ -60,7 +69,7 @@ const partsList = document.getElementById("partsList");
 const addPartBtn = document.getElementById("addPartBtn");
 const searchPartsInput = document.getElementById("searchPartsInput");
 
-/* Maintenance Tabs */
+/* Maintenance tabs + containers */
 const maintTabParts = document.getElementById("maintTabParts");
 const maintTabPMs = document.getElementById("maintTabPMs");
 const maintTabProblems = document.getElementById("maintTabProblems");
@@ -74,15 +83,14 @@ const problemsList = document.getElementById("problemsList");
 
 const supervisorBadge = document.getElementById("supervisorBadge");
 
-/* PM filters + buttons */
+/* PM controls */
 const pmAreaFilter = document.getElementById("pmAreaFilter");
 const pmFreqFilter = document.getElementById("pmFreqFilter");
 const openPMPanelBtn = document.getElementById("openPMPanelBtn");
 
-/* Problems filters + buttons */
+/* Problems controls */
 const problemStatusFilter = document.getElementById("problemStatusFilter");
 const openProblemPanelBtn = document.getElementById("openProblemPanelBtn");
-const openProblemPanelBtn2 = document.getElementById("openProblemPanelBtn2");
 
 /* Inventory UI */
 const inventoryList = document.getElementById("inventoryList");
@@ -157,7 +165,7 @@ const pmTitle = document.getElementById("pmTitle");
 const pmNotes = document.getElementById("pmNotes");
 const savePMBtn = document.getElementById("savePMBtn");
 
-/* PM Complete */
+/* PM Log Panel */
 const pmCompleteOverlay = document.getElementById("pmCompleteOverlay");
 const pmCompletePanel = document.getElementById("pmCompletePanel");
 const closePMComplete = document.getElementById("closePMComplete");
@@ -169,7 +177,6 @@ const savePMLogBtn = document.getElementById("savePMLogBtn");
 /* Problem Panel */
 const problemPanelOverlay = document.getElementById("problemPanelOverlay");
 const problemPanel = document.getElementById("problemPanel");
-const problemPanelTitle = document.getElementById("problemPanelTitle");
 const closeProblemPanel = document.getElementById("closeProblemPanel");
 
 const problemArea = document.getElementById("problemArea");
@@ -188,23 +195,27 @@ let toastTimeoutId = null;
 --------------------------------------------------- */
 function showToast(message, type = "success") {
   if (!toastContainer) return;
+
   toastContainer.textContent = message;
   toastContainer.className = "toast " + type;
   void toastContainer.offsetWidth;
   toastContainer.classList.add("show");
+
   clearTimeout(toastTimeoutId);
-  toastTimeoutId = setTimeout(() => toastContainer.classList.remove("show"), 2500);
+  toastTimeoutId = setTimeout(() => {
+    toastContainer.classList.remove("show");
+  }, 2500);
 }
 
 /* ---------------------------------------------------
    HELPERS
 --------------------------------------------------- */
-function uid(prefix="id") {
-  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-}
-
 function todayISO() {
   return new Date().toISOString().split("T")[0];
+}
+
+function uid(prefix = "id") {
+  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
 function safeJsonParse(value, fallback) {
@@ -213,22 +224,18 @@ function safeJsonParse(value, fallback) {
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("file read failed"));
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.readAsDataURL(file);
+    const r = new FileReader();
+    r.onerror = () => reject(new Error("read failed"));
+    r.onload = () => resolve(String(r.result || ""));
+    r.readAsDataURL(file);
   });
 }
 
-/* IMPORTANT: fixes your “save problem doesn’t save with photo” bug */
+// ✅ Fix for “save problem doesn’t save with photo”
 async function readFilesAsDataUrls(fileList, maxCount = 4) {
   const files = Array.from(fileList || []).slice(0, maxCount);
   const urls = [];
   for (const f of files) {
-    // lightweight guard (still allows use)
-    if (f.size > 3.5 * 1024 * 1024) {
-      showToast("Photo is big — may fail to save", "error");
-    }
     urls.push(await readFileAsDataUrl(f));
   }
   return urls;
@@ -252,9 +259,10 @@ function loadState() {
 
   problems = safeJsonParse(localStorage.getItem(PROBLEMS_KEY), []) || [];
   pms = safeJsonParse(localStorage.getItem(PMS_KEY), []) || [];
-  settings = safeJsonParse(localStorage.getItem(SETTINGS_KEY), { supervisor: false }) || { supervisor:false };
+  settings = safeJsonParse(localStorage.getItem(SETTINGS_KEY), { supervisor: false }) || { supervisor: false };
 
-  if (currentTonsInput) currentTonsInput.value = ""; // input is ADD now (don’t show total)
+  // Tons input is now “ADD” amount – keep blank
+  if (currentTonsInput) currentTonsInput.value = "";
 
   buildCategoryDropdown();
   buildInventoryCategoryDropdown();
@@ -264,25 +272,28 @@ function loadState() {
   buildPmAreaDropdowns();
   buildProblemAreaDropdowns();
 
-  setSupervisorUI();
-
-  // seed default PMs if empty
+  // Seed PMs if empty (safe default list)
   if (!Array.isArray(pms) || pms.length === 0) {
     seedDefaultPMs();
     saveState();
   }
+
+  setSupervisorUI();
 
   renderDashboard();
   renderParts();
   renderInventory();
   renderPMs();
   renderProblems();
+
+  setMaintenanceTab(activeMaintTab);
 }
 
 function saveState() {
   localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
   localStorage.setItem(TONS_KEY, String(currentTons));
   localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
+
   localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
   localStorage.setItem(PMS_KEY, JSON.stringify(pms));
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -291,23 +302,35 @@ function saveState() {
 loadState();
 
 /* ---------------------------------------------------
+   PWA: Service Worker registration (safe, minimal)
+--------------------------------------------------- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js").catch(() => {
+      // silent fail – app still works without SW
+    });
+  });
+}
+
+/* ---------------------------------------------------
    SCREEN SWITCHING
 --------------------------------------------------- */
 function showScreen(screenId) {
   screens.forEach(s => s.classList.remove("active"));
   document.getElementById(screenId)?.classList.add("active");
 
-  navButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.screen === screenId));
+  navButtons.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.screen === screenId);
+  });
 
   if (screenId === "dashboardScreen") renderDashboard();
-  if (screenId === "maintenanceScreen") {
-    // keep last active tab
-    setMaintenanceTab(activeMaintTab);
-  }
+  if (screenId === "maintenanceScreen") setMaintenanceTab(activeMaintTab);
   if (screenId === "inventoryScreen") renderInventory();
 }
 
-navButtons.forEach(btn => btn.addEventListener("click", () => showScreen(btn.dataset.screen)));
+navButtons.forEach(btn => {
+  btn.addEventListener("click", () => showScreen(btn.dataset.screen));
+});
 
 /* ---------------------------------------------------
    TONS (ADD ONLY)
@@ -323,6 +346,7 @@ updateTonsBtn?.addEventListener("click", () => {
   if (currentTonsInput) currentTonsInput.value = "";
   saveState();
   renderDashboard();
+  renderParts();
   showToast(`Added ${add} tons`);
 });
 
@@ -331,6 +355,7 @@ resetTonsBtn?.addEventListener("click", () => {
   currentTons = 0;
   saveState();
   renderDashboard();
+  renderParts();
   showToast("Tons reset");
 });
 
@@ -369,11 +394,6 @@ function renderDashboard() {
 
   if (completedTodayEl) completedTodayEl.textContent = completedToday;
   if (completedMonthEl) completedMonthEl.textContent = completedMonth;
-
-  if (openProblemsCountEl) {
-    const openCount = (problems || []).filter(p => (p.status || "Open") === "Open").length;
-    openProblemsCountEl.textContent = openCount;
-  }
 }
 
 /* ---------------------------------------------------
@@ -382,13 +402,17 @@ function renderDashboard() {
 function buildCategoryDropdown() {
   if (!filterCategory) return;
   filterCategory.innerHTML = `<option value="ALL">All Categories</option>`;
-  categories.forEach(c => { filterCategory.innerHTML += `<option value="${c}">${c}</option>`; });
+  categories.forEach(c => {
+    filterCategory.innerHTML += `<option value="${c}">${c}</option>`;
+  });
 }
 
 function buildInventoryCategoryDropdown() {
   if (!invCategory) return;
   invCategory.innerHTML = "";
-  categories.forEach(c => { invCategory.innerHTML += `<option value="${c}">${c}</option>`; });
+  categories.forEach(c => {
+    invCategory.innerHTML += `<option value="${c}">${c}</option>`;
+  });
 }
 
 filterCategory?.addEventListener("change", renderParts);
@@ -729,8 +753,7 @@ function openCompletePanel(i) {
   completingPartIndex = i;
   completionUsedItems = [];
 
-  const today = todayISO();
-  compDate.value = today;
+  compDate.value = todayISO();
   compTons.value = currentTons;
   compNotes.value = "";
 
@@ -839,8 +862,8 @@ supervisorToggle?.addEventListener("change", () => {
   settings.supervisor = !!supervisorToggle.checked;
   saveState();
   setSupervisorUI();
-  renderProblems();
   renderPMs();
+  renderProblems();
   showToast(settings.supervisor ? "Supervisor enabled" : "Supervisor disabled");
 });
 
@@ -898,7 +921,7 @@ maintTabPMs?.addEventListener("click", () => setMaintenanceTab("pms"));
 maintTabProblems?.addEventListener("click", () => setMaintenanceTab("problems"));
 
 /* ---------------------------------------------------
-   PM AREAS
+   PMs (NEW)
 --------------------------------------------------- */
 const PM_AREAS = [
   "Cold Feed",
@@ -910,7 +933,9 @@ const PM_AREAS = [
 
 function buildPmAreaDropdowns() {
   if (pmAreaFilter) {
-    pmAreaFilter.innerHTML = `<option value="ALL">All Areas</option>` + PM_AREAS.map(a => `<option value="${a}">${a}</option>`).join("");
+    pmAreaFilter.innerHTML =
+      `<option value="ALL">All Areas</option>` +
+      PM_AREAS.map(a => `<option value="${a}">${a}</option>`).join("");
   }
   if (pmArea) {
     pmArea.innerHTML = PM_AREAS.map(a => `<option value="${a}">${a}</option>`).join("");
@@ -919,23 +944,18 @@ function buildPmAreaDropdowns() {
 
 function seedDefaultPMs() {
   const defaults = [
-    // Cold Feed
     { area:"Cold Feed", frequency:"Daily", title:"Walk belts & check tracking", notes:"Look for rub points, frayed edges" },
     { area:"Cold Feed", frequency:"Weekly", title:"Check tail pulleys & guards", notes:"Hardware tight, guards intact" },
 
-    // RAP Side
     { area:"RAP Side", frequency:"Daily", title:"Check RAP belt tracking / spillage", notes:"Clean build-up" },
     { area:"RAP Side", frequency:"Weekly", title:"Inspect bearings & take-up", notes:"Heat/noise/play" },
 
-    // Drum
     { area:"Drum", frequency:"Daily", title:"Check drum flights / burner area", notes:"Listen for unusual vibration" },
     { area:"Drum", frequency:"Weekly", title:"Inspect trunnions & tires", notes:"Grease points, wear marks" },
 
-    // Drag
     { area:"Drag", frequency:"Daily", title:"Check drag chain & cleanout", notes:"Watch for carryback" },
     { area:"Drag", frequency:"Weekly", title:"Inspect sprockets / reducers", notes:"Oil leaks, alignment" },
 
-    // Top Silos
     { area:"Top Silos", frequency:"Daily", title:"Check silo gates / air", notes:"Leaks, slow gates" },
     { area:"Top Silos", frequency:"Weekly", title:"Inspect catwalks / handrails", notes:"Loose bolts, trip hazards" }
   ];
@@ -950,9 +970,6 @@ function seedDefaultPMs() {
   }));
 }
 
-/* ---------------------------------------------------
-   PM RENDER
---------------------------------------------------- */
 pmAreaFilter?.addEventListener("change", renderPMs);
 pmFreqFilter?.addEventListener("change", renderPMs);
 
@@ -977,9 +994,7 @@ function renderPMs() {
 
   filtered.forEach(pm => {
     const last = (pm.history || []).slice().reverse()[0];
-    const lastLine = last
-      ? `Last: ${last.date}${last.notes ? " — " + last.notes : ""}`
-      : "Last: None";
+    const lastLine = last ? `Last: ${last.date}${last.notes ? " — " + last.notes : ""}` : "Last: None";
 
     const card = document.createElement("div");
     card.className = "part-card";
@@ -1009,9 +1024,7 @@ function renderPMs() {
           ${
             (pm.history || []).slice().reverse().slice(0, 5).map(h => {
               const hasPhoto = !!h.photo;
-              return `
-                <div class="part-meta">• ${h.date}${h.notes ? " — " + h.notes : ""}${hasPhoto ? " 📷" : ""}</div>
-              `;
+              return `<div class="part-meta">• ${h.date}${h.notes ? " — " + h.notes : ""}${hasPhoto ? " 📷" : ""}</div>`;
             }).join("") || `<div class="part-meta">No history</div>`
           }
         </div>
@@ -1035,17 +1048,15 @@ pmList?.addEventListener("click", (e) => {
   if (e.target.classList.contains("pm-del-btn")) deletePM(e.target.dataset.pmid);
 });
 
-/* ---------------------------------------------------
-   PM PANEL OPEN/CLOSE
---------------------------------------------------- */
-function openPMPanel(isEdit, id=null) {
+/* PM Add/Edit Panel */
+function openPMPanel(isEdit, id = null) {
   editingPmId = isEdit ? id : null;
   if (pmPanelTitle) pmPanelTitle.textContent = isEdit ? "Edit PM" : "Add PM";
 
-  if (pmArea) pmArea.value = PM_AREAS[0] || "Cold Feed";
-  if (pmFrequency) pmFrequency.value = "Daily";
-  if (pmTitle) pmTitle.value = "";
-  if (pmNotes) pmNotes.value = "";
+  pmArea.value = PM_AREAS[0] || "Cold Feed";
+  pmFrequency.value = "Daily";
+  pmTitle.value = "";
+  pmNotes.value = "";
 
   if (isEdit) {
     const pm = (pms || []).find(x => x.id === id);
@@ -1129,14 +1140,12 @@ function deletePM(id) {
   showToast("PM deleted");
 }
 
-/* ---------------------------------------------------
-   PM LOG
---------------------------------------------------- */
+/* PM Log Panel */
 function openPMLog(id) {
   loggingPmId = id;
-  if (pmLogDate) pmLogDate.value = todayISO();
-  if (pmLogNotes) pmLogNotes.value = "";
-  if (pmLogPhoto) pmLogPhoto.value = "";
+  pmLogDate.value = todayISO();
+  pmLogNotes.value = "";
+  pmLogPhoto.value = "";
 
   pmCompleteOverlay?.classList.remove("hidden");
   setTimeout(() => pmCompletePanel?.classList.add("show"), 10);
@@ -1160,7 +1169,6 @@ savePMLogBtn?.addEventListener("click", async () => {
   const notes = (pmLogNotes?.value || "").trim();
   let photo = "";
 
-  // optional photo
   const file = pmLogPhoto?.files?.[0];
   if (file) {
     try {
@@ -1181,10 +1189,9 @@ savePMLogBtn?.addEventListener("click", async () => {
 });
 
 /* ---------------------------------------------------
-   PROBLEMS: AREA DROPDOWNS
+   PROBLEMS (NEW)
 --------------------------------------------------- */
 function buildProblemAreaDropdowns() {
-  // use PM_AREAS as problem areas too
   if (problemArea) {
     problemArea.innerHTML = PM_AREAS.map(a => `<option value="${a}">${a}</option>`).join("");
   }
@@ -1198,9 +1205,6 @@ function statusPill(status) {
   return `<span class="pill pill-open">Open</span>`;
 }
 
-/* ---------------------------------------------------
-   PROBLEMS: RENDER
---------------------------------------------------- */
 function renderProblems() {
   if (!problemsList) return;
 
@@ -1211,7 +1215,6 @@ function renderProblems() {
 
   if (list.length === 0) {
     problemsList.innerHTML = `<div class="card"><div class="part-meta">No problems.</div></div>`;
-    renderDashboard();
     return;
   }
 
@@ -1222,7 +1225,8 @@ function renderProblems() {
     const created = pr.createdAt ? pr.createdAt.split("T")[0] : "";
     const status = pr.status || "Open";
 
-    const thumbs = (pr.photos || []).slice(0, 4).map(src => `<img class="thumb" src="${src}" alt="photo">`).join("");
+    const thumbs = (pr.photos || []).slice(0, 4)
+      .map(src => `<img class="thumb" src="${src}" alt="photo">`).join("");
 
     const supervisorTools = settings.supervisor ? `
       <div class="part-actions">
@@ -1253,8 +1257,6 @@ function renderProblems() {
 
     problemsList.appendChild(card);
   });
-
-  renderDashboard();
 }
 
 problemsList?.addEventListener("click", (e) => {
@@ -1289,17 +1291,13 @@ problemsList?.addEventListener("click", (e) => {
   }
 });
 
-/* ---------------------------------------------------
-   PROBLEM PANEL OPEN/CLOSE
---------------------------------------------------- */
+/* Problem Panel */
 function openProblemPanel() {
-  editingProblemId = null;
-  if (problemPanelTitle) problemPanelTitle.textContent = "Report Problem";
-  if (problemArea) problemArea.value = PM_AREAS[0] || "Cold Feed";
-  if (problemSeverity) problemSeverity.value = "Medium";
-  if (problemTitle) problemTitle.value = "";
-  if (problemNotes) problemNotes.value = "";
-  if (problemPhotos) problemPhotos.value = "";
+  problemArea.value = PM_AREAS[0] || "Cold Feed";
+  problemSeverity.value = "Medium";
+  problemTitle.value = "";
+  problemNotes.value = "";
+  problemPhotos.value = "";
 
   problemPanelOverlay?.classList.remove("hidden");
   setTimeout(() => problemPanel?.classList.add("show"), 10);
@@ -1311,12 +1309,10 @@ function closeProblemPanelFn() {
 }
 
 openProblemPanelBtn?.addEventListener("click", openProblemPanel);
-openProblemPanelBtn2?.addEventListener("click", openProblemPanel);
 
 closeProblemPanel?.addEventListener("click", closeProblemPanelFn);
 problemPanelOverlay?.addEventListener("click", (e) => { if (e.target === problemPanelOverlay) closeProblemPanelFn(); });
 
-/* ✅ FIX: save AFTER photos load */
 saveProblemBtn?.addEventListener("click", async () => {
   const areaVal = (problemArea?.value || "").trim();
   const sevVal = (problemSeverity?.value || "").trim();
@@ -1349,27 +1345,6 @@ saveProblemBtn?.addEventListener("click", async () => {
 
   saveState();
   renderProblems();
-  renderDashboard();
   closeProblemPanelFn();
   showToast("Problem saved");
 });
-
-/* ---------------------------------------------------
-   SETTINGS: PM AREAS in filters (already built) + Supervisor badge
---------------------------------------------------- */
-
-/* ---------------------------------------------------
-   INVENTORY SELECT FOR COMPLETE PANEL
---------------------------------------------------- */
-function buildCompleteInventorySelect() {
-  if (!compInvSelect) return;
-  compInvSelect.innerHTML = `<option value="">Select inventory item</option>`;
-  inventory.forEach((item, idx) => {
-    compInvSelect.innerHTML += `<option value="${idx}">${item.part} (Qty: ${item.qty})</option>`;
-  });
-}
-
-/* ---------------------------------------------------
-   DEFAULT TAB STATE ON LOAD
---------------------------------------------------- */
-setMaintenanceTab("parts");
