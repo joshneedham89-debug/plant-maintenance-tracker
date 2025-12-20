@@ -916,10 +916,22 @@ function setMaintenanceTab(tab) {
   if (tab === "problems") renderProblems();
 }
 
-maintTabParts?.addEventListener("click", () => setMaintenanceTab("parts"));
-maintTabPMs?.addEventListener("click", () => setMaintenanceTab("pms"));
-maintTabProblems?.addEventListener("click", () => setMaintenanceTab("problems"));
+function bindMaintenanceTabs() {
+  if (maintTabParts) {
+    maintTabParts.onclick = () => setMaintenanceTab("parts");
+  }
 
+  if (maintTabPMs) {
+    maintTabPMs.onclick = () => setMaintenanceTab("pms");
+  }
+
+  if (maintTabProblems) {
+    maintTabProblems.onclick = () => setMaintenanceTab("problems");
+  }
+}
+
+/* bind tabs once DOM + state are ready */
+bindMaintenanceTabs();
 /* ---------------------------------------------------
    PMs (NEW)
 --------------------------------------------------- */
