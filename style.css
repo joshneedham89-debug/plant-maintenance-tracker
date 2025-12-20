@@ -179,9 +179,17 @@ select {
 }
 
 /* Status colors */
-.part-card.status-ok { border-left-color: #2ecc71; }
-.part-card.status-due { border-left-color: #f1c40f; }
-.part-card.status-overdue { border-left-color: #e74c3c; }
+.part-card.status-ok {
+  border-left-color: #2ecc71;
+}
+
+.part-card.status-due {
+  border-left-color: #f1c40f;
+}
+
+.part-card.status-overdue {
+  border-left-color: #e74c3c;
+}
 
 .part-main {
   display: flex;
@@ -274,8 +282,13 @@ select {
    Screens
 --------------------------------------------------- */
 
-.screen { display: none; }
-.screen.active { display: block; }
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
 
 /* ---------------------------------------------------
    Bottom Navigation
@@ -310,7 +323,9 @@ select {
   font-weight: 700;
 }
 
-.nav-btn br { line-height: 0; }
+.nav-btn br {
+  line-height: 0;
+}
 
 /* ---------------------------------------------------
    Maintenance Sticky Header
@@ -348,7 +363,9 @@ select {
   transition: transform 0.35s ease-out;
 }
 
-.slide-panel.show { transform: translateY(0); }
+.slide-panel.show {
+  transform: translateY(0);
+}
 
 .slide-panel-header {
   display: flex;
@@ -377,13 +394,17 @@ select {
   padding-bottom: 20px;
 }
 
+/* Inputs inside panel should always fit */
 .slide-panel input,
 .slide-panel select {
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Sticky footer for slide panel save buttons */
+/* ---------------------------------------------------
+   Sticky footer for slide panel save buttons
+--------------------------------------------------- */
+
 .panel-footer {
   position: sticky;
   bottom: 0;
@@ -397,16 +418,28 @@ select {
 }
 
 /* ---------------------------------------------------
-   Complete panel extras
+   Inventory Adjustments
 --------------------------------------------------- */
+
+.part-card .edit-inv-btn,
+.part-card .delete-inv-btn {
+  font-size: 13px;
+}
+
+/* Complete panel extras */
 .subheading {
   margin-top: 14px;
   font-size: 14px;
   font-weight: 700;
 }
 
-.used-items-list { margin-top: 8px; }
-.used-items-list .part-meta { font-size: 13px; }
+.used-items-list {
+  margin-top: 8px;
+}
+
+.used-items-list .part-meta {
+  font-size: 13px;
+}
 
 /* ---------------------------------------------------
    TOAST NOTIFICATIONS
@@ -434,17 +467,26 @@ select {
   transform: translateX(-50%) translateY(0);
 }
 
-.toast.success { background: var(--accent); }
-.toast.error { background: var(--danger); }
+.toast.success {
+  background: var(--accent);
+}
+
+.toast.error {
+  background: var(--danger);
+}
 
 /* ---------------------------------------------------
    Utility
 --------------------------------------------------- */
-.hidden { display: none; }
+
+.hidden {
+  display: none;
+}
 
 /* ---------------------------------------------------
    NEW: Segmented tabs (Maintenance)
 --------------------------------------------------- */
+
 .segmented {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -471,6 +513,7 @@ select {
 /* ---------------------------------------------------
    NEW: Pills
 --------------------------------------------------- */
+
 .pill {
   display: inline-block;
   padding: 4px 10px;
@@ -489,45 +532,63 @@ select {
 /* ---------------------------------------------------
    NEW: Settings switch
 --------------------------------------------------- */
-.row-between{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
+
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .switch { position: relative; display: inline-block; width: 52px; height: 30px; }
-.switch input { display:none; }
+.switch input { display: none; }
+
 .slider {
-  position:absolute; cursor:pointer; inset:0;
-  background:#ffffff30; border-radius:999px;
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #ffffff30;
+  border-radius: 999px;
   transition: 0.2s ease;
   border: 1px solid #2a3a58;
 }
+
 .slider:before {
-  content:"";
-  position:absolute;
-  height: 24px; width: 24px;
-  left: 3px; top: 2px;
-  background:white; border-radius:50%;
+  content: "";
+  position: absolute;
+  height: 24px;
+  width: 24px;
+  left: 3px;
+  top: 2px;
+  background: white;
+  border-radius: 50%;
   transition: 0.2s ease;
 }
-.switch input:checked + .slider { background: var(--accent); border-color: transparent; }
-.switch input:checked + .slider:before { transform: translateX(22px); }
+
+.switch input:checked + .slider {
+  background: var(--accent);
+  border-color: transparent;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(22px);
+}
 
 /* ---------------------------------------------------
    NEW: Photo thumbs
 --------------------------------------------------- */
-.thumb-row{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-top:10px;
+
+.thumb-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
 }
-.thumb{
-  width:72px;
-  height:72px;
-  border-radius:10px;
-  object-fit:cover;
-  border:1px solid #2a3a58;
-}
+
+.thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #2a3a58;
+   }
