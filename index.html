@@ -54,18 +54,7 @@
         <h3>Add Tons</h3>
         <input id="currentTonsInput" type="number" placeholder="Enter tons to ADD (ex: 2500)" />
         <button id="updateTonsBtn" class="primary-btn">Update</button>
-        <div class="part-meta" style="margin-top:8px;">
-          Tip: This adds to the current total. Reset Tons is now in Settings.
-        </div>
-      </div>
-
-      <!-- Quick Report Problem -->
-      <div class="card">
-        <h3>Report a Problem</h3>
-        <button id="openProblemPanelBtn" class="primary-btn full">+ Report Problem</button>
-        <div class="part-meta" style="margin-top:8px;">
-          Open problems: <b id="openProblemsCount">0</b>
-        </div>
+        <div class="part-meta" style="margin-top:8px;">Reset Tons is now in Settings.</div>
       </div>
     </section>
 
@@ -120,7 +109,7 @@
             <option value="Resolved">Resolved</option>
           </select>
 
-          <button id="openProblemPanelBtn2" class="primary-btn full">+ Report Problem</button>
+          <button id="openProblemPanelBtn" class="primary-btn full">+ Report Problem</button>
         </div>
 
         <div id="supervisorBadge" class="hidden" style="margin-top:10px;">
@@ -128,7 +117,6 @@
         </div>
       </div>
 
-      <!-- Lists -->
       <div id="partsList"></div>
       <div id="pmList" class="hidden"></div>
       <div id="problemsList" class="hidden"></div>
@@ -192,7 +180,7 @@
         <div class="row-between">
           <div>
             <div style="font-weight:800;">Supervisor Mode</div>
-            <div class="part-meta">Unlock resolve tools + PM editing</div>
+            <div class="part-meta">Unlock PM editing + problem status tools</div>
           </div>
           <label class="switch">
             <input id="supervisorToggle" type="checkbox">
@@ -226,8 +214,10 @@
       </div>
 
       <div class="slide-panel-body">
+
         <label>Part Name</label>
         <input id="newPartName" type="text" list="inventoryNameList">
+
         <datalist id="inventoryNameList"></datalist>
 
         <label>Category</label>
@@ -258,6 +248,7 @@
       </div>
 
       <div class="slide-panel-body">
+
         <label>Part Name</label>
         <input id="invPartName" type="text">
 
@@ -354,7 +345,7 @@
     </div>
   </div>
 
-  <!-- PM COMPLETE PANEL -->
+  <!-- PM LOG PANEL -->
   <div id="pmCompleteOverlay" class="panel-overlay hidden">
     <div id="pmCompletePanel" class="slide-panel">
       <div class="slide-panel-header">
@@ -420,4 +411,4 @@
   <script src="inventory.js"></script>
   <script src="script.js"></script>
 </body>
-    </html>
+</html>
