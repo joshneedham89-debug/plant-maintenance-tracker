@@ -916,22 +916,21 @@ function setMaintenanceTab(tab) {
   if (tab === "problems") renderProblems();
 }
 
-function bindMaintenanceTabs() {
-  if (maintTabParts) {
-    maintTabParts.onclick = () => setMaintenanceTab("parts");
-  }
+/* ---------------------------------------------------
+   MAINTENANCE TAB DELEGATION (PWA SAFE)
+--------------------------------------------------- */
+const maintTabContainer = document.querySelector(".segmented");
 
-  if (maintTabPMs) {
-    maintTabPMs.onclick = () => setMaintenanceTab("pms");
-  }
+if (maintTabContainer) {
+  maintTabContainer.addEventListener("click", (e) => {
+    const btn = e.target.closest(".seg-btn");
+    if (!btn) return;
 
-  if (maintTabProblems) {
-    maintTabProblems.onclick = () => setMaintenanceTab("problems");
-  }
+    if (btn === maintTabParts) setMaintenanceTab("parts");
+    if (btn === maintTabPMs) setMaintenanceTab("pms");
+    if (btn === maintTabProblems) setMaintenanceTab("problems");
+  });
 }
-
-/* bind tabs once DOM + state are ready */
-bindMaintenanceTabs();
 /* ---------------------------------------------------
    PMs (NEW)
 --------------------------------------------------- */
