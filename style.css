@@ -191,6 +191,11 @@ select {
   border-left-color: #e74c3c;
 }
 
+/* NEW: due today gets a slightly stronger "alert" vibe (still in due family) */
+.part-card.status-duetoday {
+  border-left-color: #ff8a00;
+}
+
 .part-main {
   display: flex;
   justify-content: space-between;
@@ -213,6 +218,35 @@ select {
   margin-left: 10px;
 }
 
+/* NEW: small pills */
+.pills-row {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: #0b1220;
+  background: #e5e7eb;
+}
+
+.pill.today {
+  background: #ffdfb8;
+}
+
+.pill.overdue {
+  background: #ffc8c8;
+}
+
 /* Smooth expand/collapse */
 .part-details {
   margin-top: 8px;
@@ -226,7 +260,7 @@ select {
 }
 
 .part-details.expanded {
-  max-height: 380px;
+  max-height: 260px;
   opacity: 1;
 }
 
@@ -482,113 +516,3 @@ select {
 .hidden {
   display: none;
 }
-
-/* ---------------------------------------------------
-   NEW: Segmented tabs (Maintenance)
---------------------------------------------------- */
-
-.segmented {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.seg-btn {
-  border: 1px solid #23334d;
-  background: #0c1526;
-  color: #ffffffc7;
-  padding: 10px;
-  border-radius: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.seg-btn.active {
-  background: var(--accent);
-  color: #fff;
-  border-color: transparent;
-}
-
-/* ---------------------------------------------------
-   NEW: Pills
---------------------------------------------------- */
-
-.pill {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-  background: #ffffff18;
-  color: #fff;
-}
-
-.pill-open { background: #cc3333; }
-.pill-progress { background: #f1c40f; color: #000; }
-.pill-resolved { background: #2ecc71; color: #000; }
-.pill-super { background: #4b6fff; }
-
-/* ---------------------------------------------------
-   NEW: Settings switch
---------------------------------------------------- */
-
-.row-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.switch { position: relative; display: inline-block; width: 52px; height: 30px; }
-.switch input { display: none; }
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background: #ffffff30;
-  border-radius: 999px;
-  transition: 0.2s ease;
-  border: 1px solid #2a3a58;
-}
-
-.slider:before {
-  content: "";
-  position: absolute;
-  height: 24px;
-  width: 24px;
-  left: 3px;
-  top: 2px;
-  background: white;
-  border-radius: 50%;
-  transition: 0.2s ease;
-}
-
-.switch input:checked + .slider {
-  background: var(--accent);
-  border-color: transparent;
-}
-
-.switch input:checked + .slider:before {
-  transform: translateX(22px);
-}
-
-/* ---------------------------------------------------
-   NEW: Photo thumbs
---------------------------------------------------- */
-
-.thumb-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-
-.thumb {
-  width: 72px;
-  height: 72px;
-  border-radius: 10px;
-  object-fit: cover;
-  border: 1px solid #2a3a58;
-   }
