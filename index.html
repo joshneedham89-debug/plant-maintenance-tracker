@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -49,12 +50,18 @@
           <div id="completedMonthCount" class="stat-value">0</div>
         </div>
 
-        <!-- ===== Phase 3.2: Open Problems count ===== -->
+        <!-- Open Problems -->
         <div class="stat-card stat-problems">
           <div class="stat-label">Open Problems</div>
           <div id="openProblemsCount" class="stat-value">0</div>
         </div>
-        <!-- ===== End Phase 3.2 ===== -->
+
+        <!-- GOLD UPDATE: PM Due Today -->
+        <div class="stat-card stat-pm">
+          <div class="stat-label">PM Due Today</div>
+          <div id="pmDueTodayCount" class="stat-value">0</div>
+        </div>
+        <!-- END -->
       </div>
 
       <!-- Tons Update -->
@@ -65,12 +72,11 @@
         <button id="resetTonsBtn" class="secondary-btn">Reset Tons</button>
       </div>
 
-      <!-- ===== Phase 3.2: Report a Problem button on Home ===== -->
+      <!-- Report Problem -->
       <div class="card">
         <h3>Problems</h3>
         <button id="openProblemPanelBtn" class="primary-btn full">⚠️ Report a Problem</button>
       </div>
-      <!-- ===== End Phase 3.2 ===== -->
     </section>
 
     <!-- ---------------- MAINTENANCE SCREEN ---------------- -->
@@ -91,7 +97,7 @@
         <button id="addPartBtn" class="primary-btn full">+ Add Part</button>
       </div>
 
-      <!-- ===== Phase 3.3: Problems list inside Maintenance ===== -->
+      <!-- Problems list -->
       <div class="card">
         <div class="problems-header-row">
           <h3>Problems</h3>
@@ -107,9 +113,8 @@
 
         <div id="problemsList" class="problems-list"></div>
       </div>
-      <!-- ===== End Phase 3.3 ===== -->
 
-      <!-- ===== GOLD UPDATE: PMs inside Maintenance (Daily + Weekly) ===== -->
+      <!-- PMs -->
       <div class="card">
         <div class="problems-header-row">
           <h3>PMs</h3>
@@ -124,7 +129,6 @@
 
         <div id="pmsList" class="pms-list"></div>
       </div>
-      <!-- ===== End PMs ===== -->
 
       <div id="partsList"></div>
     </section>
@@ -185,6 +189,11 @@
 
       <div class="card">
         <button id="exportBtn" class="primary-btn full">Export Data</button>
+
+        <!-- GOLD UPDATE: Supervisor PM compliance export -->
+        <button id="exportPmComplianceBtn" class="secondary-btn full">Export PM Compliance (CSV)</button>
+        <!-- END -->
+
         <button id="resetAllBtn" class="danger-btn full">Reset Entire App</button>
       </div>
     </section>
@@ -286,18 +295,10 @@
         <label>Notes</label>
         <input id="compNotes" type="text">
 
-        <!-- ===== Phase 3: Maintenance Photos (optional, button-based) ===== -->
         <h4 class="subheading">Photos (optional)</h4>
         <button id="compAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
-        <input
-          id="compPhotoInput"
-          type="file"
-          accept="image/*"
-          multiple
-          class="file-input-hidden"
-        >
+        <input id="compPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
         <div id="compPhotoPreview" class="photo-preview"></div>
-        <!-- ===== End Phase 3 ===== -->
 
         <h4 class="subheading">Inventory Used (optional)</h4>
 
@@ -322,7 +323,7 @@
     </div>
   </div>
 
-  <!-- ===== Phase 3.2: REPORT PROBLEM PANEL (Home) ===== -->
+  <!-- REPORT PROBLEM PANEL -->
   <div id="problemPanelOverlay" class="panel-overlay hidden">
     <div id="problemPanel" class="slide-panel">
       <div class="slide-panel-header">
@@ -371,9 +372,8 @@
       </div>
     </div>
   </div>
-  <!-- ===== End Phase 3.2 ===== -->
 
-  <!-- ===== Phase 3.3: PROBLEM DETAIL PANEL (tap from list) ===== -->
+  <!-- PROBLEM DETAIL PANEL -->
   <div id="problemDetailOverlay" class="panel-overlay hidden">
     <div id="problemDetailPanel" class="slide-panel">
       <div class="slide-panel-header">
@@ -397,9 +397,8 @@
       </div>
     </div>
   </div>
-  <!-- ===== End Phase 3.3 ===== -->
 
-  <!-- ===== GOLD UPDATE: PM ADD/EDIT PANEL ===== -->
+  <!-- PM ADD/EDIT PANEL -->
   <div id="pmPanelOverlay" class="panel-overlay hidden">
     <div id="pmPanel" class="slide-panel">
       <div class="slide-panel-header">
@@ -426,9 +425,8 @@
       </div>
     </div>
   </div>
-  <!-- ===== End PM Add/Edit ===== -->
 
-  <!-- ===== GOLD UPDATE: PM COMPLETE PANEL ===== -->
+  <!-- PM COMPLETE PANEL -->
   <div id="pmCompleteOverlay" class="panel-overlay hidden">
     <div id="pmCompletePanel" class="slide-panel">
       <div class="slide-panel-header">
@@ -454,14 +452,28 @@
       </div>
     </div>
   </div>
-  <!-- ===== End PM Complete ===== -->
 
-  <!-- ===== Phase 3.1: Lightbox (full-screen photo viewer) ===== -->
+  <!-- GOLD UPDATE: PM GALLERY (view all photos for one PM) -->
+  <div id="pmGalleryOverlay" class="panel-overlay hidden">
+    <div id="pmGalleryPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="pmGalleryTitle">PM Photos</h3>
+        <button id="closePmGallery" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <div id="pmGalleryMeta" class="part-meta"></div>
+        <div id="pmGalleryGrid" class="photo-preview"></div>
+      </div>
+    </div>
+  </div>
+  <!-- END PM GALLERY -->
+
+  <!-- LIGHTBOX -->
   <div id="lightboxOverlay" class="lightbox-overlay hidden" aria-hidden="true">
     <button id="lightboxClose" class="lightbox-close" aria-label="Close">✖</button>
     <img id="lightboxImg" class="lightbox-img" alt="Full size photo">
   </div>
-  <!-- ===== End Phase 3.1 ===== -->
 
   <!-- TOAST -->
   <div id="toastContainer" class="toast"></div>
@@ -469,4 +481,4 @@
   <script src="inventory.js"></script>
   <script src="script.js"></script>
 </body>
-  </html>
+</html>
