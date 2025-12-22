@@ -191,11 +191,6 @@ select {
   border-left-color: #e74c3c;
 }
 
-/* NEW: due today gets a slightly stronger "alert" vibe (still in due family) */
-.part-card.status-duetoday {
-  border-left-color: #ff8a00;
-}
-
 .part-main {
   display: flex;
   justify-content: space-between;
@@ -218,35 +213,6 @@ select {
   margin-left: 10px;
 }
 
-/* NEW: small pills */
-.pills-row {
-  margin-top: 6px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  color: #0b1220;
-  background: #e5e7eb;
-}
-
-.pill.today {
-  background: #ffdfb8;
-}
-
-.pill.overdue {
-  background: #ffc8c8;
-}
-
 /* Smooth expand/collapse */
 .part-details {
   margin-top: 8px;
@@ -260,7 +226,7 @@ select {
 }
 
 .part-details.expanded {
-  max-height: 260px;
+  max-height: 500px;
   opacity: 1;
 }
 
@@ -280,14 +246,55 @@ select {
   font-size: 13px;
 }
 
-/* History section */
-.part-history {
-  margin-top: 8px;
+/* ---------------------------------------------------
+   Segmented Tabs (Maintenance)
+--------------------------------------------------- */
+.segmented {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.part-history .part-meta {
-  font-size: 13px;
+.seg-btn {
+  flex: 1;
+  border: 1px solid #223049;
+  background: #0b1220;
+  color: #ffffffb3;
+  padding: 10px 8px;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
 }
+
+.seg-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ---------------------------------------------------
+   Pills (Problems, Supervisor)
+--------------------------------------------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: #0b1220;
+  background: #e5e7eb;
+}
+
+.pill-super {
+  background: #c9f1d1;
+}
+
+.pill-open { background: #ffd3d3; }
+.pill-progress { background: #fff0c9; }
+.pill-resolved { background: #c9f1d1; }
 
 /* ---------------------------------------------------
    AC Calculator
@@ -435,10 +442,7 @@ select {
   box-sizing: border-box;
 }
 
-/* ---------------------------------------------------
-   Sticky footer for slide panel save buttons
---------------------------------------------------- */
-
+/* Sticky footer for slide panel save buttons */
 .panel-footer {
   position: sticky;
   bottom: 0;
@@ -449,30 +453,6 @@ select {
 .panel-footer .primary-btn {
   margin-top: 0;
   width: 100%;
-}
-
-/* ---------------------------------------------------
-   Inventory Adjustments
---------------------------------------------------- */
-
-.part-card .edit-inv-btn,
-.part-card .delete-inv-btn {
-  font-size: 13px;
-}
-
-/* Complete panel extras */
-.subheading {
-  margin-top: 14px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.used-items-list {
-  margin-top: 8px;
-}
-
-.used-items-list .part-meta {
-  font-size: 13px;
 }
 
 /* ---------------------------------------------------
@@ -510,9 +490,79 @@ select {
 }
 
 /* ---------------------------------------------------
+   Switch (Supervisor Toggle)
+--------------------------------------------------- */
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 54px;
+  height: 30px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #ffffff30;
+  transition: .2s;
+  border-radius: 999px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 24px;
+  width: 24px;
+  left: 3px;
+  top: 3px;
+  background-color: white;
+  transition: .2s;
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+  background-color: var(--accent);
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+/* ---------------------------------------------------
    Utility
 --------------------------------------------------- */
 
 .hidden {
   display: none;
+}
+
+/* ---------------------------------------------------
+   Photos (thumbnails) - RESTORED
+--------------------------------------------------- */
+.photo-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.photo-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #223049;
 }
