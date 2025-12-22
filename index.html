@@ -47,14 +47,25 @@
           <div class="stat-label">Completed This Month</div>
           <div id="completedMonthCount" class="stat-value">0</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-label">Open Problems</div>
+          <div id="openProblemsCount" class="stat-value">0</div>
+        </div>
       </div>
 
-      <!-- Tons Update (ADD ONLY now) -->
+      <!-- Tons Update -->
       <div class="card">
         <h3>Add Tons</h3>
         <input id="currentTonsInput" type="number" placeholder="Enter tons to ADD (ex: 2500)" />
         <button id="updateTonsBtn" class="primary-btn">Update</button>
         <div class="part-meta" style="margin-top:8px;">Reset Tons is now in Settings.</div>
+      </div>
+
+      <!-- RESTORED: Dashboard Report Problem button (Original behavior) -->
+      <div class="card">
+        <h3>Report a Problem</h3>
+        <div class="part-meta">See something in the plant? Log it fast (photos optional).</div>
+        <button id="openProblemPanelBtnDash" class="primary-btn full">+ Report Problem</button>
       </div>
     </section>
 
@@ -89,14 +100,7 @@
           <label>PM Area</label>
           <select id="pmAreaFilter"></select>
 
-          <label>Frequency</label>
-          <select id="pmFreqFilter">
-            <option value="ALL">All</option>
-            <option value="Daily">Daily</option>
-            <option value="Weekly">Weekly</option>
-          </select>
-
-          <button id="openPMPanelBtn" class="primary-btn full">+ Add PM</button>
+          <button id="openPMLogPanelBtn" class="primary-btn full">+ Log PM</button>
         </div>
 
         <!-- Problems controls -->
@@ -214,10 +218,8 @@
       </div>
 
       <div class="slide-panel-body">
-
         <label>Part Name</label>
         <input id="newPartName" type="text" list="inventoryNameList">
-
         <datalist id="inventoryNameList"></datalist>
 
         <label>Category</label>
@@ -248,7 +250,6 @@
       </div>
 
       <div class="slide-panel-body">
-
         <label>Part Name</label>
         <input id="invPartName" type="text">
 
@@ -291,6 +292,12 @@
         <label>Notes</label>
         <input id="compNotes" type="text">
 
+        <!-- RESTORED: Maintenance Photos (optional) -->
+        <label>Photos (optional)</label>
+        <button id="compAddPhotoBtn" class="secondary-btn full" type="button">+ Add Photos</button>
+        <input id="compPhotoInput" type="file" accept="image/*" multiple class="hidden">
+        <div id="compPhotoPreview" class="photo-row"></div>
+
         <h4 class="subheading">Inventory Used (optional)</h4>
 
         <label>Inventory Item</label>
@@ -314,43 +321,12 @@
     </div>
   </div>
 
-  <!-- PM PANEL -->
-  <div id="pmPanelOverlay" class="panel-overlay hidden">
-    <div id="pmPanel" class="slide-panel">
-      <div class="slide-panel-header">
-        <h3 id="pmPanelTitle">Add PM</h3>
-        <button id="closePMPanel" class="close-btn">✖</button>
-      </div>
-
-      <div class="slide-panel-body">
-        <label>Area</label>
-        <select id="pmArea"></select>
-
-        <label>Frequency</label>
-        <select id="pmFrequency">
-          <option value="Daily">Daily</option>
-          <option value="Weekly">Weekly</option>
-        </select>
-
-        <label>PM Title</label>
-        <input id="pmTitle" type="text" placeholder="Example: Check belt tracking">
-
-        <label>Notes (optional)</label>
-        <input id="pmNotes" type="text" placeholder="Quick details">
-
-        <div class="panel-footer">
-          <button id="savePMBtn" class="primary-btn full">Save PM</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- PM LOG PANEL -->
-  <div id="pmCompleteOverlay" class="panel-overlay hidden">
-    <div id="pmCompletePanel" class="slide-panel">
+  <div id="pmLogPanelOverlay" class="panel-overlay hidden">
+    <div id="pmLogPanel" class="slide-panel">
       <div class="slide-panel-header">
-        <h3>Log PM</h3>
-        <button id="closePMComplete" class="close-btn">✖</button>
+        <h3 id="pmLogPanelTitle">Log PM</h3>
+        <button id="closePMLogPanel" class="close-btn">✖</button>
       </div>
 
       <div class="slide-panel-body">
@@ -385,17 +361,18 @@
         <label>Severity</label>
         <select id="problemSeverity">
           <option value="Low">Low</option>
-          <option value="Medium" selected>Medium</option>
+          <option value="Medium">Medium</option>
           <option value="High">High</option>
+          <option value="Critical">Critical</option>
         </select>
 
         <label>Title</label>
-        <input id="problemTitle" type="text" placeholder="Short description">
+        <input id="problemTitle" type="text" placeholder="Short issue title">
 
-        <label>Notes</label>
-        <input id="problemNotes" type="text" placeholder="More details">
+        <label>Notes (optional)</label>
+        <input id="problemNotes" type="text" placeholder="Details / what happened">
 
-        <label>Photos (optional)</label>
+        <label>Photos (optional, up to 4)</label>
         <input id="problemPhotos" type="file" accept="image/*" multiple>
 
         <div class="panel-footer">
