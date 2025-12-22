@@ -4,14 +4,8 @@
 const PARTS_KEY = "pm_parts";
 const TONS_KEY = "pm_tons";
 const INVENTORY_KEY = "pm_inventory";
-
-/* ===== Phase 3.2: Problems storage ===== */
 const PROBLEMS_KEY = "pm_problems";
-/* ===== End Phase 3.2 ===== */
-
-/* ===== GOLD UPDATE: PMs storage ===== */
 const PMS_KEY = "pm_pms";
-/* ===== End PMs ===== */
 
 /* ---------------------------------------------------
    GLOBAL STATE
@@ -27,26 +21,21 @@ let editingInventoryIndex = null;
 let completingPartIndex = null;
 let completionUsedItems = []; // {invIndex, qty}
 
-/* ===== Phase 3: Maintenance Photos (optional) ===== */
-let completionPhotos = []; // array of dataURL strings
-/* ===== End Phase 3 ===== */
+/* Photos */
+let completionPhotos = [];
+let problemPhotos = [];
+let pmCompletionPhotos = [];
 
-/* ===== Phase 3.2: Problems ===== */
+/* Problems */
 let problems = [];
-let problemPhotos = []; // array of dataURL strings
-
-/* ===== Phase 3.3: Problems list UI state ===== */
 let currentProblemFilter = "ALL";
 let viewingProblemId = null;
-/* ===== End Phase 3.3 ===== */
 
-/* ===== GOLD UPDATE: PMs ===== */
+/* PMs */
 let pms = [];
-let currentPmFilter = "ALL"; // ALL | DUE | DONE
+let currentPmFilter = "ALL";
 let editingPmId = null;
 let completingPmId = null;
-let pmCompletionPhotos = [];
-/* ===== End PMs ===== */
 
 /* ---------------------------------------------------
    ELEMENT REFERENCES
@@ -54,30 +43,28 @@ let pmCompletionPhotos = [];
 const screens = document.querySelectorAll(".screen");
 const navButtons = document.querySelectorAll(".nav-btn");
 
-/* Dashboard UI */
+/* Dashboard */
 const okCountEl = document.getElementById("okCount");
 const dueCountEl = document.getElementById("dueCount");
 const overCountEl = document.getElementById("overCount");
 const tonsRunEl = document.getElementById("tonsRun");
 const completedTodayEl = document.getElementById("completedTodayCount");
 const completedMonthEl = document.getElementById("completedMonthCount");
-
-/* ===== Phase 3.2: Open problems count ===== */
 const openProblemsCountEl = document.getElementById("openProblemsCount");
-/* ===== End Phase 3.2 ===== */
+const pmDueTodayCountEl = document.getElementById("pmDueTodayCount");
 
 /* Tons */
 const currentTonsInput = document.getElementById("currentTonsInput");
 const updateTonsBtn = document.getElementById("updateTonsBtn");
 const resetTonsBtn = document.getElementById("resetTonsBtn");
 
-/* Maintenance UI */
+/* Maintenance */
 const filterCategory = document.getElementById("filterCategory");
 const partsList = document.getElementById("partsList");
 const addPartBtn = document.getElementById("addPartBtn");
 const searchPartsInput = document.getElementById("searchPartsInput");
 
-/* Inventory UI */
+/* Inventory */
 const inventoryList = document.getElementById("inventoryList");
 const addInventoryBtn = document.getElementById("addInventoryBtn");
 const searchInventoryInput = document.getElementById("searchInventoryInput");
@@ -94,9 +81,10 @@ const ac_totalAc = document.getElementById("ac_totalAc");
 
 /* Settings */
 const exportBtn = document.getElementById("exportBtn");
+const exportPmComplianceBtn = document.getElementById("exportPmComplianceBtn");
 const resetAllBtn = document.getElementById("resetAllBtn");
 
-/* Add/Edit Part Panel (overlay version in your HTML) */
+/* Add/Edit Part Panel */
 const partPanelOverlay = document.getElementById("partPanelOverlay");
 const addPartPanel = document.getElementById("addPartPanel");
 const closePartPanelBtn = document.getElementById("closePartPanel");
@@ -110,7 +98,7 @@ const newPartTons = document.getElementById("newPartTons");
 const savePartBtn = document.getElementById("savePartBtn");
 const inventoryNameList = document.getElementById("inventoryNameList");
 
-/* Inventory Panel (overlay version in your HTML) */
+/* Inventory Panel */
 const inventoryPanelOverlay = document.getElementById("inventoryPanelOverlay");
 const inventoryPanel = document.getElementById("inventoryPanel");
 const closeInventoryPanelBtn = document.getElementById("closeInventoryPanel");
@@ -137,20 +125,19 @@ const compAddItemBtn = document.getElementById("compAddItemBtn");
 const compUsedList = document.getElementById("compUsedList");
 const saveCompletionBtn = document.getElementById("saveCompletionBtn");
 
-/* ===== Phase 3: Photo UI references ===== */
 const compAddPhotoBtn = document.getElementById("compAddPhotoBtn");
 const compPhotoInput = document.getElementById("compPhotoInput");
 const compPhotoPreview = document.getElementById("compPhotoPreview");
-/* ===== End Phase 3 ===== */
 
-/* ===== Phase 3.1: Lightbox refs ===== */
+/* Lightbox */
 const lightboxOverlay = document.getElementById("lightboxOverlay");
 const lightboxImg = document.getElementById("lightboxImg");
 const lightboxClose = document.getElementById("lightboxClose");
-/* ===== End Phase 3.1 ===== */
 
-/* ===== Phase 3.2: Problem Panel refs ===== */
+/* Problem Panel */
 const openProblemPanelBtn = document.getElementById("openProblemPanelBtn");
+const openProblemPanelBtn2 = document.getElementById("openProblemPanelBtn2");
+
 const problemPanelOverlay = document.getElementById("problemPanelOverlay");
 const problemPanel = document.getElementById("problemPanel");
 const closeProblemPanelBtn = document.getElementById("closeProblemPanel");
@@ -167,10 +154,8 @@ const probPhotoInput = document.getElementById("probPhotoInput");
 const probPhotoPreview = document.getElementById("probPhotoPreview");
 
 const saveProblemBtn = document.getElementById("saveProblemBtn");
-/* ===== End Phase 3.2 ===== */
 
-/* ===== Phase 3.3: Problems list + detail refs ===== */
-const openProblemPanelBtn2 = document.getElementById("openProblemPanelBtn2");
+/* Problems list + detail */
 const problemsListEl = document.getElementById("problemsList");
 const problemFilterBtns = document.querySelectorAll(".prob-filter");
 
@@ -183,9 +168,8 @@ const problemDetailStatus = document.getElementById("problemDetailStatus");
 const problemDetailPhotos = document.getElementById("problemDetailPhotos");
 const resolveLogBtn = document.getElementById("resolveLogBtn");
 const deleteProblemBtn = document.getElementById("deleteProblemBtn");
-/* ===== End Phase 3.3 ===== */
 
-/* ===== GOLD UPDATE: PM refs ===== */
+/* PMs */
 const openPmPanelBtn = document.getElementById("openPmPanelBtn");
 const pmsListEl = document.getElementById("pmsList");
 const pmFilterBtns = document.querySelectorAll(".pm-filter");
@@ -209,7 +193,14 @@ const pmAddPhotoBtn = document.getElementById("pmAddPhotoBtn");
 const pmPhotoInput = document.getElementById("pmPhotoInput");
 const pmPhotoPreview = document.getElementById("pmPhotoPreview");
 const savePmCompletionBtn = document.getElementById("savePmCompletionBtn");
-/* ===== End PM refs ===== */
+
+/* PM Gallery */
+const pmGalleryOverlay = document.getElementById("pmGalleryOverlay");
+const pmGalleryPanel = document.getElementById("pmGalleryPanel");
+const pmGalleryTitle = document.getElementById("pmGalleryTitle");
+const closePmGalleryBtn = document.getElementById("closePmGallery");
+const pmGalleryMeta = document.getElementById("pmGalleryMeta");
+const pmGalleryGrid = document.getElementById("pmGalleryGrid");
 
 /* Toast */
 const toastContainer = document.getElementById("toastContainer");
@@ -233,7 +224,28 @@ function showToast(message, type = "success") {
 }
 
 /* ---------------------------------------------------
-   Phase 3.1: LIGHTBOX
+   GOLD FIX: Image compression (prevents localStorage quota failure)
+--------------------------------------------------- */
+function compressImage(base64, maxWidth = 900, quality = 0.72) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.src = base64;
+  });
+}
+
+/* ---------------------------------------------------
+   Lightbox
 --------------------------------------------------- */
 function openLightbox(src) {
   if (!lightboxOverlay || !lightboxImg) return;
@@ -255,33 +267,24 @@ lightboxClose?.addEventListener("click", closeLightbox);
 lightboxOverlay?.addEventListener("click", (e) => {
   if (e.target === lightboxOverlay) closeLightbox();
 });
-
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && lightboxOverlay && !lightboxOverlay.classList.contains("hidden")) {
-    closeLightbox();
-  }
+  if (e.key === "Escape" && lightboxOverlay && !lightboxOverlay.classList.contains("hidden")) closeLightbox();
 });
 
 /* ---------------------------------------------------
-   INIT
+   INIT / SAVE (quota-safe)
 --------------------------------------------------- */
 function loadState() {
   parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
   currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
 
-  // categories + default inventory come from inventory.js
   categories = Array.isArray(PRELOADED_CATEGORIES) ? PRELOADED_CATEGORIES : [];
 
   const storedInventory = JSON.parse(localStorage.getItem(INVENTORY_KEY));
   inventory = storedInventory?.length ? storedInventory : (PRELOADED_INVENTORY?.slice?.() || []);
 
-  /* ===== Phase 3.2: load problems ===== */
   problems = JSON.parse(localStorage.getItem(PROBLEMS_KEY)) || [];
-  /* ===== End Phase 3.2 ===== */
-
-  /* ===== GOLD UPDATE: load PMs ===== */
   pms = JSON.parse(localStorage.getItem(PMS_KEY)) || [];
-  /* ===== End PMs ===== */
 
   if (currentTonsInput) currentTonsInput.value = currentTons;
 
@@ -289,37 +292,29 @@ function loadState() {
   buildInventoryCategoryDropdown();
   buildInventoryNameDatalist();
   buildCompleteInventorySelect();
-
-  /* ===== Phase 3.2: build problem category dropdown ===== */
   buildProblemCategoryDropdown();
-  /* ===== End Phase 3.2 ===== */
-
-  /* ===== GOLD UPDATE: build PM area dropdown ===== */
   buildPmAreaDropdown();
-  /* ===== End PMs ===== */
 
   renderDashboard();
   renderParts();
   renderInventory();
   renderProblemsList();
-
-  /* ===== GOLD UPDATE: render PMs ===== */
   renderPmsList();
-  /* ===== End PMs ===== */
 }
 
 function saveState() {
-  localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
-  localStorage.setItem(TONS_KEY, String(currentTons));
-  localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
-
-  /* ===== Phase 3.2: save problems ===== */
-  localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
-  /* ===== End Phase 3.2 ===== */
-
-  /* ===== GOLD UPDATE: save PMs ===== */
-  localStorage.setItem(PMS_KEY, JSON.stringify(pms));
-  /* ===== End PMs ===== */
+  try {
+    localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
+    localStorage.setItem(TONS_KEY, String(currentTons));
+    localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
+    localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
+    localStorage.setItem(PMS_KEY, JSON.stringify(pms));
+    return true;
+  } catch (err) {
+    console.error("Save failed (quota?)", err);
+    showToast("Save failed: storage full. Use fewer photos or export + reset.", "error");
+    return false;
+  }
 }
 
 loadState();
@@ -353,7 +348,7 @@ navButtons.forEach(btn => {
 --------------------------------------------------- */
 updateTonsBtn?.addEventListener("click", () => {
   currentTons = Number(currentTonsInput.value) || 0;
-  saveState();
+  if (!saveState()) return;
   renderDashboard();
   showToast("Tons updated");
 });
@@ -361,7 +356,7 @@ updateTonsBtn?.addEventListener("click", () => {
 resetTonsBtn?.addEventListener("click", () => {
   currentTons = 0;
   if (currentTonsInput) currentTonsInput.value = 0;
-  saveState();
+  if (!saveState()) return;
   renderDashboard();
   showToast("Tons reset");
 });
@@ -398,16 +393,18 @@ function renderDashboard() {
   dueCountEl.textContent = due;
   overCountEl.textContent = over;
   if (tonsRunEl) tonsRunEl.textContent = currentTons;
-
   if (completedTodayEl) completedTodayEl.textContent = completedToday;
   if (completedMonthEl) completedMonthEl.textContent = completedMonth;
 
-  /* ===== Phase 3.2: open problems count ===== */
   if (openProblemsCountEl) {
     const openCount = (problems || []).filter(p => (p.status || "Open") === "Open").length;
     openProblemsCountEl.textContent = openCount;
   }
-  /* ===== End Phase 3.2 ===== */
+
+  if (pmDueTodayCountEl) {
+    const duePmCount = (pms || []).filter(pm => isPmDue(pm)).length;
+    pmDueTodayCountEl.textContent = duePmCount;
+  }
 }
 
 /* ---------------------------------------------------
@@ -473,16 +470,17 @@ function renderParts() {
     const historyHtml = (p.history || [])
       .slice().reverse().slice(0, 2)
       .map(h => {
-        const photoCount = Array.isArray(h.photos) ? h.photos.length : 0;
-        const photoStrip = photoCount
-          ? `<div class="history-photo-strip">
-              ${h.photos.slice(0, 6).map(src => `<img src="${src}" alt="photo">`).join("")}
-              ${photoCount > 6 ? `<span class="history-photo-more">+${photoCount - 6}</span>` : ""}
-            </div>`
-          : "";
+        const photos = Array.isArray(h.photos) ? h.photos : [];
+        const strip = photos.length ? `
+          <div class="photo-preview-grid">
+            ${photos.slice(0, 6).map(src => `
+              <div class="photo-thumb"><img src="${src}" alt="photo"></div>
+            `).join("")}
+          </div>
+        ` : "";
         return `
-          <div class="part-meta">• ${h.date} – ${h.tons} tons${photoCount ? ` – 📷 ${photoCount}` : ""}</div>
-          ${photoStrip}
+          <div class="part-meta">• ${h.date} – ${h.tons} tons${photos.length ? ` – 📷 ${photos.length}` : ""}</div>
+          ${strip}
         `;
       })
       .join("") || `<div class="part-meta">No history</div>`;
@@ -493,9 +491,9 @@ function renderParts() {
     card.innerHTML = `
       <div class="part-main" data-idx="${idx}">
         <div>
-          <div class="part-name">${p.name}</div>
-          <div class="part-meta">${p.category} — ${p.section}</div>
-          <div class="part-meta">Last: ${p.date}</div>
+          <div class="part-name">${escapeHtml(p.name)}</div>
+          <div class="part-meta">${escapeHtml(p.category)} — ${escapeHtml(p.section)}</div>
+          <div class="part-meta">Last: ${escapeHtml(p.date)}</div>
           <div class="part-meta">Status: <b>${st.status.toUpperCase()}</b></div>
         </div>
         <div class="expand-icon">▼</div>
@@ -523,51 +521,37 @@ function renderParts() {
   });
 }
 
-/* Expand/collapse + part actions + photo lightbox */
 partsList?.addEventListener("click", (e) => {
-  // Phase 3.1: history thumbnail -> lightbox
-  const historyImg = e.target?.tagName === "IMG" ? e.target.closest(".history-photo-strip img") : null;
-  if (historyImg && historyImg.src) {
-    openLightbox(historyImg.src);
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img?.src && img.closest(".photo-thumb")) {
+    openLightbox(img.src);
     return;
   }
 
   const main = e.target.closest(".part-main");
   if (main) {
     const idx = main.dataset.idx;
-    document
-      .querySelector(`.part-details[data-details="${idx}"]`)
-      ?.classList.toggle("expanded");
+    document.querySelector(`.part-details[data-details="${idx}"]`)?.classList.toggle("expanded");
     return;
   }
 
-  if (e.target.classList.contains("edit-part-btn"))
-    openPartForEdit(Number(e.target.dataset.idx));
-
-  if (e.target.classList.contains("duplicate-part-btn"))
-    duplicatePart(Number(e.target.dataset.idx));
-
-  if (e.target.classList.contains("delete-part-btn"))
-    deletePart(Number(e.target.dataset.idx));
-
-  if (e.target.classList.contains("complete-btn"))
-    openCompletePanel(Number(e.target.dataset.idx));
+  if (e.target.classList.contains("edit-part-btn")) openPartForEdit(Number(e.target.dataset.idx));
+  if (e.target.classList.contains("duplicate-part-btn")) duplicatePart(Number(e.target.dataset.idx));
+  if (e.target.classList.contains("delete-part-btn")) deletePart(Number(e.target.dataset.idx));
+  if (e.target.classList.contains("complete-btn")) openCompletePanel(Number(e.target.dataset.idx));
 });
 
 /* ---------------------------------------------------
-   PART: ADD/EDIT PANEL (overlay)
+   PART: ADD/EDIT PANEL
 --------------------------------------------------- */
 function openPartPanel(isEdit, index) {
   editingPartIndex = isEdit ? index : null;
 
   if (partPanelTitle) partPanelTitle.textContent = isEdit ? "Edit Part" : "Add New Part";
 
-  // categories dropdown for the panel
   if (newPartCategory) {
     newPartCategory.innerHTML = "";
-    categories.forEach(c => {
-      newPartCategory.innerHTML += `<option value="${c}">${c}</option>`;
-    });
+    categories.forEach(c => { newPartCategory.innerHTML += `<option value="${c}">${c}</option>`; });
   }
 
   if (isEdit && parts[index]) {
@@ -598,11 +582,8 @@ addPartBtn?.addEventListener("click", () => openPartPanel(false, null));
 function openPartForEdit(index) { openPartPanel(true, index); }
 
 closePartPanelBtn?.addEventListener("click", closePartPanel);
-partPanelOverlay?.addEventListener("click", (e) => {
-  if (e.target === partPanelOverlay) closePartPanel();
-});
+partPanelOverlay?.addEventListener("click", (e) => { if (e.target === partPanelOverlay) closePartPanel(); });
 
-// If user selects an inventory name, auto-set category
 newPartName?.addEventListener("change", () => {
   const name = newPartName.value.toLowerCase().trim();
   const match = inventory.find(item => (item.part || "").toLowerCase() === name);
@@ -626,18 +607,14 @@ savePartBtn?.addEventListener("click", () => {
     parts[editingPartIndex] = { ...existing, name, category, section, days, tonInterval };
   } else {
     parts.push({
-      name,
-      category,
-      section,
-      days,
-      tonInterval,
+      name, category, section, days, tonInterval,
       date: new Date().toISOString().split("T")[0],
       lastTons: currentTons,
       history: []
     });
   }
 
-  saveState();
+  if (!saveState()) return;
   renderParts();
   renderDashboard();
   closePartPanel();
@@ -650,7 +627,7 @@ savePartBtn?.addEventListener("click", () => {
 function deletePart(i) {
   if (!confirm("Delete this part?")) return;
   parts.splice(i, 1);
-  saveState();
+  if (!saveState()) return;
   renderParts();
   renderDashboard();
   showToast("Part deleted");
@@ -667,13 +644,13 @@ function duplicatePart(i) {
     lastTons: currentTons,
   });
 
-  saveState();
+  if (!saveState()) return;
   renderParts();
   showToast("Part duplicated");
 }
 
 /* ---------------------------------------------------
-   INVENTORY SEARCH + RENDER
+   INVENTORY
 --------------------------------------------------- */
 function renderInventory() {
   if (!inventoryList) return;
@@ -694,10 +671,10 @@ function renderInventory() {
     card.className = "part-card";
 
     card.innerHTML = `
-      <div class="part-name">${item.part}</div>
-      <div class="part-meta">${item.category} — ${item.location}</div>
-      <div class="part-meta">Qty: ${item.qty}</div>
-      <div class="part-meta">${item.notes || ""}</div>
+      <div class="part-name">${escapeHtml(item.part)}</div>
+      <div class="part-meta">${escapeHtml(item.category)} — ${escapeHtml(item.location)}</div>
+      <div class="part-meta">Qty: ${escapeHtml(item.qty)}</div>
+      <div class="part-meta">${escapeHtml(item.notes || "")}</div>
 
       <div class="part-actions">
         <button class="edit-inv-btn" data-idx="${idx}">Edit</button>
@@ -715,16 +692,10 @@ function renderInventory() {
 searchInventoryInput?.addEventListener("input", renderInventory);
 
 inventoryList?.addEventListener("click", (e) => {
-  if (e.target.classList.contains("edit-inv-btn"))
-    openInventoryForEdit(Number(e.target.dataset.idx));
-
-  if (e.target.classList.contains("delete-inv-btn"))
-    deleteInventoryItem(Number(e.target.dataset.idx));
+  if (e.target.classList.contains("edit-inv-btn")) openInventoryForEdit(Number(e.target.dataset.idx));
+  if (e.target.classList.contains("delete-inv-btn")) deleteInventoryItem(Number(e.target.dataset.idx));
 });
 
-/* ---------------------------------------------------
-   INVENTORY: ADD/EDIT PANEL (overlay)
---------------------------------------------------- */
 function openInventoryPanel(isEdit, index) {
   editingInventoryIndex = isEdit ? index : null;
 
@@ -762,9 +733,7 @@ addInventoryBtn?.addEventListener("click", () => openInventoryPanel(false, null)
 function openInventoryForEdit(index) { openInventoryPanel(true, index); }
 
 closeInventoryPanelBtn?.addEventListener("click", closeInventoryPanel);
-inventoryPanelOverlay?.addEventListener("click", (e) => {
-  if (e.target === inventoryPanelOverlay) closeInventoryPanel();
-});
+inventoryPanelOverlay?.addEventListener("click", (e) => { if (e.target === inventoryPanelOverlay) closeInventoryPanel(); });
 
 saveInventoryBtn?.addEventListener("click", () => {
   const part = invPartName.value.trim();
@@ -786,7 +755,7 @@ saveInventoryBtn?.addEventListener("click", () => {
     inventory.push(itemData);
   }
 
-  saveState();
+  if (!saveState()) return;
   renderInventory();
   closeInventoryPanel();
   showToast(editingInventoryIndex !== null ? "Inventory updated" : "Inventory added");
@@ -795,14 +764,11 @@ saveInventoryBtn?.addEventListener("click", () => {
 function deleteInventoryItem(i) {
   if (!confirm("Delete this item?")) return;
   inventory.splice(i, 1);
-  saveState();
+  if (!saveState()) return;
   renderInventory();
   showToast("Inventory item deleted");
 }
 
-/* ---------------------------------------------------
-   INVENTORY NAME DATALIST (sync into parts)
---------------------------------------------------- */
 function buildInventoryNameDatalist() {
   if (!inventoryNameList) return;
   inventoryNameList.innerHTML = "";
@@ -814,13 +780,12 @@ function buildInventoryNameDatalist() {
 }
 
 /* ---------------------------------------------------
-   COMPLETE MAINTENANCE PANEL
+   COMPLETE MAINTENANCE PANEL + PHOTO SAVE (compressed)
 --------------------------------------------------- */
 function openCompletePanel(i, prefill) {
   completingPartIndex = i;
   completionUsedItems = [];
 
-  // reset photos each time panel opens
   completionPhotos = [];
   if (compPhotoPreview) compPhotoPreview.innerHTML = "";
   if (compPhotoInput) compPhotoInput.value = "";
@@ -830,7 +795,6 @@ function openCompletePanel(i, prefill) {
   compTons.value = currentTons;
   compNotes.value = "";
 
-  // optional prefill (from resolved problem)
   if (prefill && typeof prefill === "object") {
     if (prefill.notes && compNotes) compNotes.value = String(prefill.notes);
     if (Array.isArray(prefill.photos)) {
@@ -852,24 +816,19 @@ function closeCompletePanel() {
 }
 
 closeCompletePanelBtn?.addEventListener("click", closeCompletePanel);
-completePanelOverlay?.addEventListener("click", (e) => {
-  if (e.target === completePanelOverlay) closeCompletePanel();
-});
+completePanelOverlay?.addEventListener("click", (e) => { if (e.target === completePanelOverlay) closeCompletePanel(); });
 
 function buildCompleteInventorySelect() {
   if (!compInvSelect) return;
   compInvSelect.innerHTML = `<option value="">Select inventory item</option>`;
   inventory.forEach((item, idx) => {
-    compInvSelect.innerHTML += `<option value="${idx}">
-      ${item.part} (Qty: ${item.qty})
-    </option>`;
+    compInvSelect.innerHTML += `<option value="${idx}">${item.part} (Qty: ${item.qty})</option>`;
   });
 }
 
 compAddItemBtn?.addEventListener("click", () => {
   const invIndex = compInvSelect.value;
   const qty = Number(compInvQty.value);
-
   if (invIndex === "" || qty <= 0) return showToast("Select item + quantity", "error");
 
   completionUsedItems.push({ invIndex: Number(invIndex), qty });
@@ -884,14 +843,9 @@ compAddItemBtn?.addEventListener("click", () => {
   compInvQty.value = 1;
 });
 
-/* ===== Phase 3: Photo handlers (button-based, optional) ===== */
 function renderCompletionPhotoPreview() {
   if (!compPhotoPreview) return;
-
-  if (!completionPhotos.length) {
-    compPhotoPreview.innerHTML = "";
-    return;
-  }
+  if (!completionPhotos.length) { compPhotoPreview.innerHTML = ""; return; }
 
   compPhotoPreview.innerHTML = `
     <div class="photo-preview-grid">
@@ -905,38 +859,28 @@ function renderCompletionPhotoPreview() {
   `;
 }
 
-compAddPhotoBtn?.addEventListener("click", () => {
-  // GOLD FIX: input is no longer display:none so click works on mobile
-  compPhotoInput?.click();
-});
+compAddPhotoBtn?.addEventListener("click", () => compPhotoInput?.click());
 
-compPhotoInput?.addEventListener("change", () => {
+compPhotoInput?.addEventListener("change", async () => {
   const files = Array.from(compPhotoInput.files || []);
-  if (!files.length) return; // user cancelled picker -> no impact on saving
+  if (!files.length) return;
 
-  const MAX_ADD = 8;
+  const MAX_ADD = 4; // GOLD stability
   const toAdd = files.slice(0, MAX_ADD);
 
-  let added = 0;
-  toAdd.forEach(file => {
-    if (!file.type.startsWith("image/")) return;
+  for (const file of toAdd) {
+    if (!file.type.startsWith("image/")) continue;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      completionPhotos.push(String(reader.result || ""));
-      added++;
-      if (added === toAdd.length) {
-        renderCompletionPhotoPreview();
-        showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
-      }
-    };
-    reader.readAsDataURL(file);
-  });
+    const base64 = await readFileAsDataURL(file);
+    const compressed = await compressImage(base64);
+    completionPhotos.push(compressed);
+  }
 
   compPhotoInput.value = "";
+  renderCompletionPhotoPreview();
+  showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
 });
 
-// tap preview thumb to open lightbox (remove button still works)
 compPhotoPreview?.addEventListener("click", (e) => {
   const btn = e.target.closest(".photo-remove");
   if (btn) {
@@ -949,11 +893,8 @@ compPhotoPreview?.addEventListener("click", (e) => {
   }
 
   const img = e.target?.tagName === "IMG" ? e.target : null;
-  if (img && img.src) {
-    openLightbox(img.src);
-  }
+  if (img && img.src) openLightbox(img.src);
 });
-/* ===== End Phase 3 ===== */
 
 saveCompletionBtn?.addEventListener("click", () => {
   const p = parts[completingPartIndex];
@@ -987,11 +928,11 @@ saveCompletionBtn?.addEventListener("click", () => {
     inventory[u.invIndex].qty = Math.max(0, Number(inventory[u.invIndex].qty) - u.qty);
   });
 
-  saveState();
+  if (!saveState()) return;
+
   renderParts();
   renderInventory();
   renderDashboard();
-
   showToast("Maintenance logged");
   closeCompletePanel();
 });
@@ -1021,14 +962,16 @@ acCalcBtn?.addEventListener("click", () => {
 exportBtn?.addEventListener("click", () => {
   const data = { parts, currentTons, inventory, problems, pms };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "maintenance_data.json";
-  a.click();
-
+  downloadBlob(blob, "maintenance_data.json");
   showToast("Exported");
+});
+
+/* GOLD: PM Compliance export (CSV) */
+exportPmComplianceBtn?.addEventListener("click", () => {
+  const csv = buildPmComplianceCsv();
+  const blob = new Blob([csv], { type: "text/csv" });
+  downloadBlob(blob, `pm_compliance_${getTodayStr()}.csv`);
+  showToast("PM compliance exported");
 });
 
 /* ---------------------------------------------------
@@ -1042,30 +985,24 @@ resetAllBtn?.addEventListener("click", () => {
 });
 
 /* ===================================================
-   Phase 3.2: REPORT A PROBLEM (Home + slide panel)
+   PROBLEMS (includes compressed photo add)
 =================================================== */
-
 function buildProblemCategoryDropdown() {
   if (!probCategory) return;
   probCategory.innerHTML = "";
-  (categories || []).forEach(c => {
-    probCategory.innerHTML += `<option value="${c}">${c}</option>`;
-  });
+  (categories || []).forEach(c => { probCategory.innerHTML += `<option value="${c}">${c}</option>`; });
 }
 
 function openProblemPanel() {
-  // reset form each open
   if (probTitle) probTitle.value = "";
   if (probLocation) probLocation.value = "";
   if (probNotes) probNotes.value = "";
-
   if (probSeverity) probSeverity.value = "Medium";
   if (probStatus) probStatus.value = "Open";
 
   buildProblemCategoryDropdown();
   if (probCategory && categories.length) probCategory.value = categories[0];
 
-  // reset photos
   problemPhotos = [];
   if (probPhotoPreview) probPhotoPreview.innerHTML = "";
   if (probPhotoInput) probPhotoInput.value = "";
@@ -1082,17 +1019,11 @@ function closeProblemPanel() {
 openProblemPanelBtn?.addEventListener("click", openProblemPanel);
 openProblemPanelBtn2?.addEventListener("click", openProblemPanel);
 closeProblemPanelBtn?.addEventListener("click", closeProblemPanel);
-problemPanelOverlay?.addEventListener("click", (e) => {
-  if (e.target === problemPanelOverlay) closeProblemPanel();
-});
+problemPanelOverlay?.addEventListener("click", (e) => { if (e.target === problemPanelOverlay) closeProblemPanel(); });
 
 function renderProblemPhotoPreview() {
   if (!probPhotoPreview) return;
-
-  if (!problemPhotos.length) {
-    probPhotoPreview.innerHTML = "";
-    return;
-  }
+  if (!problemPhotos.length) { probPhotoPreview.innerHTML = ""; return; }
 
   probPhotoPreview.innerHTML = `
     <div class="photo-preview-grid">
@@ -1106,37 +1037,27 @@ function renderProblemPhotoPreview() {
   `;
 }
 
-probAddPhotoBtn?.addEventListener("click", () => {
-  probPhotoInput?.click();
-});
+probAddPhotoBtn?.addEventListener("click", () => probPhotoInput?.click());
 
-probPhotoInput?.addEventListener("change", () => {
+probPhotoInput?.addEventListener("change", async () => {
   const files = Array.from(probPhotoInput.files || []);
   if (!files.length) return;
 
-  const MAX_ADD = 8;
+  const MAX_ADD = 4;
   const toAdd = files.slice(0, MAX_ADD);
 
-  let added = 0;
-  toAdd.forEach(file => {
-    if (!file.type.startsWith("image/")) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      problemPhotos.push(String(reader.result || ""));
-      added++;
-      if (added === toAdd.length) {
-        renderProblemPhotoPreview();
-        showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
-      }
-    };
-    reader.readAsDataURL(file);
-  });
+  for (const file of toAdd) {
+    if (!file.type.startsWith("image/")) continue;
+    const base64 = await readFileAsDataURL(file);
+    const compressed = await compressImage(base64);
+    problemPhotos.push(compressed);
+  }
 
   probPhotoInput.value = "";
+  renderProblemPhotoPreview();
+  showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
 });
 
-// tap thumb to view full-screen + remove
 probPhotoPreview?.addEventListener("click", (e) => {
   const btn = e.target.closest(".photo-remove");
   if (btn) {
@@ -1147,13 +1068,13 @@ probPhotoPreview?.addEventListener("click", (e) => {
     showToast("Photo removed");
     return;
   }
-
   const img = e.target?.tagName === "IMG" ? e.target : null;
-  if (img && img.src) openLightbox(img.src);
+  if (img?.src) openLightbox(img.src);
 });
 
 saveProblemBtn?.addEventListener("click", (e) => {
   e.preventDefault();
+
   const title = (probTitle?.value || "").trim();
   const category = probCategory?.value || "";
   const location = (probLocation?.value || "").trim();
@@ -1169,17 +1090,14 @@ saveProblemBtn?.addEventListener("click", (e) => {
   const item = {
     id: "prob_" + Date.now(),
     createdAt: new Date().toISOString(),
-    title,
-    category,
-    location,
-    severity,
-    status,
-    notes,
+    title, category, location, severity, status, notes,
     photos: problemPhotos.slice()
   };
 
   problems.unshift(item);
-  saveState();
+
+  if (!saveState()) return;
+
   renderDashboard();
   renderProblemsList();
 
@@ -1187,16 +1105,20 @@ saveProblemBtn?.addEventListener("click", (e) => {
   closeProblemPanel();
 });
 
-/* ===================================================
-   Phase 3.3: PROBLEMS LIST (inside Maintenance)
-=================================================== */
-
+/* Problems list + detail */
 function getProblemStatusClass(status) {
   const s = String(status || "Open");
   if (s === "Resolved") return "status-resolved";
   if (s === "In Progress") return "status-inprogress";
   return "status-open";
 }
+
+problemFilterBtns?.forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentProblemFilter = btn.dataset.filter || "ALL";
+    renderProblemsList();
+  });
+});
 
 function renderProblemsList() {
   if (!problemsListEl) return;
@@ -1234,6 +1156,13 @@ function renderProblemsList() {
   }).join("");
 }
 
+problemsListEl?.addEventListener("click", (e) => {
+  const card = e.target.closest(".problem-card");
+  if (!card) return;
+  const id = card.dataset.probid;
+  if (id) openProblemDetail(id);
+});
+
 function openProblemDetail(problemId) {
   const p = (problems || []).find(x => x.id === problemId);
   if (!p) return;
@@ -1270,9 +1199,7 @@ function openProblemDetail(problemId) {
       problemDetailPhotos.innerHTML = `
         <div class="photo-preview-grid">
           ${photos.map((src, idx) => `
-            <div class="photo-thumb">
-              <img src="${src}" alt="Problem Photo ${idx + 1}">
-            </div>
+            <div class="photo-thumb"><img src="${src}" alt="Problem Photo ${idx + 1}"></div>
           `).join("")}
         </div>
       `;
@@ -1290,23 +1217,7 @@ function closeProblemDetail() {
 }
 
 closeProblemDetailBtn?.addEventListener("click", closeProblemDetail);
-problemDetailOverlay?.addEventListener("click", (e) => {
-  if (e.target === problemDetailOverlay) closeProblemDetail();
-});
-
-problemFilterBtns?.forEach(btn => {
-  btn.addEventListener("click", () => {
-    currentProblemFilter = btn.dataset.filter || "ALL";
-    renderProblemsList();
-  });
-});
-
-problemsListEl?.addEventListener("click", (e) => {
-  const card = e.target.closest(".problem-card");
-  if (!card) return;
-  const id = card.dataset.probid;
-  if (id) openProblemDetail(id);
-});
+problemDetailOverlay?.addEventListener("click", (e) => { if (e.target === problemDetailOverlay) closeProblemDetail(); });
 
 problemDetailStatus?.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-setstatus]");
@@ -1316,7 +1227,8 @@ problemDetailStatus?.addEventListener("click", (e) => {
   if (!p) return;
 
   p.status = btn.dataset.setstatus || "Open";
-  saveState();
+  if (!saveState()) return;
+
   renderDashboard();
   renderProblemsList();
   openProblemDetail(viewingProblemId);
@@ -1327,14 +1239,14 @@ problemDetailPhotos?.addEventListener("click", (e) => {
   if (img?.src) openLightbox(img.src);
 });
 
-// Resolve & Log Maintenance
 resolveLogBtn?.addEventListener("click", () => {
   if (!viewingProblemId) return;
   const p = (problems || []).find(x => x.id === viewingProblemId);
   if (!p) return;
 
   p.status = "Resolved";
-  saveState();
+  if (!saveState()) return;
+
   renderDashboard();
   renderProblemsList();
 
@@ -1374,8 +1286,10 @@ resolveLogBtn?.addEventListener("click", () => {
 deleteProblemBtn?.addEventListener("click", () => {
   if (!viewingProblemId) return;
   if (!confirm("Delete this problem?")) return;
+
   problems = (problems || []).filter(p => p.id !== viewingProblemId);
-  saveState();
+  if (!saveState()) return;
+
   renderDashboard();
   renderProblemsList();
   closeProblemDetail();
@@ -1383,24 +1297,42 @@ deleteProblemBtn?.addEventListener("click", () => {
 });
 
 /* ===================================================
-   GOLD UPDATE: PMs (Daily + Weekly) with Photos
+   PMs (Due Today + Gallery + compressed photo save)
 =================================================== */
-
 function buildPmAreaDropdown() {
   if (!pmArea) return;
-
   const PM_AREAS = ["Cold Feed", "RAP", "Drum", "Drag", "Silos", "Scales"];
   pmArea.innerHTML = "";
-  PM_AREAS.forEach(a => {
-    pmArea.innerHTML += `<option value="${a}">${a}</option>`;
-  });
+  PM_AREAS.forEach(a => { pmArea.innerHTML += `<option value="${a}">${a}</option>`; });
+}
+
+function getTodayStr() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function getPmLastDate(pm) {
+  const h = Array.isArray(pm.history) ? pm.history : [];
+  if (!h.length) return "";
+  return h[h.length - 1]?.date || "";
+}
+
+function isPmDue(pm) {
+  const today = getTodayStr();
+  const last = getPmLastDate(pm);
+  const freq = pm.frequency || "Daily";
+  if (!last) return true;
+
+  if (freq === "Daily") return last !== today;
+
+  const lastMs = new Date(last).getTime();
+  const nowMs = new Date(today).getTime();
+  const days = Math.floor((nowMs - lastMs) / 86400000);
+  return days >= 7;
 }
 
 function openPmPanel(isEdit, id) {
   editingPmId = isEdit ? id : null;
-
   if (pmPanelTitle) pmPanelTitle.textContent = isEdit ? "Edit PM" : "Add PM";
-
   buildPmAreaDropdown();
 
   if (isEdit) {
@@ -1428,66 +1360,44 @@ function closePmPanel() {
 
 openPmPanelBtn?.addEventListener("click", () => openPmPanel(false, null));
 closePmPanelBtn?.addEventListener("click", closePmPanel);
-pmPanelOverlay?.addEventListener("click", (e) => {
-  if (e.target === pmPanelOverlay) closePmPanel();
-});
+pmPanelOverlay?.addEventListener("click", (e) => { if (e.target === pmPanelOverlay) closePmPanel(); });
 
 savePmBtn?.addEventListener("click", () => {
   const name = (pmName?.value || "").trim();
   const area = pmArea?.value || "Cold Feed";
   const frequency = pmFrequency?.value || "Daily";
-
   if (!name) return showToast("Enter PM name", "error");
 
   if (editingPmId) {
     const idx = (pms || []).findIndex(x => x.id === editingPmId);
-    if (idx >= 0) {
-      pms[idx] = { ...pms[idx], name, area, frequency };
-    }
+    if (idx >= 0) pms[idx] = { ...pms[idx], name, area, frequency };
   } else {
     pms.unshift({
       id: "pm_" + Date.now(),
       createdAt: new Date().toISOString(),
-      name,
-      area,
-      frequency,
+      name, area, frequency,
       history: []
     });
   }
 
-  saveState();
+  if (!saveState()) return;
+
   renderPmsList();
+  renderDashboard();
   showToast(editingPmId ? "PM updated" : "PM added");
   closePmPanel();
 });
 
-function getTodayStr() {
-  return new Date().toISOString().split("T")[0];
-}
+pmFilterBtns?.forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentPmFilter = btn.dataset.pmfilter || "ALL";
+    renderPmsList();
+  });
+});
 
-function getPmLastDate(pm) {
+function countPmPhotoTotal(pm) {
   const h = Array.isArray(pm.history) ? pm.history : [];
-  if (!h.length) return "";
-  const last = h[h.length - 1];
-  return last?.date || "";
-}
-
-function isPmDue(pm) {
-  const today = getTodayStr();
-  const last = getPmLastDate(pm);
-  const freq = pm.frequency || "Daily";
-
-  if (!last) return true;
-
-  if (freq === "Daily") {
-    return last !== today;
-  }
-
-  // Weekly: due if last is older than 7 days
-  const lastMs = new Date(last).getTime();
-  const nowMs = new Date(today).getTime();
-  const days = Math.floor((nowMs - lastMs) / 86400000);
-  return days >= 7;
+  return h.reduce((acc, entry) => acc + (Array.isArray(entry.photos) ? entry.photos.length : 0), 0);
 }
 
 function renderPmsList() {
@@ -1515,6 +1425,7 @@ function renderPmsList() {
     const due = isPmDue(pm);
     const pill = due ? `<span class="pm-pill pm-due">DUE</span>` : `<span class="pm-pill pm-done">DONE</span>`;
     const historyCount = Array.isArray(pm.history) ? pm.history.length : 0;
+    const photoTotal = countPmPhotoTotal(pm);
 
     return `
       <div class="pm-card" data-pmid="${pm.id}">
@@ -1522,7 +1433,7 @@ function renderPmsList() {
           <div>
             <div class="pm-title">${escapeHtml(pm.name || "PM")}</div>
             <div class="pm-sub">${escapeHtml(pm.area || "")} — ${escapeHtml(pm.frequency || "")}</div>
-            <div class="pm-sub">${last ? `Last: ${escapeHtml(last)}` : "Last: (none)"}${historyCount ? ` • History: ${historyCount}` : ""}</div>
+            <div class="pm-sub">${last ? `Last: ${escapeHtml(last)}` : "Last: (none)"}${historyCount ? ` • History: ${historyCount}` : ""}${photoTotal ? ` • 📷 ${photoTotal}` : ""}</div>
           </div>
           ${pill}
         </div>
@@ -1530,6 +1441,7 @@ function renderPmsList() {
         <div class="pm-actions">
           <button class="pm-complete-btn" data-pmid="${pm.id}">Complete</button>
           <button class="pm-edit-btn" data-pmid="${pm.id}">Edit</button>
+          <button class="pm-gallery-btn" data-pmid="${pm.id}">Gallery</button>
           <button class="pm-delete-btn" data-pmid="${pm.id}">Delete</button>
         </div>
       </div>
@@ -1537,35 +1449,24 @@ function renderPmsList() {
   }).join("");
 }
 
-pmFilterBtns?.forEach(btn => {
-  btn.addEventListener("click", () => {
-    currentPmFilter = btn.dataset.pmfilter || "ALL";
-    renderPmsList();
-  });
-});
-
 pmsListEl?.addEventListener("click", (e) => {
   const id = e.target?.dataset?.pmid || e.target.closest("[data-pmid]")?.dataset?.pmid;
   if (!id) return;
 
-  if (e.target.classList.contains("pm-edit-btn")) {
-    openPmPanel(true, id);
-    return;
-  }
+  if (e.target.classList.contains("pm-edit-btn")) return openPmPanel(true, id);
 
   if (e.target.classList.contains("pm-delete-btn")) {
     if (!confirm("Delete this PM?")) return;
     pms = (pms || []).filter(x => x.id !== id);
-    saveState();
+    if (!saveState()) return;
     renderPmsList();
-    showToast("PM deleted");
-    return;
+    renderDashboard();
+    return showToast("PM deleted");
   }
 
-  if (e.target.classList.contains("pm-complete-btn")) {
-    openPmComplete(id);
-    return;
-  }
+  if (e.target.classList.contains("pm-complete-btn")) return openPmComplete(id);
+
+  if (e.target.classList.contains("pm-gallery-btn")) return openPmGallery(id);
 });
 
 function openPmComplete(id) {
@@ -1578,9 +1479,7 @@ function openPmComplete(id) {
   if (!pm) return;
 
   if (pmCompleteTitle) pmCompleteTitle.textContent = `Complete PM — ${pm.name || ""}`;
-
-  const today = getTodayStr();
-  if (pmCompDate) pmCompDate.value = today;
+  if (pmCompDate) pmCompDate.value = getTodayStr();
   if (pmCompNotes) pmCompNotes.value = "";
 
   pmCompleteOverlay?.classList.remove("hidden");
@@ -1594,17 +1493,11 @@ function closePmComplete() {
 }
 
 closePmCompleteBtn?.addEventListener("click", closePmComplete);
-pmCompleteOverlay?.addEventListener("click", (e) => {
-  if (e.target === pmCompleteOverlay) closePmComplete();
-});
+pmCompleteOverlay?.addEventListener("click", (e) => { if (e.target === pmCompleteOverlay) closePmComplete(); });
 
 function renderPmPhotoPreview() {
   if (!pmPhotoPreview) return;
-
-  if (!pmCompletionPhotos.length) {
-    pmPhotoPreview.innerHTML = "";
-    return;
-  }
+  if (!pmCompletionPhotos.length) { pmPhotoPreview.innerHTML = ""; return; }
 
   pmPhotoPreview.innerHTML = `
     <div class="photo-preview-grid">
@@ -1618,34 +1511,25 @@ function renderPmPhotoPreview() {
   `;
 }
 
-pmAddPhotoBtn?.addEventListener("click", () => {
-  pmPhotoInput?.click();
-});
+pmAddPhotoBtn?.addEventListener("click", () => pmPhotoInput?.click());
 
-pmPhotoInput?.addEventListener("change", () => {
+pmPhotoInput?.addEventListener("change", async () => {
   const files = Array.from(pmPhotoInput.files || []);
   if (!files.length) return;
 
-  const MAX_ADD = 8;
+  const MAX_ADD = 4;
   const toAdd = files.slice(0, MAX_ADD);
 
-  let added = 0;
-  toAdd.forEach(file => {
-    if (!file.type.startsWith("image/")) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      pmCompletionPhotos.push(String(reader.result || ""));
-      added++;
-      if (added === toAdd.length) {
-        renderPmPhotoPreview();
-        showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
-      }
-    };
-    reader.readAsDataURL(file);
-  });
+  for (const file of toAdd) {
+    if (!file.type.startsWith("image/")) continue;
+    const base64 = await readFileAsDataURL(file);
+    const compressed = await compressImage(base64);
+    pmCompletionPhotos.push(compressed);
+  }
 
   pmPhotoInput.value = "";
+  renderPmPhotoPreview();
+  showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
 });
 
 pmPhotoPreview?.addEventListener("click", (e) => {
@@ -1658,38 +1542,180 @@ pmPhotoPreview?.addEventListener("click", (e) => {
     showToast("Photo removed");
     return;
   }
-
   const img = e.target?.tagName === "IMG" ? e.target : null;
   if (img?.src) openLightbox(img.src);
 });
 
 savePmCompletionBtn?.addEventListener("click", () => {
   if (!completingPmId) return;
-
   const pm = (pms || []).find(x => x.id === completingPmId);
   if (!pm) return;
 
   const date = pmCompDate?.value || getTodayStr();
   const notes = (pmCompNotes?.value || "").trim();
-
   if (!date) return showToast("Pick a date", "error");
 
-  const entry = {
-    date,
-    notes,
-    photos: pmCompletionPhotos.slice()
-  };
-
+  const entry = { date, notes, photos: pmCompletionPhotos.slice() };
   if (!Array.isArray(pm.history)) pm.history = [];
   pm.history.push(entry);
 
-  saveState();
+  if (!saveState()) return;
+
   renderPmsList();
+  renderDashboard();
   showToast("PM logged");
   closePmComplete();
 });
 
-/* Tiny helper to avoid breaking HTML when rendering user text */
+/* PM GALLERY */
+function collectPmGalleryPhotos(pm) {
+  const out = [];
+  const h = Array.isArray(pm.history) ? pm.history : [];
+  h.forEach(entry => {
+    const photos = Array.isArray(entry.photos) ? entry.photos : [];
+    photos.forEach(src => out.push({ src, date: entry.date || "" }));
+  });
+  return out;
+}
+
+function openPmGallery(id) {
+  const pm = (pms || []).find(x => x.id === id);
+  if (!pm) return;
+
+  const photos = collectPmGalleryPhotos(pm);
+  if (pmGalleryTitle) pmGalleryTitle.textContent = `PM Photos — ${pm.name || ""}`;
+  if (pmGalleryMeta) pmGalleryMeta.textContent = photos.length
+    ? `${pm.area || ""} • ${pm.frequency || ""} • Total photos: ${photos.length}`
+    : `${pm.area || ""} • ${pm.frequency || ""} • No photos yet`;
+
+  if (pmGalleryGrid) {
+    if (!photos.length) {
+      pmGalleryGrid.innerHTML = `<div class="part-meta">No photos logged for this PM yet.</div>`;
+    } else {
+      pmGalleryGrid.innerHTML = `
+        <div class="photo-preview-grid">
+          ${photos.map((p, idx) => `
+            <div>
+              <div class="photo-thumb">
+                <img src="${p.src}" alt="PM Photo ${idx + 1}">
+              </div>
+              <div class="photo-caption">${escapeHtml(p.date || "")}</div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+  }
+
+  pmGalleryOverlay?.classList.remove("hidden");
+  setTimeout(() => pmGalleryPanel?.classList.add("show"), 10);
+}
+
+function closePmGallery() {
+  pmGalleryPanel?.classList.remove("show");
+  setTimeout(() => pmGalleryOverlay?.classList.add("hidden"), 250);
+}
+
+closePmGalleryBtn?.addEventListener("click", closePmGallery);
+pmGalleryOverlay?.addEventListener("click", (e) => { if (e.target === pmGalleryOverlay) closePmGallery(); });
+
+pmGalleryGrid?.addEventListener("click", (e) => {
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img?.src) openLightbox(img.src);
+});
+
+/* ===================================================
+   PARTS STATUS FILTER / SEARCH
+=================================================== */
+function buildCompleteInventorySelect() { /* already above uses inventory */ }
+
+/* ---------------------------------------------------
+   EXPORT: PM Compliance CSV (Supervisor)
+   - Month-to-date expected vs completed
+--------------------------------------------------- */
+function buildPmComplianceCsv() {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = today.getMonth(); // 0-based
+  const dayOfMonth = today.getDate();
+
+  // Month-to-date expected:
+  // Daily: expected = days elapsed this month (1..today)
+  // Weekly: expected = number of weeks elapsed (ceil(day/7))
+  const expectedDaily = dayOfMonth;
+  const expectedWeekly = Math.ceil(dayOfMonth / 7);
+
+  const rows = [
+    ["PM Name","Area","Frequency","Expected (MTD)","Completed (MTD)","Compliance %","Last Completed","Due Today"]
+  ];
+
+  const monthStr = String(m + 1).padStart(2,"0");
+  const ymPrefix = `${y}-${monthStr}-`;
+
+  (pms || []).forEach(pm => {
+    const freq = pm.frequency || "Daily";
+    const expected = (freq === "Weekly") ? expectedWeekly : expectedDaily;
+
+    const completions = (Array.isArray(pm.history) ? pm.history : [])
+      .filter(h => (h.date || "").startsWith(ymPrefix))
+      .map(h => h.date)
+      .filter(Boolean);
+
+    // daily: count unique dates; weekly: count entries
+    const completed = (freq === "Weekly")
+      ? completions.length
+      : new Set(completions).size;
+
+    const compliance = expected > 0 ? Math.min(100, Math.round((completed / expected) * 100)) : 0;
+    const last = getPmLastDate(pm) || "";
+    const dueToday = isPmDue(pm) ? "YES" : "NO";
+
+    rows.push([
+      pm.name || "",
+      pm.area || "",
+      freq,
+      String(expected),
+      String(completed),
+      String(compliance),
+      last,
+      dueToday
+    ]);
+  });
+
+  return rows.map(r => r.map(csvEscape).join(",")).join("\n");
+}
+
+function csvEscape(val) {
+  const s = String(val ?? "");
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+    return `"${s.replaceAll('"','""')}"`;
+  }
+  return s;
+}
+
+/* ---------------------------------------------------
+   EXPORT helpers
+--------------------------------------------------- */
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function readFileAsDataURL(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ---------------------------------------------------
+   UTIL
+--------------------------------------------------- */
 function escapeHtml(str) {
   return String(str || "")
     .replaceAll("&", "&amp;")
@@ -1697,4 +1723,4 @@ function escapeHtml(str) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
-                                       }
+   }
