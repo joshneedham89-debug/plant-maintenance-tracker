@@ -39,6 +39,7 @@
           <div class="stat-label">Tons Run</div>
           <div id="tonsRun" class="stat-value">0</div>
         </div>
+
         <div class="stat-card">
           <div class="stat-label">Completed Today</div>
           <div id="completedTodayCount" class="stat-value">0</div>
@@ -47,26 +48,29 @@
           <div class="stat-label">Completed This Month</div>
           <div id="completedMonthCount" class="stat-value">0</div>
         </div>
-        <div class="stat-card">
+
+        <!-- ===== Phase 3.2: Open Problems count ===== -->
+        <div class="stat-card stat-problems">
           <div class="stat-label">Open Problems</div>
           <div id="openProblemsCount" class="stat-value">0</div>
         </div>
+        <!-- ===== End Phase 3.2 ===== -->
       </div>
 
       <!-- Tons Update -->
       <div class="card">
-        <h3>Add Tons</h3>
-        <input id="currentTonsInput" type="number" placeholder="Enter tons to ADD (ex: 2500)" />
+        <h3>Update Tons</h3>
+        <input id="currentTonsInput" type="number" placeholder="Enter current tons" />
         <button id="updateTonsBtn" class="primary-btn">Update</button>
-        <div class="part-meta" style="margin-top:8px;">Reset Tons is now in Settings.</div>
+        <button id="resetTonsBtn" class="secondary-btn">Reset Tons</button>
       </div>
 
-      <!-- RESTORED: Dashboard Report Problem button (Original behavior) -->
+      <!-- ===== Phase 3.2: Report a Problem button on Home ===== -->
       <div class="card">
-        <h3>Report a Problem</h3>
-        <div class="part-meta">See something in the plant? Log it fast (photos optional).</div>
-        <button id="openProblemPanelBtnDash" class="primary-btn full">+ Report Problem</button>
+        <h3>Problems</h3>
+        <button id="openProblemPanelBtn" class="primary-btn full">⚠️ Report a Problem</button>
       </div>
+      <!-- ===== End Phase 3.2 ===== -->
     </section>
 
     <!-- ---------------- MAINTENANCE SCREEN ---------------- -->
@@ -74,56 +78,38 @@
       <h2 class="section-title">Maintenance</h2>
 
       <div class="card maintenance-header">
-        <div class="segmented">
-          <button id="maintTabParts" class="seg-btn active" type="button">Parts</button>
-          <button id="maintTabPMs" class="seg-btn" type="button">PMs</button>
-          <button id="maintTabProblems" class="seg-btn" type="button">Problems</button>
-        </div>
+        <label>Search Parts</label>
+        <input
+          id="searchPartsInput"
+          type="text"
+          placeholder="Search by name, category, or section"
+        >
 
-        <!-- Parts controls -->
-        <div id="maintPartsControls">
-          <label>Search Parts</label>
-          <input
-            id="searchPartsInput"
-            type="text"
-            placeholder="Search by name, category, or section"
-          >
+        <label>Filter by Category</label>
+        <select id="filterCategory"></select>
 
-          <label>Filter by Category</label>
-          <select id="filterCategory"></select>
-
-          <button id="addPartBtn" class="primary-btn full">+ Add Part</button>
-        </div>
-
-        <!-- PM controls -->
-        <div id="maintPMControls" class="hidden">
-          <label>PM Area</label>
-          <select id="pmAreaFilter"></select>
-
-          <button id="openPMLogPanelBtn" class="primary-btn full">+ Log PM</button>
-        </div>
-
-        <!-- Problems controls -->
-        <div id="maintProblemsControls" class="hidden">
-          <label>Status</label>
-          <select id="problemStatusFilter">
-            <option value="ALL">All</option>
-            <option value="Open">Open</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Resolved">Resolved</option>
-          </select>
-
-          <button id="openProblemPanelBtn" class="primary-btn full">+ Report Problem</button>
-        </div>
-
-        <div id="supervisorBadge" class="hidden" style="margin-top:10px;">
-          <span class="pill pill-super">Supervisor Mode</span>
-        </div>
+        <button id="addPartBtn" class="primary-btn full">+ Add Part</button>
       </div>
 
+      <!-- ===== Phase 3.3: Problems list inside Maintenance ===== -->
+      <div class="card">
+        <div class="problems-header-row">
+          <h3>Problems</h3>
+          <button id="openProblemPanelBtn2" class="secondary-btn">+ Report</button>
+        </div>
+
+        <div class="problem-filters">
+          <button class="prob-filter active" data-filter="ALL">All</button>
+          <button class="prob-filter" data-filter="Open">Open</button>
+          <button class="prob-filter" data-filter="In Progress">In Progress</button>
+          <button class="prob-filter" data-filter="Resolved">Resolved</button>
+        </div>
+
+        <div id="problemsList" class="problems-list"></div>
+      </div>
+      <!-- ===== End Phase 3.3 ===== -->
+
       <div id="partsList"></div>
-      <div id="pmList" class="hidden"></div>
-      <div id="problemsList" class="hidden"></div>
     </section>
 
     <!-- ---------------- INVENTORY SCREEN ---------------- -->
@@ -181,18 +167,6 @@
       <h2 class="section-title">Settings</h2>
 
       <div class="card">
-        <div class="row-between">
-          <div>
-            <div style="font-weight:800;">Supervisor Mode</div>
-            <div class="part-meta">Unlock PM editing + problem status tools</div>
-          </div>
-          <label class="switch">
-            <input id="supervisorToggle" type="checkbox">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <button id="resetTonsBtn" class="secondary-btn full">Reset Tons</button>
         <button id="exportBtn" class="primary-btn full">Export Data</button>
         <button id="resetAllBtn" class="danger-btn full">Reset Entire App</button>
       </div>
@@ -218,8 +192,10 @@
       </div>
 
       <div class="slide-panel-body">
+
         <label>Part Name</label>
         <input id="newPartName" type="text" list="inventoryNameList">
+
         <datalist id="inventoryNameList"></datalist>
 
         <label>Category</label>
@@ -250,6 +226,7 @@
       </div>
 
       <div class="slide-panel-body">
+
         <label>Part Name</label>
         <input id="invPartName" type="text">
 
@@ -292,11 +269,18 @@
         <label>Notes</label>
         <input id="compNotes" type="text">
 
-        <!-- RESTORED: Maintenance Photos (optional) -->
-        <label>Photos (optional)</label>
-        <button id="compAddPhotoBtn" class="secondary-btn full" type="button">+ Add Photos</button>
-        <input id="compPhotoInput" type="file" accept="image/*" multiple class="hidden">
-        <div id="compPhotoPreview" class="photo-row"></div>
+        <!-- ===== Phase 3: Maintenance Photos (optional, button-based) ===== -->
+        <h4 class="subheading">Photos (optional)</h4>
+        <button id="compAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <input
+          id="compPhotoInput"
+          type="file"
+          accept="image/*"
+          multiple
+          class="hidden"
+        >
+        <div id="compPhotoPreview" class="photo-preview"></div>
+        <!-- ===== End Phase 3 ===== -->
 
         <h4 class="subheading">Inventory Used (optional)</h4>
 
@@ -321,66 +305,89 @@
     </div>
   </div>
 
-  <!-- PM LOG PANEL -->
-  <div id="pmLogPanelOverlay" class="panel-overlay hidden">
-    <div id="pmLogPanel" class="slide-panel">
-      <div class="slide-panel-header">
-        <h3 id="pmLogPanelTitle">Log PM</h3>
-        <button id="closePMLogPanel" class="close-btn">✖</button>
-      </div>
-
-      <div class="slide-panel-body">
-        <label>Date</label>
-        <input id="pmLogDate" type="date">
-
-        <label>Notes (optional)</label>
-        <input id="pmLogNotes" type="text" placeholder="What you found / did">
-
-        <label>Photo (optional)</label>
-        <input id="pmLogPhoto" type="file" accept="image/*">
-
-        <div class="panel-footer">
-          <button id="savePMLogBtn" class="primary-btn full">Save PM Log</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PROBLEM PANEL -->
+  <!-- ===== Phase 3.2: REPORT PROBLEM PANEL (Home) ===== -->
   <div id="problemPanelOverlay" class="panel-overlay hidden">
     <div id="problemPanel" class="slide-panel">
       <div class="slide-panel-header">
-        <h3 id="problemPanelTitle">Report Problem</h3>
+        <h3>Report a Problem</h3>
         <button id="closeProblemPanel" class="close-btn">✖</button>
       </div>
 
       <div class="slide-panel-body">
-        <label>Area</label>
-        <select id="problemArea"></select>
+
+        <label>Title</label>
+        <input id="probTitle" type="text" placeholder="Short issue name (ex: Slat conveyor squeal)">
+
+        <label>Category</label>
+        <select id="probCategory"></select>
+
+        <label>Area / Location</label>
+        <input id="probLocation" type="text" placeholder="Where is it?">
 
         <label>Severity</label>
-        <select id="problemSeverity">
+        <select id="probSeverity">
           <option value="Low">Low</option>
-          <option value="Medium">Medium</option>
+          <option value="Medium" selected>Medium</option>
           <option value="High">High</option>
           <option value="Critical">Critical</option>
         </select>
 
-        <label>Title</label>
-        <input id="problemTitle" type="text" placeholder="Short issue title">
+        <label>Status</label>
+        <select id="probStatus">
+          <option value="Open" selected>Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
 
-        <label>Notes (optional)</label>
-        <input id="problemNotes" type="text" placeholder="Details / what happened">
+        <label>Notes</label>
+        <input id="probNotes" type="text" placeholder="Extra details (optional)">
 
-        <label>Photos (optional, up to 4)</label>
-        <input id="problemPhotos" type="file" accept="image/*" multiple>
+        <h4 class="subheading">Photos (optional)</h4>
+        <button id="probAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <input id="probPhotoInput" type="file" accept="image/*" multiple class="hidden">
+        <div id="probPhotoPreview" class="photo-preview"></div>
 
         <div class="panel-footer">
-          <button id="saveProblemBtn" class="primary-btn full">Save Problem</button>
+          <button id="saveProblemBtn" type="button" class="primary-btn full">Save Problem</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- ===== End Phase 3.2 ===== -->
+
+  <!-- ===== Phase 3.3: PROBLEM DETAIL PANEL (tap from list) ===== -->
+  <div id="problemDetailOverlay" class="panel-overlay hidden">
+    <div id="problemDetailPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="problemDetailTitle">Problem</h3>
+        <button id="closeProblemDetail" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <div id="problemDetailMeta" class="problem-detail-meta"></div>
+
+        <h4 class="subheading">Status</h4>
+        <div id="problemDetailStatus" class="status-pill-row"></div>
+
+        <h4 class="subheading">Photos</h4>
+        <div id="problemDetailPhotos" class="photo-preview"></div>
+
+        <div class="panel-footer">
+          <button id="resolveLogBtn" class="primary-btn full">Resolve &amp; Log Maintenance</button>
+          <button id="deleteProblemBtn" class="danger-btn full">Delete Problem</button>
         </div>
       </div>
     </div>
   </div>
+  <!-- ===== End Phase 3.3 ===== -->
+
+  <!-- ===== Phase 3.1: Lightbox (full-screen photo viewer) ===== -->
+  <div id="lightboxOverlay" class="lightbox-overlay hidden" aria-hidden="true">
+    <button id="lightboxClose" class="lightbox-close" aria-label="Close">✖</button>
+    <img id="lightboxImg" class="lightbox-img" alt="Full size photo">
+  </div>
+  <!-- ===== End Phase 3.1 ===== -->
 
   <!-- TOAST -->
   <div id="toastContainer" class="toast"></div>
