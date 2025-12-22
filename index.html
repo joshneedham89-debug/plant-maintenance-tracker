@@ -49,12 +49,10 @@
           <div id="completedMonthCount" class="stat-value">0</div>
         </div>
 
-        <!-- ===== Phase 3.2: Open Problems count ===== -->
         <div class="stat-card stat-problems">
           <div class="stat-label">Open Problems</div>
           <div id="openProblemsCount" class="stat-value">0</div>
         </div>
-        <!-- ===== End Phase 3.2 ===== -->
       </div>
 
       <!-- Tons Update -->
@@ -65,12 +63,11 @@
         <button id="resetTonsBtn" class="secondary-btn">Reset Tons</button>
       </div>
 
-      <!-- ===== Phase 3.2: Report a Problem button on Home ===== -->
+      <!-- Report a Problem -->
       <div class="card">
         <h3>Problems</h3>
         <button id="openProblemPanelBtn" class="primary-btn full">⚠️ Report a Problem</button>
       </div>
-      <!-- ===== End Phase 3.2 ===== -->
     </section>
 
     <!-- ---------------- MAINTENANCE SCREEN ---------------- -->
@@ -91,7 +88,27 @@
         <button id="addPartBtn" class="primary-btn full">+ Add Part</button>
       </div>
 
-      <!-- ===== Phase 3.3: Problems list inside Maintenance ===== -->
+      <!-- PMs -->
+      <div class="card">
+        <div class="problems-header-row">
+          <h3>PMs</h3>
+          <button id="openPmPanelBtn" class="secondary-btn">+ Add PM</button>
+        </div>
+
+        <div class="pm-filters">
+          <button class="pm-filter active" data-pmfilter="ALL">All</button>
+          <button class="pm-filter" data-pmfilter="Cold Feed">Cold Feed</button>
+          <button class="pm-filter" data-pmfilter="RAP">RAP</button>
+          <button class="pm-filter" data-pmfilter="Drum">Drum</button>
+          <button class="pm-filter" data-pmfilter="Drag">Drag</button>
+          <button class="pm-filter" data-pmfilter="Silos">Silos</button>
+          <button class="pm-filter" data-pmfilter="Scales">Scales</button>
+        </div>
+
+        <div id="pmsList" class="problems-list"></div>
+      </div>
+
+      <!-- Problems list -->
       <div class="card">
         <div class="problems-header-row">
           <h3>Problems</h3>
@@ -107,7 +124,6 @@
 
         <div id="problemsList" class="problems-list"></div>
       </div>
-      <!-- ===== End Phase 3.3 ===== -->
 
       <div id="partsList"></div>
     </section>
@@ -269,18 +285,10 @@
         <label>Notes</label>
         <input id="compNotes" type="text">
 
-        <!-- ===== Phase 3: Maintenance Photos (optional, button-based) ===== -->
         <h4 class="subheading">Photos (optional)</h4>
         <button id="compAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
-        <input
-          id="compPhotoInput"
-          type="file"
-          accept="image/*"
-          multiple
-          class="hidden"
-        >
+        <input id="compPhotoInput" type="file" accept="image/*" multiple class="file-hidden">
         <div id="compPhotoPreview" class="photo-preview"></div>
-        <!-- ===== End Phase 3 ===== -->
 
         <h4 class="subheading">Inventory Used (optional)</h4>
 
@@ -305,7 +313,7 @@
     </div>
   </div>
 
-  <!-- ===== Phase 3.2: REPORT PROBLEM PANEL (Home) ===== -->
+  <!-- REPORT PROBLEM PANEL -->
   <div id="problemPanelOverlay" class="panel-overlay hidden">
     <div id="problemPanel" class="slide-panel">
       <div class="slide-panel-header">
@@ -344,7 +352,7 @@
 
         <h4 class="subheading">Photos (optional)</h4>
         <button id="probAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
-        <input id="probPhotoInput" type="file" accept="image/*" multiple class="hidden">
+        <input id="probPhotoInput" type="file" accept="image/*" multiple class="file-hidden">
         <div id="probPhotoPreview" class="photo-preview"></div>
 
         <div class="panel-footer">
@@ -354,9 +362,8 @@
       </div>
     </div>
   </div>
-  <!-- ===== End Phase 3.2 ===== -->
 
-  <!-- ===== Phase 3.3: PROBLEM DETAIL PANEL (tap from list) ===== -->
+  <!-- PROBLEM DETAIL PANEL -->
   <div id="problemDetailOverlay" class="panel-overlay hidden">
     <div id="problemDetailPanel" class="slide-panel">
       <div class="slide-panel-header">
@@ -380,14 +387,105 @@
       </div>
     </div>
   </div>
-  <!-- ===== End Phase 3.3 ===== -->
 
-  <!-- ===== Phase 3.1: Lightbox (full-screen photo viewer) ===== -->
+  <!-- PM ADD / EDIT PANEL -->
+  <div id="pmPanelOverlay" class="panel-overlay hidden">
+    <div id="pmPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="pmPanelTitle">Add PM</h3>
+        <button id="closePmPanel" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <label>Area</label>
+        <select id="pmArea">
+          <option value="Cold Feed">Cold Feed</option>
+          <option value="RAP">RAP</option>
+          <option value="Drum">Drum</option>
+          <option value="Drag">Drag</option>
+          <option value="Silos">Silos</option>
+          <option value="Scales">Scales</option>
+        </select>
+
+        <label>PM Name</label>
+        <input id="pmName" type="text" placeholder="ex: Grease head pulley bearing">
+
+        <label>Frequency</label>
+        <select id="pmFrequency">
+          <option value="Daily">Daily</option>
+          <option value="Weekly" selected>Weekly</option>
+          <option value="Monthly">Monthly</option>
+          <option value="Custom">Custom (days)</option>
+        </select>
+
+        <label id="pmCustomDaysLabel" class="hidden">Custom Days Interval</label>
+        <input id="pmCustomDays" type="number" min="1" placeholder="ex: 10" class="hidden">
+
+        <label>Notes</label>
+        <input id="pmDefNotes" type="text" placeholder="Optional">
+
+        <div class="panel-footer">
+          <button id="savePmBtn" class="primary-btn full">Save PM</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PM COMPLETE PANEL -->
+  <div id="pmCompleteOverlay" class="panel-overlay hidden">
+    <div id="pmCompletePanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="pmCompleteTitle">Complete PM</h3>
+        <button id="closePmComplete" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <label>Completion Date</label>
+        <input id="pmCompDate" type="date">
+
+        <label>Notes</label>
+        <input id="pmCompNotes" type="text" placeholder="Optional">
+
+        <h4 class="subheading">Photos (optional)</h4>
+        <button id="pmAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <input id="pmPhotoInput" type="file" accept="image/*" multiple class="file-hidden">
+        <div id="pmPhotoPreview" class="photo-preview"></div>
+
+        <div class="panel-footer">
+          <button id="savePmCompletionBtn" class="primary-btn full">Save PM</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PM DETAIL PANEL -->
+  <div id="pmDetailOverlay" class="panel-overlay hidden">
+    <div id="pmDetailPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="pmDetailTitle">PM</h3>
+        <button id="closePmDetail" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <div id="pmDetailMeta" class="problem-detail-meta"></div>
+
+        <h4 class="subheading">History</h4>
+        <div id="pmDetailHistory" class="pm-history"></div>
+
+        <div class="panel-footer">
+          <button id="pmCompleteBtn" class="primary-btn full">Complete</button>
+          <button id="pmEditBtn" class="secondary-btn full">Edit</button>
+          <button id="pmDeleteBtn" class="danger-btn full">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
   <div id="lightboxOverlay" class="lightbox-overlay hidden" aria-hidden="true">
     <button id="lightboxClose" class="lightbox-close" aria-label="Close">✖</button>
     <img id="lightboxImg" class="lightbox-img" alt="Full size photo">
   </div>
-  <!-- ===== End Phase 3.1 ===== -->
 
   <!-- TOAST -->
   <div id="toastContainer" class="toast"></div>
