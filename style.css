@@ -165,11 +165,11 @@ select {
   color: var(--accent);
 }
 
-/* ===== Phase 3.2: Open Problems styling ===== */
-.stat-problems .stat-value {
-  color: #ffcc00;
-}
-/* ===== End Phase 3.2 ===== */
+/* Open problems highlight */
+.stat-problems .stat-value { color: #ffcc00; }
+
+/* GOLD: PM due highlight */
+.stat-pm .stat-value { color: #ff6b6b; }
 
 /* ---------------------------------------------------
    Parts List
@@ -185,17 +185,9 @@ select {
 }
 
 /* Status colors */
-.part-card.status-ok {
-  border-left-color: #2ecc71;
-}
-
-.part-card.status-due {
-  border-left-color: #f1c40f;
-}
-
-.part-card.status-overdue {
-  border-left-color: #e74c3c;
-}
+.part-card.status-ok { border-left-color: #2ecc71; }
+.part-card.status-due { border-left-color: #f1c40f; }
+.part-card.status-overdue { border-left-color: #e74c3c; }
 
 .part-main {
   display: flex;
@@ -204,20 +196,10 @@ select {
   cursor: pointer;
 }
 
-.part-name {
-  font-size: 18px;
-  font-weight: 700;
-}
+.part-name { font-size: 18px; font-weight: 700; }
+.part-meta { font-size: 14px; color: var(--muted); }
 
-.part-meta {
-  font-size: 14px;
-  color: var(--muted);
-}
-
-.expand-icon {
-  font-size: 18px;
-  margin-left: 10px;
-}
+.expand-icon { font-size: 18px; margin-left: 10px; }
 
 /* Smooth expand/collapse */
 .part-details {
@@ -231,10 +213,7 @@ select {
   transition: max-height 0.25s ease, opacity 0.25s ease;
 }
 
-.part-details.expanded {
-  max-height: 260px;
-  opacity: 1;
-}
+.part-details.expanded { max-height: 260px; opacity: 1; }
 
 .part-actions {
   margin-top: 12px;
@@ -253,13 +232,8 @@ select {
 }
 
 /* History section */
-.part-history {
-  margin-top: 8px;
-}
-
-.part-history .part-meta {
-  font-size: 13px;
-}
+.part-history { margin-top: 8px; }
+.part-history .part-meta { font-size: 13px; }
 
 /* ---------------------------------------------------
    AC Calculator
@@ -275,26 +249,15 @@ select {
   font-size: 16px;
 }
 
-.result-card h3 {
-  margin-top: 0;
-}
-
-.result-card span {
-  font-weight: 800;
-  color: #0a4f0a;
-}
+.result-card h3 { margin-top: 0; }
+.result-card span { font-weight: 800; color: #0a4f0a; }
 
 /* ---------------------------------------------------
    Screens
 --------------------------------------------------- */
 
-.screen {
-  display: none;
-}
-
-.screen.active {
-  display: block;
-}
+.screen { display: none; }
+.screen.active { display: block; }
 
 /* ---------------------------------------------------
    Bottom Navigation
@@ -324,14 +287,8 @@ select {
   text-align: center;
 }
 
-.nav-btn.active {
-  color: var(--accent);
-  font-weight: 700;
-}
-
-.nav-btn br {
-  line-height: 0;
-}
+.nav-btn.active { color: var(--accent); font-weight: 700; }
+.nav-btn br { line-height: 0; }
 
 /* ---------------------------------------------------
    Maintenance Sticky Header
@@ -369,9 +326,7 @@ select {
   transition: transform 0.35s ease-out;
 }
 
-.slide-panel.show {
-  transform: translateY(0);
-}
+.slide-panel.show { transform: translateY(0); }
 
 .slide-panel-header {
   display: flex;
@@ -381,10 +336,7 @@ select {
   padding-right: 8px;
 }
 
-.slide-panel-header h3 {
-  margin: 0;
-  font-size: 20px;
-}
+.slide-panel-header h3 { margin: 0; font-size: 20px; }
 
 .close-btn {
   background: none;
@@ -402,15 +354,9 @@ select {
 
 /* Inputs inside panel should always fit */
 .slide-panel input,
-.slide-panel select {
-  width: 100%;
-  box-sizing: border-box;
-}
+.slide-panel select { width: 100%; box-sizing: border-box; }
 
-/* ---------------------------------------------------
-   Sticky footer for slide panel save buttons
---------------------------------------------------- */
-
+/* Sticky footer for slide panel save buttons */
 .panel-footer {
   position: sticky;
   bottom: 0;
@@ -418,19 +364,7 @@ select {
   background: linear-gradient(to top, rgba(15, 23, 36, 0.96), transparent);
 }
 
-.panel-footer .primary-btn {
-  margin-top: 0;
-  width: 100%;
-}
-
-/* ---------------------------------------------------
-   Inventory Adjustments
---------------------------------------------------- */
-
-.part-card .edit-inv-btn,
-.part-card .delete-inv-btn {
-  font-size: 13px;
-}
+.panel-footer .primary-btn { margin-top: 0; width: 100%; }
 
 /* Complete panel extras */
 .subheading {
@@ -439,18 +373,13 @@ select {
   font-weight: 700;
 }
 
-.used-items-list {
-  margin-top: 8px;
-}
+.used-items-list { margin-top: 8px; }
+.used-items-list .part-meta { font-size: 13px; }
 
-.used-items-list .part-meta {
-  font-size: 13px;
-}
-
-/* ===== Phase 3: Photo UI styling ===== */
-.photo-preview {
-  margin-top: 10px;
-}
+/* ---------------------------------------------------
+   PHOTO UI
+--------------------------------------------------- */
+.photo-preview { margin-top: 10px; }
 
 .photo-preview-grid {
   display: grid;
@@ -474,6 +403,12 @@ select {
   display: block;
 }
 
+.photo-caption {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
 .photo-remove {
   position: absolute;
   top: 6px;
@@ -488,37 +423,6 @@ select {
   color: #fff;
 }
 
-/* Photos inside history (last 2 entries only) */
-.history-photo-strip {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin: 6px 0 10px 0;
-}
-
-.history-photo-strip img {
-  width: 46px;
-  height: 46px;
-  border-radius: 10px;
-  object-fit: cover;
-  border: 1px solid #223049;
-  cursor: pointer;
-}
-
-.history-photo-more {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 46px;
-  padding: 0 10px;
-  border-radius: 10px;
-  border: 1px dashed #223049;
-  color: var(--muted);
-  font-size: 13px;
-}
-/* ===== End Phase 3 ===== */
-
-/* ===== GOLD FIX: file inputs must NOT be display:none on mobile ===== */
 .file-input-hidden{
   position: absolute;
   left: -9999px;
@@ -527,9 +431,10 @@ select {
   opacity: 0;
   pointer-events: none;
 }
-/* ===== End FIX ===== */
 
-/* ===== Phase 3.1: Lightbox ===== */
+/* ---------------------------------------------------
+   Lightbox
+--------------------------------------------------- */
 .lightbox-overlay {
   position: fixed;
   inset: 0;
@@ -537,7 +442,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 3000; /* above panels + toast */
+  z-index: 3000;
   padding: 18px;
 }
 
@@ -561,9 +466,10 @@ select {
   background: rgba(255,255,255,0.14);
   color: #fff;
 }
-/* ===== End Phase 3.1 ===== */
 
-/* ===== Phase 3.3: Problems list + status pills ===== */
+/* ---------------------------------------------------
+   Problems UI
+--------------------------------------------------- */
 .problems-header-row{
   display:flex;
   align-items:center;
@@ -591,9 +497,7 @@ select {
   font-size:13px;
 }
 
-.prob-filter.active{
-  border-color: var(--accent);
-}
+.prob-filter.active{ border-color: var(--accent); }
 
 .problems-list{
   margin-top:10px;
@@ -651,19 +555,17 @@ select {
   flex-wrap:wrap;
 }
 
-.status-pill-row button{
-  border:none;
-  cursor:pointer;
-}
+.status-pill-row button{ border:none; cursor:pointer; }
 
 .problem-detail-meta{
   color:var(--muted);
   font-size:14px;
   line-height:1.35;
 }
-/* ===== End Phase 3.3 ===== */
 
-/* ===== GOLD UPDATE: PM list (minimal, reuse style language) ===== */
+/* ---------------------------------------------------
+   PM UI
+--------------------------------------------------- */
 .pm-filters{
   display:flex;
   gap:8px;
@@ -682,9 +584,7 @@ select {
   font-size:13px;
 }
 
-.pm-filter.active{
-  border-color: var(--accent);
-}
+.pm-filter.active{ border-color: var(--accent); }
 
 .pms-list{
   margin-top:10px;
@@ -747,14 +647,12 @@ select {
   white-space:nowrap;
 }
 
-.pm-due{ background: rgba(255, 204, 0, 0.12); color:#ffcc00; }
+.pm-due{ background: rgba(255, 107, 107, 0.12); color:#ff6b6b; }
 .pm-done{ background: rgba(46, 204, 113, 0.12); color:#2ecc71; }
-/* ===== End PM ===== */
 
 /* ---------------------------------------------------
-   TOAST NOTIFICATIONS
+   TOAST
 --------------------------------------------------- */
-
 .toast {
   position: fixed;
   bottom: 90px;
@@ -777,18 +675,10 @@ select {
   transform: translateX(-50%) translateY(0);
 }
 
-.toast.success {
-  background: var(--accent);
-}
-
-.toast.error {
-  background: var(--danger);
-}
+.toast.success { background: var(--accent); }
+.toast.error { background: var(--danger); }
 
 /* ---------------------------------------------------
    Utility
 --------------------------------------------------- */
-
-.hidden {
-  display: none;
-}
+.hidden { display: none; }
