@@ -1,5 +1,6 @@
 /* ---------------------------------------------------
-   CATEGORY LIST (GOLD BASELINE – UNCHANGED)
+   CATEGORY LIST
+   GOLD BASELINE – FINAL
 --------------------------------------------------- */
 const PRELOADED_CATEGORIES = [
   "Virgin Side",
@@ -11,18 +12,19 @@ const PRELOADED_CATEGORIES = [
   "Motors",
   "Gearboxes",
   "Belts",
-  "Parts",
   "Electrical",
+  "Screens",
   "Pumps",
+  "Parts",
   "Controls",
   "Other"
 ];
 
 /* ---------------------------------------------------
    PRELOADED INVENTORY
-   GOLD BASELINE – FULL PLANT INVENTORY (Option A)
+   GOLD BASELINE – FULL PLANT INVENTORY (FINAL)
+   Option A – One item per spare, specs in notes
 --------------------------------------------------- */
-
 const PRELOADED_INVENTORY = [
 
   /* ===================== MOTORS ===================== */
@@ -31,7 +33,7 @@ const PRELOADED_INVENTORY = [
     part: "Drum Motor – 200 HP",
     location: "Drum",
     qty: 1,
-    notes: "1780 RPM, Frame 444/5T, Astec"
+    notes: "1780 RPM, Frame 444/5T"
   },
   {
     category: "Motors",
@@ -39,6 +41,34 @@ const PRELOADED_INVENTORY = [
     location: "Baghouse",
     qty: 2,
     notes: "1780 RPM, Frame 404/5T"
+  },
+  {
+    category: "Motors",
+    part: "Hot Oil Booster Blower Motor – 40 HP",
+    location: "Tank Farm",
+    qty: 1,
+    notes: "1765 RPM"
+  },
+  {
+    category: "Motors",
+    part: "Hot Oil Burner Blower Motor – 20 HP",
+    location: "Tank Farm",
+    qty: 1,
+    notes: "1765 RPM"
+  },
+  {
+    category: "Motors",
+    part: "AC Meter Pump Motor – 10 HP",
+    location: "Tank Farm",
+    qty: 1,
+    notes: "1760 RPM"
+  },
+  {
+    category: "Motors",
+    part: "Blue Smoke Fan Motor – 15 HP",
+    location: "Drum",
+    qty: 1,
+    notes: "1765 RPM"
   },
   {
     category: "Motors",
@@ -57,16 +87,23 @@ const PRELOADED_INVENTORY = [
   {
     category: "Motors",
     part: "Virgin Feeder Bin Motor – 7.5 HP",
-    location: "Virgin Bins",
-    qty: 1,
+    location: "Virgin Side",
+    qty: 2,
+    notes: "1765 RPM, Frame 213T"
+  },
+  {
+    category: "Motors",
+    part: "Recycle Feeder Bin Motor – 7.5 HP",
+    location: "Recycle Side",
+    qty: 2,
     notes: "1765 RPM, Frame 213T"
   },
   {
     category: "Motors",
     part: "Recycle Screen Deck Motor – 5 HP",
-    location: "Recycle Screen Deck",
+    location: "Recycle Side",
     qty: 1,
-    notes: "1760 RPM, Frame 184T"
+    notes: "1760 RPM"
   },
 
   /* ===================== GEARBOXES ===================== */
@@ -75,53 +112,151 @@ const PRELOADED_INVENTORY = [
     part: "Drum Planetary Gearbox",
     location: "Drum",
     qty: 0,
-    notes: "43.78 Ratio, 1750 RPM"
+    notes: "43.78 Ratio"
   },
   {
     category: "Gearboxes",
     part: "Incline Dust Auger Gearbox",
     location: "Baghouse",
     qty: 1,
-    notes: "14:1 Ratio, 1974 RPM, PN 352065"
+    notes: "14:1 Ratio"
+  },
+  {
+    category: "Gearboxes",
+    part: "Traverse Drive Gearbox",
+    location: "Silos / Drag",
+    qty: 1,
+    notes: "TXZ Series"
+  },
+  {
+    category: "Gearboxes",
+    part: "Recycle Feeder Gearbox",
+    location: "Recycle Side",
+    qty: 1,
+    notes: "Dodge Unit"
   },
 
   /* ===================== BELTS ===================== */
   {
     category: "Belts",
-    part: "3VX630 Belt",
-    location: "Multiple Drives",
-    qty: 9,
+    part: "B51 Belt",
+    location: "Various Drives",
+    qty: 6,
+    notes: ""
+  },
+  {
+    category: "Belts",
+    part: "B52 Belt",
+    location: "Various Drives",
+    qty: 6,
+    notes: ""
+  },
+  {
+    category: "Belts",
+    part: "B62 Belt",
+    location: "Various Drives",
+    qty: 4,
+    notes: ""
+  },
+  {
+    category: "Belts",
+    part: "B90 Belt",
+    location: "Various Drives",
+    qty: 4,
+    notes: ""
+  },
+  {
+    category: "Belts",
+    part: "2BX90 Belt",
+    location: "Various Drives",
+    qty: 6,
+    notes: ""
+  },
+  {
+    category: "Belts",
+    part: "2BX92 Belt",
+    location: "Various Drives",
+    qty: 4,
+    notes: ""
+  },
+  {
+    category: "Belts",
+    part: "3VX450 Belt",
+    location: "Various Drives",
+    qty: 6,
     notes: ""
   },
   {
     category: "Belts",
     part: "3VX530 Belt",
-    location: "Incline Dust Auger",
+    location: "Various Drives",
     qty: 7,
     notes: ""
   },
   {
     category: "Belts",
-    part: "5VX950 Belt",
-    location: "Drag / Traverse",
-    qty: 8,
+    part: "3VX630 Belt",
+    location: "Various Drives",
+    qty: 9,
     notes: ""
   },
   {
     category: "Belts",
-    part: "8VX1120 Belt",
-    location: "Exhaust Fan",
-    qty: 10,
+    part: "3VX750 Belt",
+    location: "Various Drives",
+    qty: 6,
+    notes: ""
+  },
+  {
+    category: "Belts",
+    part: "3VX800 Belt",
+    location: "Various Drives",
+    qty: 6,
+    notes: ""
+  },
+  {
+    category: "Belts",
+    part: "3VX900 Belt",
+    location: "Various Drives",
+    qty: 6,
+    notes: ""
+  },
+  {
+    category: "Belts",
+    part: "3VX1060 Belt",
+    location: "Various Drives",
+    qty: 4,
+    notes: ""
+  },
+  {
+    category: "Belts",
+    part: "5VX800 Belt",
+    location: "Various Drives",
+    qty: 6,
+    notes: ""
+  },
+  {
+    category: "Belts",
+    part: "5VX950 Belt",
+    location: "Various Drives",
+    qty: 8,
     notes: ""
   },
 
-  /* ===================== DRUM ===================== */
+  /* ===================== DRUM / CONVEYOR BELTS ===================== */
   {
     category: "Drum",
-    part: "Virgin Incline to Drum Belt",
-    location: "Drum",
+    part: "Virgin Feeder Belt",
+    location: "Virgin Side",
     qty: 2,
-    notes: "22\" x 2-ply x 24\" wide"
+    notes: "22\" x 2-ply x 24\""
+  },
+  {
+    category: "Drum",
+    part: "Recycle Feeder Belt",
+    location: "Recycle Side",
+    qty: 2,
+    notes: "34\" x 36\""
   },
 
   /* ===================== BAGHOUSE ===================== */
@@ -130,30 +265,37 @@ const PRELOADED_INVENTORY = [
     part: "Baghouse Filter Bags",
     location: "Baghouse",
     qty: 120,
-    notes: "4 5/8\" Diameter x 120 1/2\" Long"
+    notes: "4 5/8\" Dia x 120 1/2\" Long"
   },
   {
     category: "Baghouse",
     part: "Baghouse Dust Auger Motor",
     location: "Baghouse",
     qty: 2,
-    notes: "15 HP, 1765 RPM, Frame 254/6T"
+    notes: "15 HP"
   },
 
-  /* ===================== SILOS / DRAG ===================== */
+  /* ===================== SCREENS ===================== */
   {
-    category: "Silos / Drag",
-    part: "Drag Slat Chain Assembly",
-    location: "Drag Slat",
-    qty: 1,
-    notes: "Complete spare assembly"
+    category: "Screens",
+    part: "Virgin Screen Deck Panels – Top",
+    location: "Virgin Side",
+    qty: 3,
+    notes: "46.5\" x 48\" – 1\" holes"
   },
   {
-    category: "Silos / Drag",
-    part: "Traverse Drive Assembly",
-    location: "Traverse",
-    qty: 1,
-    notes: "Complete spare assembly"
+    category: "Screens",
+    part: "Virgin Screen Deck Panels – Bottom",
+    location: "Virgin Side",
+    qty: 2,
+    notes: "Slot style"
+  },
+  {
+    category: "Screens",
+    part: "Recycle Screen Deck Panels",
+    location: "Recycle Side",
+    qty: 2,
+    notes: "1.25\" holes"
   },
 
   /* ===================== TANK FARM ===================== */
@@ -162,30 +304,32 @@ const PRELOADED_INVENTORY = [
     part: "AC Meter Pump",
     location: "Tank Farm",
     qty: 1,
-    notes: "Upper shaft on pump"
+    notes: "Complete spare"
+  },
+
+  /* ===================== ELECTRICAL ===================== */
+  {
+    category: "Electrical",
+    part: "Astec Tach Sensors",
+    location: "Maintenance Shop",
+    qty: 2,
+    notes: "Astec PN variants"
   },
 
   /* ===================== PARTS ===================== */
   {
     category: "Parts",
-    part: "Screen Deck Panels – Virgin",
-    location: "Virgin Screen Deck",
-    qty: 3,
-    notes: "46.5\" x 48\" – 1\" Holes"
+    part: "Drag Slat Chain Assembly",
+    location: "Silos / Drag",
+    qty: 1,
+    notes: "Complete spare"
   },
   {
     category: "Parts",
-    part: "Screen Deck Panels – Recycle",
-    location: "Recycle Screen Deck",
-    qty: 2,
-    notes: "46.5\" x 48\" – 1.25\" Holes"
-  },
-  {
-    category: "Parts",
-    part: "Astec Tach Sensors",
-    location: "Maintenance Shop",
-    qty: 2,
-    notes: "Astec PN 077576"
+    part: "Traverse Drive Assembly",
+    location: "Silos / Drag",
+    qty: 1,
+    notes: "Complete spare"
   }
 
 ];
