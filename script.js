@@ -1,5 +1,5 @@
 /* ---------------------------------------------------
-   STORAGE KEYS (GOLD - DO NOT CHANGE)
+   STORAGE KEYS
 --------------------------------------------------- */
 const PARTS_KEY = "pm_parts";
 const TONS_KEY = "pm_tons";
@@ -7,25 +7,24 @@ const INVENTORY_KEY = "pm_inventory";
 const PROBLEMS_KEY = "pm_problems";
 const PMS_KEY = "pm_pms";
 
-/* Phase 3.4 (Additive): Roles + Admin PIN (local only) */
-const ROLE_KEY = "pm_role";
-const ROLE_CFG_KEY = "pm_role_cfg";
-const ADMIN_PIN_KEY = "pm_admin_pin";
-
 /* ---------------------------------------------------
    GLOBAL STATE
 --------------------------------------------------- */
 let parts = [];
 let currentTons = 0;
-
 let categories = [];
 let inventory = [];
 
+let editingPartIndex = null;
+let editingInventoryIndex = null;
+
+let completingPartIndex = null;
+let completionUsedItems = []; // {invIndex, qty}
+
 /* Photos */
-let partPhotos = [];
+let completionPhotos = [];
 let problemPhotos = [];
 let pmCompletionPhotos = [];
-let pmChecklistState = []; // Phase 3.4
 
 /* Problems */
 let problems = [];
@@ -37,55 +36,6 @@ let pms = [];
 let currentPmFilter = "ALL";
 let editingPmId = null;
 let completingPmId = null;
-/* Phase 3.4: Role enforcement state */
-let currentRole = "Maintenance";
-let adminAuthed = false;
-let roleCfg = { allowRoleChange: true };
-
-function normalizeRole(r) {
-  const v = String(r || "").trim();
-  if (["Admin","Supervisor","Maintenance","Ground"].includes(v)) return v;
-  return "Maintenance";
-}
-
-function loadRoleState() {
-  currentRole = normalizeRole(localStorage.getItem(ROLE_KEY) || "Maintenance");
-  try {
-    roleCfg = JSON.parse(localStorage.getItem(ROLE_CFG_KEY)) || { allowRoleChange: true };
-  } catch (e) {
-    roleCfg = { allowRoleChange: true };
-  }
-}
-
-function saveRoleState() {
-  localStorage.setItem(ROLE_KEY, currentRole);
-  localStorage.setItem(ROLE_CFG_KEY, JSON.stringify(roleCfg || { allowRoleChange: true }));
-}
-
-function isAdminRole() { return currentRole === "Admin"; }
-
-function canPm(action) {
-  // PM Role Matrix (locked)
-  // action: viewTab, view, complete, checklist, photos, manage
-  if (action === "viewTab") return true;
-  if (action === "view") return true;
-  if (["complete","checklist","photos"].includes(action)) return currentRole !== "Ground";
-  if (action === "manage") return isAdminRole() && adminAuthed;
-  return false;
-}
-
-function getStoredAdminPin() {
-  return String(localStorage.getItem(ADMIN_PIN_KEY) || "");
-}
-
-function setStoredAdminPin(pin) {
-  localStorage.setItem(ADMIN_PIN_KEY, String(pin));
-}
-
-function isValidPin(pin) {
-  const p = String(pin || "").trim();
-  return /^[0-9]{4,8}$/.test(p);
-}
 
 /* ---------------------------------------------------
    ELEMENT REFERENCES
@@ -97,110 +47,129 @@ const navButtons = document.querySelectorAll(".nav-btn");
 const okCountEl = document.getElementById("okCount");
 const dueCountEl = document.getElementById("dueCount");
 const overCountEl = document.getElementById("overCount");
-const pmDueTodayCountEl = document.getElementById("pmDueTodayCount");
+const tonsRunEl = document.getElementById("tonsRun");
+const completedTodayEl = document.getElementById("completedTodayCount");
+const completedMonthEl = document.getElementById("completedMonthCount");
 const openProblemsCountEl = document.getElementById("openProblemsCount");
+const pmDueTodayCountEl = document.getElementById("pmDueTodayCount");
 
 /* Tons */
 const currentTonsInput = document.getElementById("currentTonsInput");
 const updateTonsBtn = document.getElementById("updateTonsBtn");
-const exportMaintenanceBtn = document.getElementById("exportMaintenanceBtn");
-
-/* Nav */
-navButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const screenId = btn.dataset.screen;
-    showScreen(screenId);
-  });
-});
+const resetTonsBtn = document.getElementById("resetTonsBtn");
 
 /* Maintenance */
-const searchPartsInput = document.getElementById("searchPartsInput");
 const filterCategory = document.getElementById("filterCategory");
+const partsList = document.getElementById("partsList");
 const addPartBtn = document.getElementById("addPartBtn");
-const partsListEl = document.getElementById("partsList");
+const searchPartsInput = document.getElementById("searchPartsInput");
 
 /* Inventory */
-const searchInventory = document.getElementById("searchInventory");
-const inventoryListEl = document.getElementById("inventoryList");
+const inventoryList = document.getElementById("inventoryList");
+const addInventoryBtn = document.getElementById("addInventoryBtn");
+const searchInventoryInput = document.getElementById("searchInventoryInput");
 
-/* AC Calc */
-const ac_oilRate = document.getElementById("ac_oilRate");
+/* AC Calculator */
+const ac_residual = document.getElementById("ac_residual");
+const ac_rapPct = document.getElementById("ac_rapPct");
+const ac_target = document.getElementById("ac_target");
+const ac_tph = document.getElementById("ac_tph");
+const ac_totalTons = document.getElementById("ac_totalTons");
+const acCalcBtn = document.getElementById("acCalcBtn");
 const ac_pumpRate = document.getElementById("ac_pumpRate");
 const ac_totalAc = document.getElementById("ac_totalAc");
-const ac_calcBtn = document.getElementById("ac_calcBtn");
 
 /* Settings */
 const exportBtn = document.getElementById("exportBtn");
 const exportPmComplianceBtn = document.getElementById("exportPmComplianceBtn");
 const resetAllBtn = document.getElementById("resetAllBtn");
 
-/* Phase 3.4: Roles / Admin PIN UI */
-const roleSelect = document.getElementById("roleSelect");
-const adminLoginBtn = document.getElementById("adminLoginBtn");
-const adminLogoutBtn = document.getElementById("adminLogoutBtn");
-const adminPanel = document.getElementById("adminPanel");
-const allowRoleChangeChk = document.getElementById("allowRoleChangeChk");
-const adminPinNew = document.getElementById("adminPinNew");
-const adminPinConfirm = document.getElementById("adminPinConfirm");
-const saveAdminPinBtn = document.getElementById("saveAdminPinBtn");
-
-const adminPinOverlay = document.getElementById("adminPinOverlay");
-const adminPinPanel = document.getElementById("adminPinPanel");
-const closeAdminPinBtn = document.getElementById("closeAdminPin");
-const adminPinInput = document.getElementById("adminPinInput");
-const adminPinMsg = document.getElementById("adminPinMsg");
-const submitAdminPinBtn = document.getElementById("submitAdminPinBtn");
-
-/* Phase 3.4: PM checklist + visibility */
-const pmChecklistDef = document.getElementById("pmChecklistDef");
-const pmVisAdmin = document.getElementById("pmVisAdmin");
-const pmVisSupervisor = document.getElementById("pmVisSupervisor");
-const pmVisMaintenance = document.getElementById("pmVisMaintenance");
-const pmVisGround = document.getElementById("pmVisGround");
-const pmDefLocked = document.getElementById("pmDefLocked");
-
-const pmChecklistWrap = document.getElementById("pmChecklistWrap");
-const pmChecklistList = document.getElementById("pmChecklistList");
-const pmChecklistHint = document.getElementById("pmChecklistHint");
-
-const pmDueTodayText = document.getElementById("pmDueTodayText");
-
-/* Panels: Parts */
+/* Add/Edit Part Panel */
 const partPanelOverlay = document.getElementById("partPanelOverlay");
 const addPartPanel = document.getElementById("addPartPanel");
-const partPanelTitle = document.getElementById("partPanelTitle");
 const closePartPanelBtn = document.getElementById("closePartPanel");
-const savePartBtn = document.getElementById("savePartBtn");
+const partPanelTitle = document.getElementById("partPanelTitle");
+
 const newPartName = document.getElementById("newPartName");
 const newPartCategory = document.getElementById("newPartCategory");
 const newPartSection = document.getElementById("newPartSection");
-const newPartMinQty = document.getElementById("newPartMinQty");
-const newPartQty = document.getElementById("newPartQty");
-const newPartNotes = document.getElementById("newPartNotes");
-const addPhotoBtn = document.getElementById("addPhotoBtn");
-const photoInput = document.getElementById("photoInput");
-const photoPreview = document.getElementById("photoPreview");
+const newPartDays = document.getElementById("newPartDays");
+const newPartTons = document.getElementById("newPartTons");
+const savePartBtn = document.getElementById("savePartBtn");
+const inventoryNameList = document.getElementById("inventoryNameList");
 
-/* Panels: Problems */
-const problemPanelOverlay = document.getElementById("problemPanelOverlay");
-const problemPanel = document.getElementById("problemPanel");
-const problemPanelTitle = document.getElementById("problemPanelTitle");
-const closeProblemPanelBtn = document.getElementById("closeProblemPanel");
-const saveProblemBtn = document.getElementById("saveProblemBtn");
-const deleteProblemBtn = document.getElementById("deleteProblemBtn");
+/* Inventory Panel */
+const inventoryPanelOverlay = document.getElementById("inventoryPanelOverlay");
+const inventoryPanel = document.getElementById("inventoryPanel");
+const closeInventoryPanelBtn = document.getElementById("closeInventoryPanel");
+const inventoryPanelTitle = document.getElementById("inventoryPanelTitle");
+
+const invPartName = document.getElementById("invPartName");
+const invCategory = document.getElementById("invCategory");
+const invLocation = document.getElementById("invLocation");
+const invQty = document.getElementById("invQty");
+const invNotes = document.getElementById("invNotes");
+const saveInventoryBtn = document.getElementById("saveInventoryBtn");
+
+/* Complete Maintenance Panel */
+const completePanelOverlay = document.getElementById("completePanelOverlay");
+const completePanel = document.getElementById("completePanel");
+const closeCompletePanelBtn = document.getElementById("closeCompletePanel");
+
+const compDate = document.getElementById("compDate");
+const compTons = document.getElementById("compTons");
+const compNotes = document.getElementById("compNotes");
+const compInvSelect = document.getElementById("compInvSelect");
+const compInvQty = document.getElementById("compInvQty");
+const compAddItemBtn = document.getElementById("compAddItemBtn");
+const compUsedList = document.getElementById("compUsedList");
+const saveCompletionBtn = document.getElementById("saveCompletionBtn");
+
+const compAddPhotoBtn = document.getElementById("compAddPhotoBtn");
+const compPhotoInput = document.getElementById("compPhotoInput");
+const compPhotoPreview = document.getElementById("compPhotoPreview");
+
+/* Lightbox */
+const lightboxOverlay = document.getElementById("lightboxOverlay");
+const lightboxImg = document.getElementById("lightboxImg");
+const lightboxClose = document.getElementById("lightboxClose");
+
+/* Problem Panel */
 const openProblemPanelBtn = document.getElementById("openProblemPanelBtn");
 const openProblemPanelBtn2 = document.getElementById("openProblemPanelBtn2");
-const problemTitle = document.getElementById("problemTitle");
-const problemArea = document.getElementById("problemArea");
-const problemStatus = document.getElementById("problemStatus");
-const problemNotes = document.getElementById("problemNotes");
+
+const problemPanelOverlay = document.getElementById("problemPanelOverlay");
+const problemPanel = document.getElementById("problemPanel");
+const closeProblemPanelBtn = document.getElementById("closeProblemPanel");
+
+const probTitle = document.getElementById("probTitle");
+const probCategory = document.getElementById("probCategory");
+const probLocation = document.getElementById("probLocation");
+const probSeverity = document.getElementById("probSeverity");
+const probStatus = document.getElementById("probStatus");
+const probNotes = document.getElementById("probNotes");
+
 const probAddPhotoBtn = document.getElementById("probAddPhotoBtn");
 const probPhotoInput = document.getElementById("probPhotoInput");
 const probPhotoPreview = document.getElementById("probPhotoPreview");
-const problemsListEl = document.getElementById("problemsList");
-const probFilterBtns = document.querySelectorAll(".prob-filter");
 
-/* Panels: PMs */
+const saveProblemBtn = document.getElementById("saveProblemBtn");
+
+/* Problems list + detail */
+const problemsListEl = document.getElementById("problemsList");
+const problemFilterBtns = document.querySelectorAll(".prob-filter");
+
+const problemDetailOverlay = document.getElementById("problemDetailOverlay");
+const problemDetailPanel = document.getElementById("problemDetailPanel");
+const closeProblemDetailBtn = document.getElementById("closeProblemDetail");
+const problemDetailTitle = document.getElementById("problemDetailTitle");
+const problemDetailMeta = document.getElementById("problemDetailMeta");
+const problemDetailStatus = document.getElementById("problemDetailStatus");
+const problemDetailPhotos = document.getElementById("problemDetailPhotos");
+const resolveLogBtn = document.getElementById("resolveLogBtn");
+const deleteProblemBtn = document.getElementById("deleteProblemBtn");
+
+/* PMs */
 const openPmPanelBtn = document.getElementById("openPmPanelBtn");
 const pmsListEl = document.getElementById("pmsList");
 const pmFilterBtns = document.querySelectorAll(".pm-filter");
@@ -209,10 +178,10 @@ const pmPanelOverlay = document.getElementById("pmPanelOverlay");
 const pmPanel = document.getElementById("pmPanel");
 const pmPanelTitle = document.getElementById("pmPanelTitle");
 const closePmPanelBtn = document.getElementById("closePmPanel");
-const savePmBtn = document.getElementById("savePmBtn");
 const pmName = document.getElementById("pmName");
 const pmArea = document.getElementById("pmArea");
 const pmFrequency = document.getElementById("pmFrequency");
+const savePmBtn = document.getElementById("savePmBtn");
 
 const pmCompleteOverlay = document.getElementById("pmCompleteOverlay");
 const pmCompletePanel = document.getElementById("pmCompletePanel");
@@ -225,6 +194,7 @@ const pmPhotoInput = document.getElementById("pmPhotoInput");
 const pmPhotoPreview = document.getElementById("pmPhotoPreview");
 const savePmCompletionBtn = document.getElementById("savePmCompletionBtn");
 
+/* PM Gallery */
 const pmGalleryOverlay = document.getElementById("pmGalleryOverlay");
 const pmGalleryPanel = document.getElementById("pmGalleryPanel");
 const pmGalleryTitle = document.getElementById("pmGalleryTitle");
@@ -232,40 +202,79 @@ const closePmGalleryBtn = document.getElementById("closePmGallery");
 const pmGalleryMeta = document.getElementById("pmGalleryMeta");
 const pmGalleryGrid = document.getElementById("pmGalleryGrid");
 
-/* Lightbox */
-const lightboxOverlay = document.getElementById("lightboxOverlay");
-const lightboxImg = document.getElementById("lightboxImg");
+/* Toast */
+const toastContainer = document.getElementById("toastContainer");
+let toastTimeoutId = null;
 
 /* ---------------------------------------------------
-   SCREEN NAV
+   TOAST
 --------------------------------------------------- */
-function showScreen(screenId) {
-  screens.forEach(s => s.classList.remove("active"));
-  document.getElementById(screenId)?.classList.add("active");
+function showToast(message, type = "success") {
+  if (!toastContainer) return;
 
-  navButtons.forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.screen === screenId);
-  });
+  toastContainer.textContent = message;
+  toastContainer.className = "toast " + type;
+  void toastContainer.offsetWidth;
+  toastContainer.classList.add("show");
 
-  if (screenId === "dashboardScreen") renderDashboard();
-  if (screenId === "maintenanceScreen") {
-    renderParts();
-    renderProblemsList();
-    renderPmsList(); // safe: PM list now lives on PM tab
-  }
-  if (screenId === "pmScreen") {
-    renderPmsList();
-  }
-  if (screenId === "inventoryScreen") renderInventory();
+  clearTimeout(toastTimeoutId);
+  toastTimeoutId = setTimeout(() => {
+    toastContainer.classList.remove("show");
+  }, 2500);
 }
 
 /* ---------------------------------------------------
-   LOAD + SAVE
+   GOLD FIX: Image compression (prevents localStorage quota failure)
+--------------------------------------------------- */
+function compressImage(base64, maxWidth = 900, quality = 0.72) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.src = base64;
+  });
+}
+
+/* ---------------------------------------------------
+   Lightbox
+--------------------------------------------------- */
+function openLightbox(src) {
+  if (!lightboxOverlay || !lightboxImg) return;
+  lightboxImg.src = src;
+  lightboxOverlay.classList.remove("hidden");
+  lightboxOverlay.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+  if (!lightboxOverlay || !lightboxImg) return;
+  lightboxOverlay.classList.add("hidden");
+  lightboxOverlay.setAttribute("aria-hidden", "true");
+  lightboxImg.src = "";
+  document.body.style.overflow = "";
+}
+
+lightboxClose?.addEventListener("click", closeLightbox);
+lightboxOverlay?.addEventListener("click", (e) => {
+  if (e.target === lightboxOverlay) closeLightbox();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && lightboxOverlay && !lightboxOverlay.classList.contains("hidden")) closeLightbox();
+});
+
+/* ---------------------------------------------------
+   INIT / SAVE (quota-safe)
 --------------------------------------------------- */
 function loadState() {
-  // Phase 3.4: load role state (defaults to Maintenance)
-  loadRoleState();
-
   parts = JSON.parse(localStorage.getItem(PARTS_KEY)) || [];
   currentTons = Number(localStorage.getItem(TONS_KEY)) || 0;
 
@@ -280,27 +289,29 @@ function loadState() {
   if (currentTonsInput) currentTonsInput.value = currentTons;
 
   buildCategoryDropdown();
-  buildInventoryPartDatalist();
-  buildProblemAreaDropdown();
+  buildInventoryCategoryDropdown();
+  buildInventoryNameDatalist();
+  buildCompleteInventorySelect();
+  buildProblemCategoryDropdown();
   buildPmAreaDropdown();
 
   renderDashboard();
   renderParts();
+  renderInventory();
   renderProblemsList();
   renderPmsList();
-  renderInventory();
 }
 
 function saveState() {
   try {
-    localStorage.setItem(PARTS_KEY, JSON.stringify(parts || []));
-    localStorage.setItem(TONS_KEY, String(Number(currentTons || 0)));
-    localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory || []));
-    localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems || []));
-    localStorage.setItem(PMS_KEY, JSON.stringify(pms || []));
+    localStorage.setItem(PARTS_KEY, JSON.stringify(parts));
+    localStorage.setItem(TONS_KEY, String(currentTons));
+    localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
+    localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
+    localStorage.setItem(PMS_KEY, JSON.stringify(pms));
     return true;
   } catch (err) {
-    console.error("saveState failed (quota?)", err);
+    console.error("Save failed (quota?)", err);
     showToast("Save failed: storage full. Use fewer photos or export + reset.", "error");
     return false;
   }
@@ -308,177 +319,254 @@ function saveState() {
 
 loadState();
 
-/* Phase 3.4: Apply role UI without changing Gold behavior */
-function applyRoleUI() {
-  if (roleSelect) roleSelect.value = currentRole;
-
-  const allow = !!(roleCfg && roleCfg.allowRoleChange);
-  if (allowRoleChangeChk) allowRoleChangeChk.checked = allow;
-
-  // Lock role switching when Admin disables it (unless Admin is unlocked)
-  if (roleSelect) {
-    const locked = !allow && !(isAdminRole() && adminAuthed);
-    roleSelect.disabled = locked;
-    roleSelect.classList.toggle("disabled", locked);
-  }
-
-  // PM manage controls
-  if (openPmPanelBtn) openPmPanelBtn.classList.toggle("hidden", !canPm("manage"));
-
-  // Admin controls panel
-  const showAdmin = isAdminRole() && adminAuthed;
-  if (adminPanel) adminPanel.classList.toggle("hidden", !showAdmin);
-  if (adminLogoutBtn) adminLogoutBtn.classList.toggle("hidden", !showAdmin);
-}
-
-function openAdminPinPrompt(msg) {
-  if (adminPinMsg) adminPinMsg.textContent = msg || "";
-  if (adminPinInput) adminPinInput.value = "";
-  adminPinOverlay?.classList.remove("hidden");
-  setTimeout(() => adminPinPanel?.classList.add("show"), 10);
-}
-
-function closeAdminPinPrompt() {
-  adminPinPanel?.classList.remove("show");
-  setTimeout(() => adminPinOverlay?.classList.add("hidden"), 250);
-  if (adminPinInput) adminPinInput.value = "";
-  if (adminPinMsg) adminPinMsg.textContent = "";
-}
-
-applyRoleUI();
-
-// Phase 3.4: PM tab default filter = Due Today (does not affect Gold screens)
-currentPmFilter = "DUE";
-
 /* ---------------------------------------------------
-   DASHBOARD
+   SCREEN SWITCHING
 --------------------------------------------------- */
-function renderDashboard() {
-  const ok = (parts || []).filter(p => !isDue(p)).length;
-  const due = (parts || []).filter(p => isDue(p)).length;
-  const over = (parts || []).filter(p => isOverdue(p)).length;
+function showScreen(screenId) {
+  screens.forEach(s => s.classList.remove("active"));
+  document.getElementById(screenId)?.classList.add("active");
 
-  if (okCountEl) okCountEl.textContent = String(ok);
-  if (dueCountEl) dueCountEl.textContent = String(due);
-  if (overCountEl) overCountEl.textContent = String(over);
+  navButtons.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.screen === screenId);
+  });
 
-  const openProblems = (problems || []).filter(p => (p.status || "Open") !== "Resolved").length;
-  if (openProblemsCountEl) openProblemsCountEl.textContent = String(openProblems);
-
-  const pmDueToday = (pms || []).filter(isPmDue).length;
-  if (pmDueTodayCountEl) pmDueTodayCountEl.textContent = String(pmDueToday);
+  if (screenId === "dashboardScreen") renderDashboard();
+  if (screenId === "maintenanceScreen") {
+    renderParts();
+    renderProblemsList();
+    renderPmsList();
+  }
+  if (screenId === "inventoryScreen") renderInventory();
 }
+
+navButtons.forEach(btn => {
+  btn.addEventListener("click", () => showScreen(btn.dataset.screen));
+});
 
 /* ---------------------------------------------------
    TONS
 --------------------------------------------------- */
 updateTonsBtn?.addEventListener("click", () => {
-  const val = Number(currentTonsInput?.value || 0);
-  if (!Number.isFinite(val) || val <= 0) return showToast("Enter a valid tons amount", "error");
-  currentTons += val;
+  currentTons = Number(currentTonsInput.value) || 0;
   if (!saveState()) return;
   renderDashboard();
   showToast("Tons updated");
 });
 
-exportMaintenanceBtn?.addEventListener("click", () => {
-  exportMaintenanceCSV();
+resetTonsBtn?.addEventListener("click", () => {
+  currentTons = 0;
+  if (currentTonsInput) currentTonsInput.value = 0;
+  if (!saveState()) return;
+  renderDashboard();
+  showToast("Tons reset");
 });
 
 /* ---------------------------------------------------
-   PARTS
+   DASHBOARD
 --------------------------------------------------- */
-function buildCategoryDropdown() {
-  if (!newPartCategory || !filterCategory) return;
+function renderDashboard() {
+  if (!okCountEl) return;
 
-  newPartCategory.innerHTML = categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
-  filterCategory.innerHTML = `<option value="ALL">All</option>` + categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
-}
+  let ok = 0, due = 0, over = 0;
+  let completedToday = 0;
+  let completedMonth = 0;
 
-function buildInventoryPartDatalist() {
-  const dl = document.getElementById("inventoryPartNames");
-  if (!dl) return;
-  const names = (inventory || []).map(i => i.name).filter(Boolean);
-  dl.innerHTML = names.map(n => `<option value="${escapeHtml(n)}"></option>`).join("");
-}
+  const today = new Date().toISOString().split("T")[0];
+  const [year, month] = today.split("-");
 
-searchPartsInput?.addEventListener("input", () => renderParts());
-filterCategory?.addEventListener("change", () => renderParts());
+  parts.forEach(p => {
+    const st = calculateStatus(p);
+    if (st.status === "ok") ok++;
+    else if (st.status === "due") due++;
+    else over++;
 
-addPartBtn?.addEventListener("click", () => openPartPanel(false));
-
-function renderParts() {
-  if (!partsListEl) return;
-
-  const q = (searchPartsInput?.value || "").trim().toLowerCase();
-  const cat = filterCategory?.value || "ALL";
-
-  const filtered = (parts || []).filter(p => {
-    const matchQ = !q || [p.name, p.category, p.section].some(x => String(x || "").toLowerCase().includes(q));
-    const matchCat = cat === "ALL" || p.category === cat;
-    return matchQ && matchCat;
+    if (Array.isArray(p.history)) {
+      p.history.forEach(h => {
+        if (h.date === today) completedToday++;
+        const [hy, hm] = (h.date || "").split("-");
+        if (hy === year && hm === month) completedMonth++;
+      });
+    }
   });
 
-  if (!filtered.length) {
-    partsListEl.innerHTML = `<div class="part-meta">No parts found.</div>`;
-    return;
+  okCountEl.textContent = ok;
+  dueCountEl.textContent = due;
+  overCountEl.textContent = over;
+  if (tonsRunEl) tonsRunEl.textContent = currentTons;
+  if (completedTodayEl) completedTodayEl.textContent = completedToday;
+  if (completedMonthEl) completedMonthEl.textContent = completedMonth;
+
+  if (openProblemsCountEl) {
+    const openCount = (problems || []).filter(p => (p.status || "Open") === "Open").length;
+    openProblemsCountEl.textContent = openCount;
   }
 
-  partsListEl.innerHTML = filtered.map(p => {
-    const due = isDue(p);
-    const over = isOverdue(p);
-    const pill = over ? `<span class="pm-pill pm-due">OVER</span>` : due ? `<span class="pm-pill pm-due">DUE</span>` : `<span class="pm-pill pm-done">OK</span>`;
-    const photoTotal = Array.isArray(p.photos) ? p.photos.length : 0;
+  if (pmDueTodayCountEl) {
+    const duePmCount = (pms || []).filter(pm => isPmDue(pm)).length;
+    pmDueTodayCountEl.textContent = duePmCount;
+  }
+}
 
-    return `
-      <div class="pm-card" data-partid="${p.id}">
-        <div class="pm-card-top">
-          <div>
-            <div class="pm-title">${escapeHtml(p.name || "Part")}</div>
-            <div class="pm-sub">${escapeHtml(p.category || "")} — ${escapeHtml(p.section || "")}</div>
-            <div class="pm-sub">Min: ${escapeHtml(p.minQty)} • Qty: ${escapeHtml(p.qty)}${photoTotal ? ` • 📷 ${photoTotal}` : ""}</div>
+/* ---------------------------------------------------
+   CATEGORY DROPDOWNS
+--------------------------------------------------- */
+function buildCategoryDropdown() {
+  if (!filterCategory) return;
+  filterCategory.innerHTML = `<option value="ALL">All Categories</option>`;
+  categories.forEach(c => {
+    filterCategory.innerHTML += `<option value="${c}">${c}</option>`;
+  });
+}
+
+function buildInventoryCategoryDropdown() {
+  if (!invCategory) return;
+  invCategory.innerHTML = "";
+  categories.forEach(c => {
+    invCategory.innerHTML += `<option value="${c}">${c}</option>`;
+  });
+}
+
+filterCategory?.addEventListener("change", renderParts);
+searchPartsInput?.addEventListener("input", renderParts);
+
+/* ---------------------------------------------------
+   STATUS CALC
+--------------------------------------------------- */
+function calculateStatus(p) {
+  const daysSince = (Date.now() - new Date(p.date)) / 86400000;
+  const tonsSince = currentTons - (Number(p.lastTons) || 0);
+
+  let status = "ok";
+
+  if (daysSince > p.days || tonsSince > p.tonInterval) status = "overdue";
+  else if (p.days - daysSince < 5 || p.tonInterval - tonsSince < 500) status = "due";
+
+  return { status, daysSince, tonsSince };
+}
+
+/* ---------------------------------------------------
+   RENDER PARTS
+--------------------------------------------------- */
+function renderParts() {
+  if (!partsList) return;
+
+  const selected = filterCategory?.value || "ALL";
+  const query = (searchPartsInput?.value || "").toLowerCase().trim();
+
+  partsList.innerHTML = "";
+
+  parts.forEach((p, idx) => {
+    const st = calculateStatus(p);
+
+    const matchesCategory = selected === "ALL" || p.category === selected;
+    const matchesSearch =
+      !query ||
+      (p.name || "").toLowerCase().includes(query) ||
+      (p.category || "").toLowerCase().includes(query) ||
+      (p.section || "").toLowerCase().includes(query);
+
+    if (!matchesCategory || !matchesSearch) return;
+
+    const historyHtml = (p.history || [])
+      .slice().reverse().slice(0, 2)
+      .map(h => {
+        const photos = Array.isArray(h.photos) ? h.photos : [];
+        const strip = photos.length ? `
+          <div class="photo-preview-grid">
+            ${photos.slice(0, 6).map(src => `
+              <div class="photo-thumb"><img src="${src}" alt="photo"></div>
+            `).join("")}
           </div>
-          ${pill}
+        ` : "";
+        return `
+          <div class="part-meta">• ${h.date} – ${h.tons} tons${photos.length ? ` – 📷 ${photos.length}` : ""}</div>
+          ${strip}
+        `;
+      })
+      .join("") || `<div class="part-meta">No history</div>`;
+
+    const card = document.createElement("div");
+    card.className = `part-card status-${st.status}`;
+
+    card.innerHTML = `
+      <div class="part-main" data-idx="${idx}">
+        <div>
+          <div class="part-name">${escapeHtml(p.name)}</div>
+          <div class="part-meta">${escapeHtml(p.category)} — ${escapeHtml(p.section)}</div>
+          <div class="part-meta">Last: ${escapeHtml(p.date)}</div>
+          <div class="part-meta">Status: <b>${st.status.toUpperCase()}</b></div>
+        </div>
+        <div class="expand-icon">▼</div>
+      </div>
+
+      <div class="part-details" data-details="${idx}">
+        <div class="part-meta">Days since: ${Math.floor(st.daysSince)}</div>
+        <div class="part-meta">Tons since: ${st.tonsSince}</div>
+
+        <div class="part-actions">
+          <button class="complete-btn" data-idx="${idx}">Complete</button>
+          <button class="edit-part-btn" data-idx="${idx}">Edit</button>
+          <button class="duplicate-part-btn" data-idx="${idx}">Duplicate</button>
+          <button class="delete-part-btn" data-idx="${idx}">Delete</button>
         </div>
 
-        <div class="pm-actions">
-          <button class="part-edit-btn" data-partid="${p.id}">Edit</button>
-          <button class="part-photo-btn" data-partid="${p.id}">Photos</button>
-          <button class="part-delete-btn" data-partid="${p.id}">Delete</button>
+        <div class="part-history">
+          <div class="part-meta"><b>History:</b></div>
+          ${historyHtml}
         </div>
       </div>
     `;
-  }).join("");
+
+    partsList.appendChild(card);
+  });
 }
 
-/* Part panel open/save/close */
-function openPartPanel(isEdit, id) {
-  partPhotos = [];
-  if (photoPreview) photoPreview.innerHTML = "";
-  if (photoInput) photoInput.value = "";
+partsList?.addEventListener("click", (e) => {
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img?.src && img.closest(".photo-thumb")) {
+    openLightbox(img.src);
+    return;
+  }
 
-  if (isEdit) {
-    const item = (parts || []).find(x => x.id === id);
-    if (!item) return;
-    partPanelTitle.textContent = "Edit Part";
-    newPartName.value = item.name || "";
-    newPartCategory.value = item.category || categories[0] || "";
-    newPartSection.value = item.section || "";
-    newPartMinQty.value = item.minQty || 0;
-    newPartQty.value = item.qty || 0;
-    newPartNotes.value = item.notes || "";
-    partPhotos = Array.isArray(item.photos) ? item.photos.slice() : [];
-    renderPhotoPreview(photoPreview, partPhotos);
-    partPanelOverlay.dataset.editingId = id;
+  const main = e.target.closest(".part-main");
+  if (main) {
+    const idx = main.dataset.idx;
+    document.querySelector(`.part-details[data-details="${idx}"]`)?.classList.toggle("expanded");
+    return;
+  }
+
+  if (e.target.classList.contains("edit-part-btn")) openPartForEdit(Number(e.target.dataset.idx));
+  if (e.target.classList.contains("duplicate-part-btn")) duplicatePart(Number(e.target.dataset.idx));
+  if (e.target.classList.contains("delete-part-btn")) deletePart(Number(e.target.dataset.idx));
+  if (e.target.classList.contains("complete-btn")) openCompletePanel(Number(e.target.dataset.idx));
+});
+
+/* ---------------------------------------------------
+   PART: ADD/EDIT PANEL
+--------------------------------------------------- */
+function openPartPanel(isEdit, index) {
+  editingPartIndex = isEdit ? index : null;
+
+  if (partPanelTitle) partPanelTitle.textContent = isEdit ? "Edit Part" : "Add New Part";
+
+  if (newPartCategory) {
+    newPartCategory.innerHTML = "";
+    categories.forEach(c => { newPartCategory.innerHTML += `<option value="${c}">${c}</option>`; });
+  }
+
+  if (isEdit && parts[index]) {
+    const p = parts[index];
+    newPartName.value = p.name || "";
+    newPartCategory.value = p.category || (categories[0] || "");
+    newPartSection.value = p.section || "";
+    newPartDays.value = p.days ?? "";
+    newPartTons.value = p.tonInterval ?? "";
   } else {
-    partPanelTitle.textContent = "Add New Part";
     newPartName.value = "";
-    newPartCategory.value = categories[0] || "";
     newPartSection.value = "";
-    newPartMinQty.value = "";
-    newPartQty.value = "";
-    newPartNotes.value = "";
-    partPanelOverlay.dataset.editingId = "";
+    newPartDays.value = "";
+    newPartTons.value = "";
+    if (categories.length) newPartCategory.value = categories[0];
   }
 
   partPanelOverlay?.classList.remove("hidden");
@@ -490,113 +578,434 @@ function closePartPanel() {
   setTimeout(() => partPanelOverlay?.classList.add("hidden"), 250);
 }
 
+addPartBtn?.addEventListener("click", () => openPartPanel(false, null));
+function openPartForEdit(index) { openPartPanel(true, index); }
+
 closePartPanelBtn?.addEventListener("click", closePartPanel);
 partPanelOverlay?.addEventListener("click", (e) => { if (e.target === partPanelOverlay) closePartPanel(); });
 
-addPhotoBtn?.addEventListener("click", () => photoInput?.click());
-
-photoInput?.addEventListener("change", async () => {
-  const files = Array.from(photoInput.files || []);
-  const newPhotos = await filesToBase64(files, 4);
-  partPhotos = (partPhotos || []).concat(newPhotos).slice(0, 4);
-  renderPhotoPreview(photoPreview, partPhotos);
+newPartName?.addEventListener("change", () => {
+  const name = newPartName.value.toLowerCase().trim();
+  const match = inventory.find(item => (item.part || "").toLowerCase() === name);
+  if (match && newPartCategory) newPartCategory.value = match.category;
 });
 
 savePartBtn?.addEventListener("click", () => {
-  const id = partPanelOverlay.dataset.editingId;
-  const name = (newPartName.value || "").trim();
+  const name = newPartName.value.trim();
   const category = newPartCategory.value;
-  const section = (newPartSection.value || "").trim();
-  const minQty = Number(newPartMinQty.value || 0);
-  const qty = Number(newPartQty.value || 0);
-  const notes = (newPartNotes.value || "").trim();
+  const section = newPartSection.value.trim();
+  const days = Number(newPartDays.value);
+  const tonInterval = Number(newPartTons.value);
 
-  if (!name) return showToast("Enter part name", "error");
+  if (!name || !category || !section || !days || !tonInterval) {
+    showToast("Fill all 5 fields", "error");
+    return;
+  }
 
-  const obj = { id: id || ("part_" + Date.now()), name, category, section, minQty, qty, notes, photos: partPhotos || [] };
-
-  if (id) {
-    const idx = parts.findIndex(x => x.id === id);
-    if (idx >= 0) parts[idx] = obj;
+  if (editingPartIndex !== null && parts[editingPartIndex]) {
+    const existing = parts[editingPartIndex];
+    parts[editingPartIndex] = { ...existing, name, category, section, days, tonInterval };
   } else {
-    parts.unshift(obj);
+    parts.push({
+      name, category, section, days, tonInterval,
+      date: new Date().toISOString().split("T")[0],
+      lastTons: currentTons,
+      history: []
+    });
   }
 
   if (!saveState()) return;
   renderParts();
   renderDashboard();
   closePartPanel();
-  showToast(id ? "Part updated" : "Part added");
-});
-
-/* Parts card click */
-partsListEl?.addEventListener("click", (e) => {
-  const id = e.target?.dataset?.partid || e.target.closest("[data-partid]")?.dataset?.partid;
-  if (!id) return;
-
-  if (e.target.classList.contains("part-edit-btn")) return openPartPanel(true, id);
-
-  if (e.target.classList.contains("part-delete-btn")) {
-    if (!confirm("Delete this part?")) return;
-    parts = parts.filter(p => p.id !== id);
-    if (!saveState()) return;
-    renderParts();
-    renderDashboard();
-    return showToast("Part deleted");
-  }
-
-  if (e.target.classList.contains("part-photo-btn")) {
-    const item = parts.find(x => x.id === id);
-    if (!item) return;
-    openLightboxGallery(item.photos || []);
-  }
+  showToast(editingPartIndex !== null ? "Part updated" : "Part added");
 });
 
 /* ---------------------------------------------------
-   PROBLEMS
+   DELETE / DUPLICATE PART
 --------------------------------------------------- */
-function buildProblemAreaDropdown() {
-  if (!problemArea) return;
-  const areas = ["Cold Feed","RAP","Drum","Drag","Silos","Scales","Other"];
-  problemArea.innerHTML = areas.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
+function deletePart(i) {
+  if (!confirm("Delete this part?")) return;
+  parts.splice(i, 1);
+  if (!saveState()) return;
+  renderParts();
+  renderDashboard();
+  showToast("Part deleted");
 }
 
-probFilterBtns?.forEach(btn => {
-  btn.addEventListener("click", () => {
-    currentProblemFilter = btn.dataset.filter || "ALL";
-    probFilterBtns.forEach(b => b.classList.toggle("active", b === btn));
-    renderProblemsList();
+function duplicatePart(i) {
+  const p = parts[i];
+  if (!p) return;
+
+  parts.push({
+    ...p,
+    name: p.name + " (Copy)",
+    date: new Date().toISOString().split("T")[0],
+    lastTons: currentTons,
   });
+
+  if (!saveState()) return;
+  renderParts();
+  showToast("Part duplicated");
+}
+
+/* ---------------------------------------------------
+   INVENTORY
+--------------------------------------------------- */
+function renderInventory() {
+  if (!inventoryList) return;
+
+  const query = (searchInventoryInput?.value || "").toLowerCase().trim();
+  inventoryList.innerHTML = "";
+
+  inventory.forEach((item, idx) => {
+    const matchesSearch =
+      !query ||
+      (item.part || "").toLowerCase().includes(query) ||
+      (item.category || "").toLowerCase().includes(query) ||
+      (item.location || "").toLowerCase().includes(query);
+
+    if (!matchesSearch) return;
+
+    const card = document.createElement("div");
+    card.className = "part-card";
+
+    card.innerHTML = `
+      <div class="part-name">${escapeHtml(item.part)}</div>
+      <div class="part-meta">${escapeHtml(item.category)} — ${escapeHtml(item.location)}</div>
+      <div class="part-meta">Qty: ${escapeHtml(item.qty)}</div>
+      <div class="part-meta">${escapeHtml(item.notes || "")}</div>
+
+      <div class="part-actions">
+        <button class="edit-inv-btn" data-idx="${idx}">Edit</button>
+        <button class="delete-inv-btn" data-idx="${idx}">Delete</button>
+      </div>
+    `;
+
+    inventoryList.appendChild(card);
+  });
+
+  buildInventoryNameDatalist();
+  buildCompleteInventorySelect();
+}
+
+searchInventoryInput?.addEventListener("input", renderInventory);
+
+inventoryList?.addEventListener("click", (e) => {
+  if (e.target.classList.contains("edit-inv-btn")) openInventoryForEdit(Number(e.target.dataset.idx));
+  if (e.target.classList.contains("delete-inv-btn")) deleteInventoryItem(Number(e.target.dataset.idx));
 });
 
-openProblemPanelBtn?.addEventListener("click", () => openProblemPanel(false));
-openProblemPanelBtn2?.addEventListener("click", () => openProblemPanel(false));
+function openInventoryPanel(isEdit, index) {
+  editingInventoryIndex = isEdit ? index : null;
 
-function openProblemPanel(isEdit, id) {
-  viewingProblemId = isEdit ? id : null;
+  if (inventoryPanelTitle) {
+    inventoryPanelTitle.textContent = isEdit ? "Edit Inventory Item" : "Add Inventory Item";
+  }
+
+  buildInventoryCategoryDropdown();
+
+  if (isEdit && inventory[index]) {
+    const item = inventory[index];
+    invPartName.value = item.part || "";
+    invCategory.value = item.category || (categories[0] || "");
+    invLocation.value = item.location || "";
+    invQty.value = item.qty ?? "";
+    invNotes.value = item.notes || "";
+  } else {
+    invPartName.value = "";
+    invLocation.value = "";
+    invQty.value = "";
+    invNotes.value = "";
+    if (categories.length) invCategory.value = categories[0];
+  }
+
+  inventoryPanelOverlay?.classList.remove("hidden");
+  setTimeout(() => inventoryPanel?.classList.add("show"), 10);
+}
+
+function closeInventoryPanel() {
+  inventoryPanel?.classList.remove("show");
+  setTimeout(() => inventoryPanelOverlay?.classList.add("hidden"), 250);
+}
+
+addInventoryBtn?.addEventListener("click", () => openInventoryPanel(false, null));
+function openInventoryForEdit(index) { openInventoryPanel(true, index); }
+
+closeInventoryPanelBtn?.addEventListener("click", closeInventoryPanel);
+inventoryPanelOverlay?.addEventListener("click", (e) => { if (e.target === inventoryPanelOverlay) closeInventoryPanel(); });
+
+saveInventoryBtn?.addEventListener("click", () => {
+  const part = invPartName.value.trim();
+  const category = invCategory.value;
+  const location = invLocation.value.trim();
+  const qty = Number(invQty.value);
+  const notes = invNotes.value.trim();
+
+  if (!part || !category || !location || !Number.isFinite(qty)) {
+    showToast("Fill part/category/location/qty", "error");
+    return;
+  }
+
+  const itemData = { part, category, location, qty, notes };
+
+  if (editingInventoryIndex !== null && inventory[editingInventoryIndex]) {
+    inventory[editingInventoryIndex] = itemData;
+  } else {
+    inventory.push(itemData);
+  }
+
+  if (!saveState()) return;
+  renderInventory();
+  closeInventoryPanel();
+  showToast(editingInventoryIndex !== null ? "Inventory updated" : "Inventory added");
+});
+
+function deleteInventoryItem(i) {
+  if (!confirm("Delete this item?")) return;
+  inventory.splice(i, 1);
+  if (!saveState()) return;
+  renderInventory();
+  showToast("Inventory item deleted");
+}
+
+function buildInventoryNameDatalist() {
+  if (!inventoryNameList) return;
+  inventoryNameList.innerHTML = "";
+  inventory.forEach(item => {
+    const option = document.createElement("option");
+    option.value = item.part;
+    inventoryNameList.appendChild(option);
+  });
+}
+
+/* ---------------------------------------------------
+   COMPLETE MAINTENANCE PANEL + PHOTO SAVE (compressed)
+--------------------------------------------------- */
+function openCompletePanel(i, prefill) {
+  completingPartIndex = i;
+  completionUsedItems = [];
+
+  completionPhotos = [];
+  if (compPhotoPreview) compPhotoPreview.innerHTML = "";
+  if (compPhotoInput) compPhotoInput.value = "";
+
+  const today = new Date().toISOString().split("T")[0];
+  compDate.value = today;
+  compTons.value = currentTons;
+  compNotes.value = "";
+
+  if (prefill && typeof prefill === "object") {
+    if (prefill.notes && compNotes) compNotes.value = String(prefill.notes);
+    if (Array.isArray(prefill.photos)) {
+      completionPhotos = prefill.photos.slice();
+      renderCompletionPhotoPreview();
+    }
+  }
+
+  buildCompleteInventorySelect();
+  compUsedList.innerHTML = "";
+
+  completePanelOverlay?.classList.remove("hidden");
+  setTimeout(() => completePanel?.classList.add("show"), 10);
+}
+
+function closeCompletePanel() {
+  completePanel?.classList.remove("show");
+  setTimeout(() => completePanelOverlay?.classList.add("hidden"), 250);
+}
+
+closeCompletePanelBtn?.addEventListener("click", closeCompletePanel);
+completePanelOverlay?.addEventListener("click", (e) => { if (e.target === completePanelOverlay) closeCompletePanel(); });
+
+function buildCompleteInventorySelect() {
+  if (!compInvSelect) return;
+  compInvSelect.innerHTML = `<option value="">Select inventory item</option>`;
+  inventory.forEach((item, idx) => {
+    compInvSelect.innerHTML += `<option value="${idx}">${item.part} (Qty: ${item.qty})</option>`;
+  });
+}
+
+compAddItemBtn?.addEventListener("click", () => {
+  const invIndex = compInvSelect.value;
+  const qty = Number(compInvQty.value);
+  if (invIndex === "" || qty <= 0) return showToast("Select item + quantity", "error");
+
+  completionUsedItems.push({ invIndex: Number(invIndex), qty });
+
+  const item = inventory[invIndex];
+  const line = document.createElement("div");
+  line.className = "part-meta";
+  line.textContent = `• ${item.part} – ${qty}`;
+  compUsedList.appendChild(line);
+
+  compInvSelect.value = "";
+  compInvQty.value = 1;
+});
+
+function renderCompletionPhotoPreview() {
+  if (!compPhotoPreview) return;
+  if (!completionPhotos.length) { compPhotoPreview.innerHTML = ""; return; }
+
+  compPhotoPreview.innerHTML = `
+    <div class="photo-preview-grid">
+      ${completionPhotos.map((src, idx) => `
+        <div class="photo-thumb">
+          <img src="${src}" alt="Maintenance Photo ${idx + 1}">
+          <button class="photo-remove" data-idx="${idx}" title="Remove">✖</button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+compAddPhotoBtn?.addEventListener("click", () => compPhotoInput?.click());
+
+compPhotoInput?.addEventListener("change", async () => {
+  const files = Array.from(compPhotoInput.files || []);
+  if (!files.length) return;
+
+  const MAX_ADD = 4; // GOLD stability
+  const toAdd = files.slice(0, MAX_ADD);
+
+  for (const file of toAdd) {
+    if (!file.type.startsWith("image/")) continue;
+
+    const base64 = await readFileAsDataURL(file);
+    const compressed = await compressImage(base64);
+    completionPhotos.push(compressed);
+  }
+
+  compPhotoInput.value = "";
+  renderCompletionPhotoPreview();
+  showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
+});
+
+compPhotoPreview?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".photo-remove");
+  if (btn) {
+    const idx = Number(btn.dataset.idx);
+    if (!Number.isFinite(idx)) return;
+    completionPhotos.splice(idx, 1);
+    renderCompletionPhotoPreview();
+    showToast("Photo removed");
+    return;
+  }
+
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img && img.src) openLightbox(img.src);
+});
+
+saveCompletionBtn?.addEventListener("click", () => {
+  const p = parts[completingPartIndex];
+  if (!p) return;
+
+  const date = compDate.value;
+  const tons = Number(compTons.value);
+  const notes = (compNotes.value || "").trim();
+
+  if (!date || isNaN(tons)) return showToast("Enter date + tons", "error");
+
+  const historyEntry = {
+    date,
+    tons,
+    notes,
+    usedItems: completionUsedItems.map(u => ({
+      part: inventory[u.invIndex]?.part || "Unknown",
+      qty: u.qty
+    })),
+    photos: completionPhotos.slice()
+  };
+
+  if (!p.history) p.history = [];
+  p.history.push(historyEntry);
+
+  p.date = date;
+  p.lastTons = tons;
+
+  completionUsedItems.forEach(u => {
+    if (!inventory[u.invIndex]) return;
+    inventory[u.invIndex].qty = Math.max(0, Number(inventory[u.invIndex].qty) - u.qty);
+  });
+
+  if (!saveState()) return;
+
+  renderParts();
+  renderInventory();
+  renderDashboard();
+  showToast("Maintenance logged");
+  closeCompletePanel();
+});
+
+/* ---------------------------------------------------
+   AC CALCULATOR
+--------------------------------------------------- */
+acCalcBtn?.addEventListener("click", () => {
+  const R = Number(ac_residual.value) / 100;
+  const RAPpct = Number(ac_rapPct.value) / 100;
+  const ACtarget = Number(ac_target.value) / 100;
+  const TPH = Number(ac_tph.value);
+  const total = Number(ac_totalTons.value);
+
+  const pump = TPH * (ACtarget - (RAPpct * R));
+  const needed = total * (ACtarget - (RAPpct * R));
+
+  ac_pumpRate.textContent = pump.toFixed(3);
+  ac_totalAc.textContent = needed.toFixed(2);
+
+  showToast("AC calculated");
+});
+
+/* ---------------------------------------------------
+   EXPORT DATA
+--------------------------------------------------- */
+exportBtn?.addEventListener("click", () => {
+  const data = { parts, currentTons, inventory, problems, pms };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  downloadBlob(blob, "maintenance_data.json");
+  showToast("Exported");
+});
+
+/* GOLD: PM Compliance export (CSV) */
+exportPmComplianceBtn?.addEventListener("click", () => {
+  const csv = buildPmComplianceCsv();
+  const blob = new Blob([csv], { type: "text/csv" });
+  downloadBlob(blob, `pm_compliance_${getTodayStr()}.csv`);
+  showToast("PM compliance exported");
+});
+
+/* ---------------------------------------------------
+   RESET ALL
+--------------------------------------------------- */
+resetAllBtn?.addEventListener("click", () => {
+  if (!confirm("Reset ALL data?")) return;
+  localStorage.clear();
+  showToast("Reset complete");
+  location.reload();
+});
+
+/* ===================================================
+   PROBLEMS (includes compressed photo add)
+=================================================== */
+function buildProblemCategoryDropdown() {
+  if (!probCategory) return;
+  probCategory.innerHTML = "";
+  (categories || []).forEach(c => { probCategory.innerHTML += `<option value="${c}">${c}</option>`; });
+}
+
+function openProblemPanel() {
+  if (probTitle) probTitle.value = "";
+  if (probLocation) probLocation.value = "";
+  if (probNotes) probNotes.value = "";
+  if (probSeverity) probSeverity.value = "Medium";
+  if (probStatus) probStatus.value = "Open";
+
+  buildProblemCategoryDropdown();
+  if (probCategory && categories.length) probCategory.value = categories[0];
+
   problemPhotos = [];
   if (probPhotoPreview) probPhotoPreview.innerHTML = "";
   if (probPhotoInput) probPhotoInput.value = "";
-
-  if (isEdit) {
-    const item = problems.find(x => x.id === id);
-    if (!item) return;
-    problemPanelTitle.textContent = "Edit Problem";
-    problemTitle.value = item.title || "";
-    problemArea.value = item.area || "Cold Feed";
-    problemStatus.value = item.status || "Open";
-    problemNotes.value = item.notes || "";
-    problemPhotos = Array.isArray(item.photos) ? item.photos.slice() : [];
-    renderPhotoPreview(probPhotoPreview, problemPhotos);
-    deleteProblemBtn?.classList.remove("hidden");
-  } else {
-    problemPanelTitle.textContent = "Report Problem";
-    problemTitle.value = "";
-    problemArea.value = "Cold Feed";
-    problemStatus.value = "Open";
-    problemNotes.value = "";
-    deleteProblemBtn?.classList.add("hidden");
-  }
 
   problemPanelOverlay?.classList.remove("hidden");
   setTimeout(() => problemPanel?.classList.add("show"), 10);
@@ -607,83 +1016,140 @@ function closeProblemPanel() {
   setTimeout(() => problemPanelOverlay?.classList.add("hidden"), 250);
 }
 
+openProblemPanelBtn?.addEventListener("click", openProblemPanel);
+openProblemPanelBtn2?.addEventListener("click", openProblemPanel);
 closeProblemPanelBtn?.addEventListener("click", closeProblemPanel);
 problemPanelOverlay?.addEventListener("click", (e) => { if (e.target === problemPanelOverlay) closeProblemPanel(); });
 
+function renderProblemPhotoPreview() {
+  if (!probPhotoPreview) return;
+  if (!problemPhotos.length) { probPhotoPreview.innerHTML = ""; return; }
+
+  probPhotoPreview.innerHTML = `
+    <div class="photo-preview-grid">
+      ${problemPhotos.map((src, idx) => `
+        <div class="photo-thumb">
+          <img src="${src}" alt="Problem Photo ${idx + 1}">
+          <button class="photo-remove" data-idx="${idx}" title="Remove">✖</button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
 probAddPhotoBtn?.addEventListener("click", () => probPhotoInput?.click());
+
 probPhotoInput?.addEventListener("change", async () => {
   const files = Array.from(probPhotoInput.files || []);
-  const newPhotos = await filesToBase64(files, 4);
-  problemPhotos = (problemPhotos || []).concat(newPhotos).slice(0, 4);
-  renderPhotoPreview(probPhotoPreview, problemPhotos);
-});
+  if (!files.length) return;
 
-saveProblemBtn?.addEventListener("click", () => {
-  const title = (problemTitle?.value || "").trim();
-  if (!title) return showToast("Enter title", "error");
+  const MAX_ADD = 4;
+  const toAdd = files.slice(0, MAX_ADD);
 
-  const obj = {
-    id: viewingProblemId || ("prob_" + Date.now()),
-    createdAt: new Date().toISOString(),
-    title,
-    area: problemArea?.value || "Cold Feed",
-    status: problemStatus?.value || "Open",
-    notes: (problemNotes?.value || "").trim(),
-    photos: problemPhotos || []
-  };
-
-  if (viewingProblemId) {
-    const idx = problems.findIndex(x => x.id === viewingProblemId);
-    if (idx >= 0) problems[idx] = obj;
-  } else {
-    problems.unshift(obj);
+  for (const file of toAdd) {
+    if (!file.type.startsWith("image/")) continue;
+    const base64 = await readFileAsDataURL(file);
+    const compressed = await compressImage(base64);
+    problemPhotos.push(compressed);
   }
 
-  if (!saveState()) return;
-  renderProblemsList();
-  renderDashboard();
-  closeProblemPanel();
-  showToast("Problem saved");
+  probPhotoInput.value = "";
+  renderProblemPhotoPreview();
+  showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
 });
 
-deleteProblemBtn?.addEventListener("click", () => {
-  if (!viewingProblemId) return;
-  if (!confirm("Delete this problem?")) return;
-  problems = problems.filter(p => p.id !== viewingProblemId);
+probPhotoPreview?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".photo-remove");
+  if (btn) {
+    const idx = Number(btn.dataset.idx);
+    if (!Number.isFinite(idx)) return;
+    problemPhotos.splice(idx, 1);
+    renderProblemPhotoPreview();
+    showToast("Photo removed");
+    return;
+  }
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img?.src) openLightbox(img.src);
+});
+
+saveProblemBtn?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  const title = (probTitle?.value || "").trim();
+  const category = probCategory?.value || "";
+  const location = (probLocation?.value || "").trim();
+  const severity = probSeverity?.value || "Medium";
+  const status = probStatus?.value || "Open";
+  const notes = (probNotes?.value || "").trim();
+
+  if (!title || !category || !location) {
+    showToast("Fill Title / Category / Location", "error");
+    return;
+  }
+
+  const item = {
+    id: "prob_" + Date.now(),
+    createdAt: new Date().toISOString(),
+    title, category, location, severity, status, notes,
+    photos: problemPhotos.slice()
+  };
+
+  problems.unshift(item);
+
   if (!saveState()) return;
-  renderProblemsList();
+
   renderDashboard();
+  renderProblemsList();
+
+  showToast("Problem saved");
   closeProblemPanel();
-  showToast("Problem deleted");
+});
+
+/* Problems list + detail */
+function getProblemStatusClass(status) {
+  const s = String(status || "Open");
+  if (s === "Resolved") return "status-resolved";
+  if (s === "In Progress") return "status-inprogress";
+  return "status-open";
+}
+
+problemFilterBtns?.forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentProblemFilter = btn.dataset.filter || "ALL";
+    renderProblemsList();
+  });
 });
 
 function renderProblemsList() {
   if (!problemsListEl) return;
 
-  const list = (problems || []).filter(p => {
+  problemFilterBtns?.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.filter === currentProblemFilter);
+  });
+
+  const filtered = (problems || []).filter(p => {
     if (currentProblemFilter === "ALL") return true;
     return (p.status || "Open") === currentProblemFilter;
   });
 
-  if (!list.length) {
-    problemsListEl.innerHTML = `<div class="part-meta">No problems found.</div>`;
+  if (!filtered.length) {
+    problemsListEl.innerHTML = `<div class="part-meta">No problems yet.</div>`;
     return;
   }
 
-  problemsListEl.innerHTML = list.map(p => {
-    const photoTotal = Array.isArray(p.photos) ? p.photos.length : 0;
+  problemsListEl.innerHTML = filtered.map(p => {
+    const status = p.status || "Open";
+    const pillClass = getProblemStatusClass(status);
+    const created = (p.createdAt || "").split("T")[0] || "";
     return `
-      <div class="pm-card" data-probid="${p.id}">
-        <div class="pm-card-top">
+      <div class="problem-card" data-probid="${p.id}">
+        <div class="problem-card-top">
           <div>
-            <div class="pm-title">${escapeHtml(p.title || "Problem")}</div>
-            <div class="pm-sub">${escapeHtml(p.area || "")} — ${escapeHtml(p.status || "Open")}</div>
-            <div class="pm-sub">${escapeHtml(p.notes || "")}${photoTotal ? ` • 📷 ${photoTotal}` : ""}</div>
+            <div class="problem-title">${escapeHtml(p.title || "Problem")}</div>
+            <div class="problem-sub">${escapeHtml(p.category || "")} — ${escapeHtml(p.location || "")}</div>
+            <div class="problem-sub">${created ? `Created: ${created}` : ""}</div>
           </div>
-        </div>
-
-        <div class="pm-actions">
-          <button class="prob-edit-btn" data-probid="${p.id}">View/Edit</button>
+          <span class="status-pill ${pillClass}">${escapeHtml(status)}</span>
         </div>
       </div>
     `;
@@ -691,40 +1157,183 @@ function renderProblemsList() {
 }
 
 problemsListEl?.addEventListener("click", (e) => {
-  const id = e.target?.dataset?.probid || e.target.closest("[data-probid]")?.dataset?.probid;
-  if (!id) return;
-  if (e.target.classList.contains("prob-edit-btn")) return openProblemPanel(true, id);
+  const card = e.target.closest(".problem-card");
+  if (!card) return;
+  const id = card.dataset.probid;
+  if (id) openProblemDetail(id);
 });
 
-/* ---------------------------------------------------
-   PMs (Phase 3.4 Enhanced)
---------------------------------------------------- */
-function buildPmAreaDropdown() {
-  if (!pmArea) return;
-  const areas = ["Cold Feed","RAP","Drum","Drag","Silos","Scales"];
-  pmArea.innerHTML = areas.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
-}
+function openProblemDetail(problemId) {
+  const p = (problems || []).find(x => x.id === problemId);
+  if (!p) return;
 
-openPmPanelBtn?.addEventListener("click", () => openPmPanel(false));
+  viewingProblemId = problemId;
 
-function openPmPanel(isEdit, id) {
-  // Phase 3.4: Admin-only manage PM definitions
-  if (!canPm("manage")) {
-    showToast("Admin only", "error");
-    return;
+  if (problemDetailTitle) problemDetailTitle.textContent = p.title || "Problem";
+
+  const created = (p.createdAt || "").split("T")[0] || "";
+  const metaLines = [
+    created ? `Created: <b>${escapeHtml(created)}</b>` : "",
+    `Category: <b>${escapeHtml(p.category || "")}</b>`,
+    `Location: <b>${escapeHtml(p.location || "")}</b>`,
+    `Severity: <b>${escapeHtml(p.severity || "Medium")}</b>`,
+    p.notes ? `Notes: <b>${escapeHtml(p.notes)}</b>` : ""
+  ].filter(Boolean);
+
+  if (problemDetailMeta) problemDetailMeta.innerHTML = metaLines.join("<br>");
+
+  if (problemDetailStatus) {
+    const statuses = ["Open", "In Progress", "Resolved"];
+    problemDetailStatus.innerHTML = statuses.map(s => {
+      const cls = getProblemStatusClass(s);
+      const active = (p.status || "Open") === s ? "style=\"outline:2px solid var(--accent);\"" : "";
+      return `<button class="status-pill ${cls}" data-setstatus="${escapeHtml(s)}" ${active}>${escapeHtml(s)}</button>`;
+    }).join("");
   }
 
+  if (problemDetailPhotos) {
+    const photos = Array.isArray(p.photos) ? p.photos : [];
+    if (!photos.length) {
+      problemDetailPhotos.innerHTML = `<div class="part-meta">No photos</div>`;
+    } else {
+      problemDetailPhotos.innerHTML = `
+        <div class="photo-preview-grid">
+          ${photos.map((src, idx) => `
+            <div class="photo-thumb"><img src="${src}" alt="Problem Photo ${idx + 1}"></div>
+          `).join("")}
+        </div>
+      `;
+    }
+  }
+
+  problemDetailOverlay?.classList.remove("hidden");
+  setTimeout(() => problemDetailPanel?.classList.add("show"), 10);
+}
+
+function closeProblemDetail() {
+  problemDetailPanel?.classList.remove("show");
+  setTimeout(() => problemDetailOverlay?.classList.add("hidden"), 250);
+  viewingProblemId = null;
+}
+
+closeProblemDetailBtn?.addEventListener("click", closeProblemDetail);
+problemDetailOverlay?.addEventListener("click", (e) => { if (e.target === problemDetailOverlay) closeProblemDetail(); });
+
+problemDetailStatus?.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-setstatus]");
+  if (!btn || !viewingProblemId) return;
+
+  const p = (problems || []).find(x => x.id === viewingProblemId);
+  if (!p) return;
+
+  p.status = btn.dataset.setstatus || "Open";
+  if (!saveState()) return;
+
+  renderDashboard();
+  renderProblemsList();
+  openProblemDetail(viewingProblemId);
+});
+
+problemDetailPhotos?.addEventListener("click", (e) => {
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img?.src) openLightbox(img.src);
+});
+
+resolveLogBtn?.addEventListener("click", () => {
+  if (!viewingProblemId) return;
+  const p = (problems || []).find(x => x.id === viewingProblemId);
+  if (!p) return;
+
+  p.status = "Resolved";
+  if (!saveState()) return;
+
+  renderDashboard();
+  renderProblemsList();
+
+  const name = p.title || "Problem Fix";
+  const category = p.category || (categories[0] || "Other");
+  const section = p.location || "Plant";
+
+  let partIndex = parts.findIndex(x =>
+    (x.name || "").trim() === name.trim() &&
+    (x.category || "") === category &&
+    (x.section || "").trim() === section.trim()
+  );
+
+  if (partIndex === -1) {
+    parts.push({
+      name,
+      category,
+      section,
+      days: 3650,
+      tonInterval: 9999999,
+      date: new Date().toISOString().split("T")[0],
+      lastTons: currentTons,
+      history: []
+    });
+    partIndex = parts.length - 1;
+  }
+
+  openCompletePanel(partIndex, {
+    notes: `Resolved problem: ${name}${p.notes ? " — " + p.notes : ""}`,
+    photos: Array.isArray(p.photos) ? p.photos.slice() : []
+  });
+
+  closeProblemDetail();
+  showToast("Problem resolved + ready to log maintenance");
+});
+
+deleteProblemBtn?.addEventListener("click", () => {
+  if (!viewingProblemId) return;
+  if (!confirm("Delete this problem?")) return;
+
+  problems = (problems || []).filter(p => p.id !== viewingProblemId);
+  if (!saveState()) return;
+
+  renderDashboard();
+  renderProblemsList();
+  closeProblemDetail();
+  showToast("Problem deleted");
+});
+
+/* ===================================================
+   PMs (Due Today + Gallery + compressed photo save)
+=================================================== */
+function buildPmAreaDropdown() {
+  if (!pmArea) return;
+  const PM_AREAS = ["Cold Feed", "RAP", "Drum", "Drag", "Silos", "Scales"];
+  pmArea.innerHTML = "";
+  PM_AREAS.forEach(a => { pmArea.innerHTML += `<option value="${a}">${a}</option>`; });
+}
+
+function getTodayStr() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function getPmLastDate(pm) {
+  const h = Array.isArray(pm.history) ? pm.history : [];
+  if (!h.length) return "";
+  return h[h.length - 1]?.date || "";
+}
+
+function isPmDue(pm) {
+  const today = getTodayStr();
+  const last = getPmLastDate(pm);
+  const freq = pm.frequency || "Daily";
+  if (!last) return true;
+
+  if (freq === "Daily") return last !== today;
+
+  const lastMs = new Date(last).getTime();
+  const nowMs = new Date(today).getTime();
+  const days = Math.floor((nowMs - lastMs) / 86400000);
+  return days >= 7;
+}
+
+function openPmPanel(isEdit, id) {
   editingPmId = isEdit ? id : null;
   if (pmPanelTitle) pmPanelTitle.textContent = isEdit ? "Edit PM" : "Add PM";
   buildPmAreaDropdown();
-
-  const setVisDefaults = (vis) => {
-    const v = vis || {};
-    if (pmVisAdmin) pmVisAdmin.checked = v.Admin !== false;
-    if (pmVisSupervisor) pmVisSupervisor.checked = v.Supervisor !== false;
-    if (pmVisMaintenance) pmVisMaintenance.checked = v.Maintenance !== false;
-    if (pmVisGround) pmVisGround.checked = v.Ground !== false;
-  };
 
   if (isEdit) {
     const item = (pms || []).find(x => x.id === id);
@@ -732,24 +1341,11 @@ function openPmPanel(isEdit, id) {
       if (pmName) pmName.value = item.name || "";
       if (pmArea) pmArea.value = item.area || "Cold Feed";
       if (pmFrequency) pmFrequency.value = item.frequency || "Daily";
-
-      // Checklist (optional, backward compatible)
-      const list = Array.isArray(item.checklist) ? item.checklist : [];
-      if (pmChecklistDef) pmChecklistDef.value = list.join("\n");
-
-      // Visibility (default visible)
-      setVisDefaults(item.visibility);
-
-      // Lock
-      if (pmDefLocked) pmDefLocked.checked = !!item.locked;
     }
   } else {
     if (pmName) pmName.value = "";
     if (pmArea) pmArea.value = "Cold Feed";
     if (pmFrequency) pmFrequency.value = "Daily";
-    if (pmChecklistDef) pmChecklistDef.value = "";
-    setVisDefaults({ Admin:true, Supervisor:true, Maintenance:true, Ground:true });
-    if (pmDefLocked) pmDefLocked.checked = false;
   }
 
   pmPanelOverlay?.classList.remove("hidden");
@@ -759,48 +1355,27 @@ function openPmPanel(isEdit, id) {
 function closePmPanel() {
   pmPanel?.classList.remove("show");
   setTimeout(() => pmPanelOverlay?.classList.add("hidden"), 250);
+  editingPmId = null;
 }
 
+openPmPanelBtn?.addEventListener("click", () => openPmPanel(false, null));
 closePmPanelBtn?.addEventListener("click", closePmPanel);
 pmPanelOverlay?.addEventListener("click", (e) => { if (e.target === pmPanelOverlay) closePmPanel(); });
 
 savePmBtn?.addEventListener("click", () => {
-  if (!canPm("manage")) { showToast("Admin only", "error"); return; }
-
   const name = (pmName?.value || "").trim();
   const area = pmArea?.value || "Cold Feed";
   const frequency = pmFrequency?.value || "Daily";
   if (!name) return showToast("Enter PM name", "error");
 
-  const checklist = String(pmChecklistDef?.value || "")
-    .split("\n")
-    .map(s => s.trim())
-    .filter(Boolean);
-
-  const visibility = {
-    Admin: pmVisAdmin ? !!pmVisAdmin.checked : true,
-    Supervisor: pmVisSupervisor ? !!pmVisSupervisor.checked : true,
-    Maintenance: pmVisMaintenance ? !!pmVisMaintenance.checked : true,
-    Ground: pmVisGround ? !!pmVisGround.checked : true
-  };
-
-  const locked = pmDefLocked ? !!pmDefLocked.checked : false;
-
   if (editingPmId) {
     const idx = (pms || []).findIndex(x => x.id === editingPmId);
-    if (idx >= 0) {
-      pms[idx] = { ...pms[idx], name, area, frequency, checklist, visibility, locked };
-    }
+    if (idx >= 0) pms[idx] = { ...pms[idx], name, area, frequency };
   } else {
     pms.unshift({
       id: "pm_" + Date.now(),
       createdAt: new Date().toISOString(),
-      name,
-      area,
-      frequency,
-      checklist,
-      visibility,
-      locked,
+      name, area, frequency,
       history: []
     });
   }
@@ -809,16 +1384,21 @@ savePmBtn?.addEventListener("click", () => {
 
   renderPmsList();
   renderDashboard();
-  closePmPanel();
   showToast(editingPmId ? "PM updated" : "PM added");
+  closePmPanel();
 });
 
 pmFilterBtns?.forEach(btn => {
   btn.addEventListener("click", () => {
-    currentPmFilter = btn.dataset.pmfilter || "DUE";
+    currentPmFilter = btn.dataset.pmfilter || "ALL";
     renderPmsList();
   });
 });
+
+function countPmPhotoTotal(pm) {
+  const h = Array.isArray(pm.history) ? pm.history : [];
+  return h.reduce((acc, entry) => acc + (Array.isArray(entry.photos) ? entry.photos.length : 0), 0);
+}
 
 function renderPmsList() {
   if (!pmsListEl) return;
@@ -827,25 +1407,7 @@ function renderPmsList() {
     btn.classList.toggle("active", btn.dataset.pmfilter === currentPmFilter);
   });
 
-  const role = normalizeRole(currentRole);
-
-  // Visibility filter per role (default visible)
-  const visibleForRole = (pm) => {
-    const v = pm?.visibility;
-    if (!v) return true;
-    if (role === "Admin") return v.Admin !== false;
-    if (role === "Supervisor") return v.Supervisor !== false;
-    if (role === "Maintenance") return v.Maintenance !== false;
-    if (role === "Ground") return v.Ground !== false;
-    return true;
-  };
-
-  const allVisible = (pms || []).filter(visibleForRole);
-
-  const dueTodayCount = allVisible.filter(isPmDue).length;
-  if (pmDueTodayText) pmDueTodayText.textContent = String(dueTodayCount);
-
-  const filtered = allVisible.filter(pm => {
+  const filtered = (pms || []).filter(pm => {
     if (currentPmFilter === "ALL") return true;
     const due = isPmDue(pm);
     if (currentPmFilter === "DUE") return due;
@@ -854,73 +1416,46 @@ function renderPmsList() {
   });
 
   if (!filtered.length) {
-    pmsListEl.innerHTML = `<div class="part-meta">No PMs in this filter.</div>`;
+    pmsListEl.innerHTML = `<div class="part-meta">No PMs yet. Tap <b>+ Add PM</b>.</div>`;
     return;
   }
 
-  const AREAS = ["Cold Feed","RAP","Drum","Drag","Silos","Scales"];
-  const grouped = {};
-  AREAS.forEach(a => grouped[a] = []);
-  filtered.forEach(pm => {
-    const a = AREAS.includes(pm.area) ? pm.area : "Cold Feed";
-    grouped[a].push(pm);
-  });
+  pmsListEl.innerHTML = filtered.map(pm => {
+    const last = getPmLastDate(pm);
+    const due = isPmDue(pm);
+    const pill = due ? `<span class="pm-pill pm-due">DUE</span>` : `<span class="pm-pill pm-done">DONE</span>`;
+    const historyCount = Array.isArray(pm.history) ? pm.history.length : 0;
+    const photoTotal = countPmPhotoTotal(pm);
 
-  const canManage = canPm("manage");
-  const canComplete = canPm("complete");
-
-  pmsListEl.innerHTML = AREAS.map(area => {
-    const list = grouped[area] || [];
-    if (!list.length) return "";
     return `
-      <div class="pm-area-group">
-        <div class="pm-area-title">${escapeHtml(area)}</div>
-        ${list.map(pm => {
-          const last = getPmLastDate(pm);
-          const due = isPmDue(pm);
-          const pill = due ? `<span class="pm-pill pm-due">DUE</span>` : `<span class="pm-pill pm-done">DONE</span>`;
-          const historyCount = Array.isArray(pm.history) ? pm.history.length : 0;
-          const photoTotal = countPmPhotoTotal(pm);
-          const hasChecklist = Array.isArray(pm.checklist) && pm.checklist.length > 0;
-          const checklistTag = hasChecklist ? ` • ☑️ ${pm.checklist.length}` : "";
+      <div class="pm-card" data-pmid="${pm.id}">
+        <div class="pm-card-top">
+          <div>
+            <div class="pm-title">${escapeHtml(pm.name || "PM")}</div>
+            <div class="pm-sub">${escapeHtml(pm.area || "")} — ${escapeHtml(pm.frequency || "")}</div>
+            <div class="pm-sub">${last ? `Last: ${escapeHtml(last)}` : "Last: (none)"}${historyCount ? ` • History: ${historyCount}` : ""}${photoTotal ? ` • 📷 ${photoTotal}` : ""}</div>
+          </div>
+          ${pill}
+        </div>
 
-          return `
-            <div class="pm-card" data-pmid="${pm.id}">
-              <div class="pm-card-top">
-                <div>
-                  <div class="pm-title">${escapeHtml(pm.name || "PM")}</div>
-                  <div class="pm-sub">${escapeHtml(pm.area || "")} — ${escapeHtml(pm.frequency || "")}</div>
-                  <div class="pm-sub">${last ? `Last: ${escapeHtml(last)}` : ""}${historyCount ? ` • ${historyCount} logs` : ""}${photoTotal ? ` • 📷 ${photoTotal}` : ""}${checklistTag}</div>
-                </div>
-                ${pill}
-              </div>
-
-              <div class="pm-actions">
-                <button class="pm-complete-btn ${!canComplete ? "disabled" : ""}" data-pmid="${pm.id}" ${!canComplete ? "disabled" : ""}>Complete</button>
-                <button class="pm-edit-btn ${!canManage ? "hidden" : ""}" data-pmid="${pm.id}">Edit</button>
-                <button class="pm-gallery-btn" data-pmid="${pm.id}">Gallery</button>
-                <button class="pm-delete-btn ${!canManage ? "hidden" : ""}" data-pmid="${pm.id}">Delete</button>
-              </div>
-            </div>
-          `;
-        }).join("")}
+        <div class="pm-actions">
+          <button class="pm-complete-btn" data-pmid="${pm.id}">Complete</button>
+          <button class="pm-edit-btn" data-pmid="${pm.id}">Edit</button>
+          <button class="pm-gallery-btn" data-pmid="${pm.id}">Gallery</button>
+          <button class="pm-delete-btn" data-pmid="${pm.id}">Delete</button>
+        </div>
       </div>
     `;
   }).join("");
 }
 
 pmsListEl?.addEventListener("click", (e) => {
-  const target = e.target;
-  const id = target?.dataset?.pmid || target?.closest?.("[data-pmid]")?.dataset?.pmid;
+  const id = e.target?.dataset?.pmid || e.target.closest("[data-pmid]")?.dataset?.pmid;
   if (!id) return;
 
-  if (target.classList.contains("pm-edit-btn")) {
-    if (!canPm("manage")) return showToast("Admin only", "error");
-    return openPmPanel(true, id);
-  }
+  if (e.target.classList.contains("pm-edit-btn")) return openPmPanel(true, id);
 
-  if (target.classList.contains("pm-delete-btn")) {
-    if (!canPm("manage")) return showToast("Admin only", "error");
+  if (e.target.classList.contains("pm-delete-btn")) {
     if (!confirm("Delete this PM?")) return;
     pms = (pms || []).filter(x => x.id !== id);
     if (!saveState()) return;
@@ -929,12 +1464,9 @@ pmsListEl?.addEventListener("click", (e) => {
     return showToast("PM deleted");
   }
 
-  if (target.classList.contains("pm-complete-btn")) {
-    if (!canPm("complete")) return showToast("Not allowed", "error");
-    return openPmComplete(id);
-  }
+  if (e.target.classList.contains("pm-complete-btn")) return openPmComplete(id);
 
-  if (target.classList.contains("pm-gallery-btn")) return openPmGallery(id);
+  if (e.target.classList.contains("pm-gallery-btn")) return openPmGallery(id);
 });
 
 function openPmComplete(id) {
@@ -946,53 +1478,9 @@ function openPmComplete(id) {
   const pm = (pms || []).find(x => x.id === id);
   if (!pm) return;
 
-  // Role enforcement
-  if (!canPm("complete")) {
-    showToast("Ground role is view-only for PMs", "error");
-    return;
-  }
-
-  if (pmCompleteTitle) pmCompleteTitle.textContent = `Complete PM: ${pm.name || ""}`;
-  if (pmCompDate) pmCompDate.value = new Date().toISOString().split("T")[0];
+  if (pmCompleteTitle) pmCompleteTitle.textContent = `Complete PM — ${pm.name || ""}`;
+  if (pmCompDate) pmCompDate.value = getTodayStr();
   if (pmCompNotes) pmCompNotes.value = "";
-
-  // Checklist (optional, but if present must be fully checked)
-  const checklist = Array.isArray(pm.checklist) ? pm.checklist : [];
-  pmChecklistState = [];
-  if (pmChecklistWrap && pmChecklistList) {
-    if (checklist.length) {
-      pmChecklistWrap.classList.remove("hidden");
-      pmChecklistList.innerHTML = checklist.map((item, idx) => {
-        const disabled = !canPm("checklist");
-        return `
-          <label class="check-row ${disabled ? "disabled" : ""}">
-            <input type="checkbox" class="pm-check" data-idx="${idx}" ${disabled ? "disabled" : ""}>
-            <span>${escapeHtml(item)}</span>
-          </label>
-        `;
-      }).join("");
-      pmChecklistState = new Array(checklist.length).fill(false);
-      if (pmChecklistHint) pmChecklistHint.textContent = "Check all items to enable completion.";
-    } else {
-      pmChecklistWrap.classList.add("hidden");
-      pmChecklistList.innerHTML = "";
-      if (pmChecklistHint) pmChecklistHint.textContent = "";
-    }
-  }
-
-  // Photos permission
-  const photosAllowed = canPm("photos");
-  if (pmAddPhotoBtn) {
-    pmAddPhotoBtn.disabled = !photosAllowed;
-    pmAddPhotoBtn.classList.toggle("hidden", !photosAllowed);
-  }
-
-  // Completion button disabled until checklist done (when checklist exists)
-  if (savePmCompletionBtn) {
-    const needsChecklist = checklist.length > 0;
-    savePmCompletionBtn.disabled = needsChecklist;
-    savePmCompletionBtn.classList.toggle("disabled", savePmCompletionBtn.disabled);
-  }
 
   pmCompleteOverlay?.classList.remove("hidden");
   setTimeout(() => pmCompletePanel?.classList.add("show"), 10);
@@ -1001,89 +1489,123 @@ function openPmComplete(id) {
 function closePmComplete() {
   pmCompletePanel?.classList.remove("show");
   setTimeout(() => pmCompleteOverlay?.classList.add("hidden"), 250);
+  completingPmId = null;
 }
 
 closePmCompleteBtn?.addEventListener("click", closePmComplete);
 pmCompleteOverlay?.addEventListener("click", (e) => { if (e.target === pmCompleteOverlay) closePmComplete(); });
 
-pmChecklistList?.addEventListener("change", (e) => {
-  const t = e.target;
-  if (!(t instanceof HTMLInputElement)) return;
-  if (!t.classList.contains("pm-check")) return;
-  const idx = Number(t.dataset.idx);
-_toggleChecklist(idx, !!t.checked);
-});
+function renderPmPhotoPreview() {
+  if (!pmPhotoPreview) return;
+  if (!pmCompletionPhotos.length) { pmPhotoPreview.innerHTML = ""; return; }
 
-function _toggleChecklist(idx, checked){
-  if (Number.isNaN(idx)) return;
-  pmChecklistState[idx] = !!checked;
-
-  const allDone = pmChecklistState.length ? pmChecklistState.every(Boolean) : true;
-  if (savePmCompletionBtn) {
-    savePmCompletionBtn.disabled = !allDone;
-    savePmCompletionBtn.classList.toggle("disabled", savePmCompletionBtn.disabled);
-  }
+  pmPhotoPreview.innerHTML = `
+    <div class="photo-preview-grid">
+      ${pmCompletionPhotos.map((src, idx) => `
+        <div class="photo-thumb">
+          <img src="${src}" alt="PM Photo ${idx + 1}">
+          <button class="photo-remove" data-idx="${idx}" title="Remove">✖</button>
+        </div>
+      `).join("")}
+    </div>
+  `;
 }
 
-pmAddPhotoBtn?.addEventListener("click", () => {
-  if (!canPm("photos")) return;
-  pmPhotoInput?.click();
-});
+pmAddPhotoBtn?.addEventListener("click", () => pmPhotoInput?.click());
 
 pmPhotoInput?.addEventListener("change", async () => {
-  if (!canPm("photos")) return;
   const files = Array.from(pmPhotoInput.files || []);
-  const newPhotos = await filesToBase64(files, 4);
-  pmCompletionPhotos = (pmCompletionPhotos || []).concat(newPhotos).slice(0, 4);
-  renderPhotoPreview(pmPhotoPreview, pmCompletionPhotos);
+  if (!files.length) return;
+
+  const MAX_ADD = 4;
+  const toAdd = files.slice(0, MAX_ADD);
+
+  for (const file of toAdd) {
+    if (!file.type.startsWith("image/")) continue;
+    const base64 = await readFileAsDataURL(file);
+    const compressed = await compressImage(base64);
+    pmCompletionPhotos.push(compressed);
+  }
+
+  pmPhotoInput.value = "";
+  renderPmPhotoPreview();
+  showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
+});
+
+pmPhotoPreview?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".photo-remove");
+  if (btn) {
+    const idx = Number(btn.dataset.idx);
+    if (!Number.isFinite(idx)) return;
+    pmCompletionPhotos.splice(idx, 1);
+    renderPmPhotoPreview();
+    showToast("Photo removed");
+    return;
+  }
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img?.src) openLightbox(img.src);
 });
 
 savePmCompletionBtn?.addEventListener("click", () => {
   if (!completingPmId) return;
-
-  // Role enforcement
-  if (!canPm("complete")) { showToast("Not allowed", "error"); return; }
-
   const pm = (pms || []).find(x => x.id === completingPmId);
   if (!pm) return;
 
   const date = pmCompDate?.value || getTodayStr();
   const notes = (pmCompNotes?.value || "").trim();
+  if (!date) return showToast("Pick a date", "error");
 
-  const checklist = Array.isArray(pm.checklist) ? pm.checklist : [];
-  const needsChecklist = checklist.length > 0;
-
-  if (needsChecklist) {
-    const allDone = pmChecklistState.length ? pmChecklistState.every(Boolean) : false;
-    if (!allDone) { showToast("Complete all checklist items first", "error"); return; }
-  }
-
-  const entry = {
-    date,
-    notes,
-    photos: pmCompletionPhotos || []
-  };
-
-  if (needsChecklist) entry.checklistResults = pmChecklistState.slice();
-
-  pm.history = Array.isArray(pm.history) ? pm.history : [];
-  pm.history.unshift(entry);
+  const entry = { date, notes, photos: pmCompletionPhotos.slice() };
+  if (!Array.isArray(pm.history)) pm.history = [];
+  pm.history.push(entry);
 
   if (!saveState()) return;
 
   renderPmsList();
   renderDashboard();
+  showToast("PM logged");
   closePmComplete();
-  showToast("PM completed");
 });
+
+/* PM GALLERY */
+function collectPmGalleryPhotos(pm) {
+  const out = [];
+  const h = Array.isArray(pm.history) ? pm.history : [];
+  h.forEach(entry => {
+    const photos = Array.isArray(entry.photos) ? entry.photos : [];
+    photos.forEach(src => out.push({ src, date: entry.date || "" }));
+  });
+  return out;
+}
 
 function openPmGallery(id) {
   const pm = (pms || []).find(x => x.id === id);
   if (!pm) return;
-  const photos = getPmAllPhotos(pm);
-  if (pmGalleryTitle) pmGalleryTitle.textContent = `PM Photos: ${pm.name || ""}`;
-  if (pmGalleryMeta) pmGalleryMeta.textContent = photos.length ? `${photos.length} photo(s)` : "No photos yet.";
-  if (pmGalleryGrid) pmGalleryGrid.innerHTML = photos.map(src => `<img src="${src}" alt="PM photo">`).join("");
+
+  const photos = collectPmGalleryPhotos(pm);
+  if (pmGalleryTitle) pmGalleryTitle.textContent = `PM Photos — ${pm.name || ""}`;
+  if (pmGalleryMeta) pmGalleryMeta.textContent = photos.length
+    ? `${pm.area || ""} • ${pm.frequency || ""} • Total photos: ${photos.length}`
+    : `${pm.area || ""} • ${pm.frequency || ""} • No photos yet`;
+
+  if (pmGalleryGrid) {
+    if (!photos.length) {
+      pmGalleryGrid.innerHTML = `<div class="part-meta">No photos logged for this PM yet.</div>`;
+    } else {
+      pmGalleryGrid.innerHTML = `
+        <div class="photo-preview-grid">
+          ${photos.map((p, idx) => `
+            <div>
+              <div class="photo-thumb">
+                <img src="${p.src}" alt="PM Photo ${idx + 1}">
+              </div>
+              <div class="photo-caption">${escapeHtml(p.date || "")}</div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+  }
 
   pmGalleryOverlay?.classList.remove("hidden");
   setTimeout(() => pmGalleryPanel?.classList.add("show"), 10);
@@ -1098,311 +1620,102 @@ closePmGalleryBtn?.addEventListener("click", closePmGallery);
 pmGalleryOverlay?.addEventListener("click", (e) => { if (e.target === pmGalleryOverlay) closePmGallery(); });
 
 pmGalleryGrid?.addEventListener("click", (e) => {
-  if (e.target.tagName !== "IMG") return;
-  openLightbox(e.target.src);
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img?.src) openLightbox(img.src);
 });
 
-/* ---------------------------------------------------
-   INVENTORY
---------------------------------------------------- */
-searchInventory?.addEventListener("input", () => renderInventory());
-
-function renderInventory() {
-  if (!inventoryListEl) return;
-  const q = (searchInventory?.value || "").trim().toLowerCase();
-  const list = (inventory || []).filter(i => !q || String(i.name || "").toLowerCase().includes(q));
-
-  if (!list.length) {
-    inventoryListEl.innerHTML = `<div class="part-meta">No inventory items found.</div>`;
-    return;
-  }
-
-  inventoryListEl.innerHTML = list.map(i => `
-    <div class="pm-card">
-      <div class="pm-card-top">
-        <div>
-          <div class="pm-title">${escapeHtml(i.name || "Item")}</div>
-          <div class="pm-sub">${escapeHtml(i.category || "")} — ${escapeHtml(i.section || "")}</div>
-          <div class="pm-sub">Min: ${escapeHtml(i.minQty)} • Qty: ${escapeHtml(i.qty)}</div>
-        </div>
-      </div>
-    </div>
-  `).join("");
-}
-
-/* ---------------------------------------------------
-   SETTINGS
---------------------------------------------------- */
 /* ===================================================
-   Phase 3.4: Role / Admin PIN behavior (Additive)
+   PARTS STATUS FILTER / SEARCH
 =================================================== */
-closeAdminPinBtn?.addEventListener("click", closeAdminPinPrompt);
-adminPinOverlay?.addEventListener("click", (e) => { if (e.target === adminPinOverlay) closeAdminPinPrompt(); });
-
-adminLoginBtn?.addEventListener("click", () => {
-  if (!isAdminRole()) {
-    showToast("Set role to Admin on this device first", "error");
-    return;
-  }
-  const hasPin = !!getStoredAdminPin();
-  openAdminPinPrompt(hasPin ? "Enter Admin PIN" : "No PIN set. Enter a new PIN to set it.");
-});
-
-submitAdminPinBtn?.addEventListener("click", () => {
-  if (!isAdminRole()) return;
-  const entered = String(adminPinInput?.value || "").trim();
-  const stored = getStoredAdminPin();
-
-  if (!stored) {
-    if (!isValidPin(entered)) {
-      if (adminPinMsg) adminPinMsg.textContent = "PIN must be 4–8 digits";
-      return;
-    }
-    setStoredAdminPin(entered);
-    adminAuthed = true;
-    closeAdminPinPrompt();
-    applyRoleUI();
-    renderPmsList();
-    showToast("Admin unlocked (PIN set)");
-    return;
-  }
-
-  if (entered === stored) {
-    adminAuthed = true;
-    closeAdminPinPrompt();
-    applyRoleUI();
-    renderPmsList();
-    showToast("Admin unlocked");
-  } else {
-    if (adminPinMsg) adminPinMsg.textContent = "Incorrect PIN";
-    showToast("Incorrect PIN", "error");
-  }
-});
-
-adminLogoutBtn?.addEventListener("click", () => {
-  adminAuthed = false;
-  applyRoleUI();
-  renderPmsList();
-  showToast("Admin locked");
-});
-
-roleSelect?.addEventListener("change", () => {
-  const next = normalizeRole(roleSelect.value);
-  const allow = !!(roleCfg && roleCfg.allowRoleChange);
-  if (!allow && !(isAdminRole() && adminAuthed)) {
-    roleSelect.value = currentRole;
-    showToast("Role change locked by Admin", "error");
-    return;
-  }
-  currentRole = next;
-  saveRoleState();
-  applyRoleUI();
-  renderDashboard();
-  renderPmsList();
-});
-
-allowRoleChangeChk?.addEventListener("change", () => {
-  if (!(isAdminRole() && adminAuthed)) {
-    allowRoleChangeChk.checked = !!(roleCfg && roleCfg.allowRoleChange);
-    showToast("Admin only", "error");
-    return;
-  }
-  roleCfg = roleCfg || {};
-  roleCfg.allowRoleChange = !!allowRoleChangeChk.checked;
-  saveRoleState();
-  applyRoleUI();
-  showToast("Role setting updated");
-});
-
-saveAdminPinBtn?.addEventListener("click", () => {
-  if (!(isAdminRole() && adminAuthed)) {
-    showToast("Admin only", "error");
-    return;
-  }
-  const p1 = String(adminPinNew?.value || "").trim();
-  const p2 = String(adminPinConfirm?.value || "").trim();
-  if (!isValidPin(p1)) { showToast("PIN must be 4–8 digits", "error"); return; }
-  if (p1 !== p2) { showToast("PINs do not match", "error"); return; }
-  setStoredAdminPin(p1);
-  if (adminPinNew) adminPinNew.value = "";
-  if (adminPinConfirm) adminPinConfirm.value = "";
-  showToast("Admin PIN saved");
-});
-
-exportBtn?.addEventListener("click", () => exportAllData());
-exportPmComplianceBtn?.addEventListener("click", () => exportPmComplianceCSV());
-
-resetAllBtn?.addEventListener("click", () => {
-  if (!confirm("Reset ALL app data? This cannot be undone.")) return;
-  localStorage.clear();
-  location.reload();
-});
+function buildCompleteInventorySelect() { /* already above uses inventory */ }
 
 /* ---------------------------------------------------
-   AC CALC
+   EXPORT: PM Compliance CSV (Supervisor)
+   - Month-to-date expected vs completed
 --------------------------------------------------- */
-ac_calcBtn?.addEventListener("click", () => {
-  const oilRate = Number(ac_oilRate?.value || 0);
-  const pumpRate = Number(ac_pumpRate?.value || 0);
-  if (!Number.isFinite(oilRate) || !Number.isFinite(pumpRate) || oilRate <= 0 || pumpRate <= 0) {
-    return showToast("Enter valid rates", "error");
-  }
-  const total = (oilRate / pumpRate) * 60;
-  if (ac_totalAc) ac_totalAc.textContent = String(Math.round(total * 100) / 100);
-});
+function buildPmComplianceCsv() {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = today.getMonth(); // 0-based
+  const dayOfMonth = today.getDate();
 
-/* ---------------------------------------------------
-   LIGHTBOX
---------------------------------------------------- */
-function openLightbox(src) {
-  if (!lightboxImg || !lightboxOverlay) return;
-  lightboxImg.src = src;
-  lightboxOverlay.classList.remove("hidden");
-}
-lightboxOverlay?.addEventListener("click", () => {
-  lightboxOverlay.classList.add("hidden");
-  if (lightboxImg) lightboxImg.src = "";
-});
+  // Month-to-date expected:
+  // Daily: expected = days elapsed this month (1..today)
+  // Weekly: expected = number of weeks elapsed (ceil(day/7))
+  const expectedDaily = dayOfMonth;
+  const expectedWeekly = Math.ceil(dayOfMonth / 7);
 
-function openLightboxGallery(photos) {
-  const list = Array.isArray(photos) ? photos : [];
-  if (!list.length) return showToast("No photos", "error");
-  openLightbox(list[0]);
-}
+  const rows = [
+    ["PM Name","Area","Frequency","Expected (MTD)","Completed (MTD)","Compliance %","Last Completed","Due Today"]
+  ];
 
-/* ---------------------------------------------------
-   HELPERS
---------------------------------------------------- */
-function isDue(part) {
-  const qty = Number(part.qty || 0);
-  const min = Number(part.minQty || 0);
-  return qty <= min;
-}
-function isOverdue(part) {
-  const qty = Number(part.qty || 0);
-  return qty <= 0;
-}
+  const monthStr = String(m + 1).padStart(2,"0");
+  const ymPrefix = `${y}-${monthStr}-`;
 
-function isPmDue(pm) {
-  const last = getPmLastDate(pm);
-  const freq = pm.frequency || "Daily";
-  if (!last) return true;
+  (pms || []).forEach(pm => {
+    const freq = pm.frequency || "Daily";
+    const expected = (freq === "Weekly") ? expectedWeekly : expectedDaily;
 
-  const lastDate = new Date(last);
-  const today = new Date(getTodayStr());
-  const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+    const completions = (Array.isArray(pm.history) ? pm.history : [])
+      .filter(h => (h.date || "").startsWith(ymPrefix))
+      .map(h => h.date)
+      .filter(Boolean);
 
-  if (freq === "Daily") return diffDays >= 1;
-  if (freq === "Weekly") return diffDays >= 7;
-  return true;
-}
+    // daily: count unique dates; weekly: count entries
+    const completed = (freq === "Weekly")
+      ? completions.length
+      : new Set(completions).size;
 
-function getPmLastDate(pm) {
-  const h = Array.isArray(pm.history) ? pm.history : [];
-  return h.length ? h[0].date : "";
-}
+    const compliance = expected > 0 ? Math.min(100, Math.round((completed / expected) * 100)) : 0;
+    const last = getPmLastDate(pm) || "";
+    const dueToday = isPmDue(pm) ? "YES" : "NO";
 
-function countPmPhotoTotal(pm) {
-  const h = Array.isArray(pm.history) ? pm.history : [];
-  return h.reduce((sum, e) => sum + ((e.photos && e.photos.length) || 0), 0);
-}
-
-function getPmAllPhotos(pm) {
-  const h = Array.isArray(pm.history) ? pm.history : [];
-  const out = [];
-  h.forEach(e => {
-    (e.photos || []).forEach(p => out.push(p));
+    rows.push([
+      pm.name || "",
+      pm.area || "",
+      freq,
+      String(expected),
+      String(completed),
+      String(compliance),
+      last,
+      dueToday
+    ]);
   });
-  return out;
+
+  return rows.map(r => r.map(csvEscape).join(",")).join("\n");
 }
 
-async function filesToBase64(files, max = 4) {
-  const sliced = files.slice(0, max);
-  const reads = sliced.map(f => new Promise((resolve) => {
+function csvEscape(val) {
+  const s = String(val ?? "");
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+    return `"${s.replaceAll('"','""')}"`;
+  }
+  return s;
+}
+
+/* ---------------------------------------------------
+   EXPORT helpers
+--------------------------------------------------- */
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function readFileAsDataURL(file) {
+  return new Promise(resolve => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => resolve("");
-    reader.readAsDataURL(f);
-  }));
-  const res = await Promise.all(reads);
-  return res.filter(Boolean);
-}
-
-function renderPhotoPreview(el, photos) {
-  if (!el) return;
-  const list = Array.isArray(photos) ? photos : [];
-  el.innerHTML = list.map(src => `<img src="${src}" alt="photo">`).join("");
-}
-
-function getTodayStr() {
-  return new Date().toISOString().split("T")[0];
-}
-
-function exportAllData() {
-  const data = {
-    parts,
-    currentTons,
-    inventory,
-    problems,
-    pms,
-    exportedAt: new Date().toISOString()
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  downloadBlob(blob, "plant-maintenance-export.json");
-  showToast("Exported");
-}
-
-function exportMaintenanceCSV() {
-  const rows = [["date","type","title","notes"]];
-  (problems || []).forEach(p => {
-    rows.push([p.createdAt || "", "problem", p.title || "", p.notes || ""]);
+    reader.readAsDataURL(file);
   });
-  const csv = rows.map(r => r.map(x => `"${String(x).replaceAll('"','""')}"`).join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  downloadBlob(blob, "maintenance-log.csv");
-  showToast("CSV exported");
 }
 
-function exportPmComplianceCSV() {
-  const rows = [["pm_name","area","frequency","completed_date","notes","checklist_results_count","photos_count"]];
-  (pms || []).forEach(pm => {
-    const h = Array.isArray(pm.history) ? pm.history : [];
-    h.forEach(e => {
-      const cr = Array.isArray(e.checklistResults) ? e.checklistResults.filter(Boolean).length : "";
-      const photos = Array.isArray(e.photos) ? e.photos.length : 0;
-      rows.push([pm.name || "", pm.area || "", pm.frequency || "", e.date || "", e.notes || "", cr, photos]);
-    });
-  });
-  const csv = rows.map(r => r.map(x => `"${String(x).replaceAll('"','""')}"`).join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  downloadBlob(blob, "pm-compliance.csv");
-  showToast("PM CSV exported");
-}
-
-function downloadBlob(blob, filename) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    URL.revokeObjectURL(a.href);
-    a.remove();
-  }, 250);
-}
-
-function showToast(msg, type) {
-  const t = document.createElement("div");
-  t.className = "toast";
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.classList.add("show"), 10);
-  setTimeout(() => {
-    t.classList.remove("show");
-    setTimeout(() => t.remove(), 200);
-  }, 1800);
-}
-
+/* ---------------------------------------------------
+   UTIL
+--------------------------------------------------- */
 function escapeHtml(str) {
   return String(str || "")
     .replaceAll("&", "&amp;")
@@ -1410,4 +1723,4 @@ function escapeHtml(str) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
-       }
+   }
