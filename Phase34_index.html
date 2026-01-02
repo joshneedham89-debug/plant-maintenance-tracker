@@ -1,0 +1,635 @@
+<!--
+/*
+GOLD BASELINE VERIFIED
+Baseline: Locked (Pre-Phase 3.4)
+Changes: Additive Only
+No Existing Logic Modified
+*/
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plant Maintenance Tracker</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="app-container">
+
+    <!-- ---------------- HEADER ---------------- -->
+    <header class="app-header">
+      <img src="icons/icon-192.png" class="logo" alt="Logo">
+      <h1>Plant Maintenance Tracker</h1>
+    </header>
+
+    <!-- ---------------- DASHBOARD ---------------- -->
+    <section id="dashboardScreen" class="screen active">
+      <h2 class="section-title">Dashboard</h2>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">OK</div>
+          <div id="okCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Due Soon</div>
+          <div id="dueCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Overdue</div>
+          <div id="overCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tons Run</div>
+          <div id="tonsRun" class="stat-value">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Completed Today</div>
+          <div id="completedTodayCount" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed This Month</div>
+          <div id="completedMonthCount" class="stat-value">0</div>
+        </div>
+
+        <!-- Open Problems -->
+        <div class="stat-card stat-problems">
+          <div class="stat-label">Open Problems</div>
+          <div id="openProblemsCount" class="stat-value">0</div>
+        </div>
+
+        <!-- GOLD UPDATE: PM Due Today -->
+        <div class="stat-card stat-pm">
+          <div class="stat-label">PM Due Today</div>
+          <div id="pmDueTodayCount" class="stat-value">0</div>
+        </div>
+        <!-- END -->
+      </div>
+
+      <!-- Tons Update -->
+      <div class="card">
+        <h3>Update Tons</h3>
+        <input id="currentTonsInput" type="number" placeholder="Enter current tons" />
+        <button id="updateTonsBtn" class="primary-btn">Update</button>
+        <button id="resetTonsBtn" class="secondary-btn">Reset Tons</button>
+      </div>
+
+      <!-- Report Problem -->
+      <div class="card">
+        <h3>Problems</h3>
+        <button id="openProblemPanelBtn" class="primary-btn full">⚠️ Report a Problem</button>
+      </div>
+    </section>
+
+    <!-- ---------------- MAINTENANCE SCREEN ---------------- -->
+    <section id="maintenanceScreen" class="screen">
+      <h2 class="section-title">Maintenance</h2>
+
+      <div class="card maintenance-header">
+        <label>Search Parts</label>
+        <input
+          id="searchPartsInput"
+          type="text"
+          placeholder="Search by name, category, or section"
+        >
+
+        <label>Filter by Category</label>
+        <select id="filterCategory"></select>
+
+        <button id="addPartBtn" class="primary-btn full">+ Add Part</button>
+      </div>
+
+      <!-- Problems list -->
+      <div class="card">
+        <div class="problems-header-row">
+          <h3>Problems</h3>
+          <button id="openProblemPanelBtn2" class="secondary-btn">+ Report</button>
+        </div>
+
+        <div class="problem-filters">
+          <button class="prob-filter active" data-filter="ALL">All</button>
+          <button class="prob-filter" data-filter="Open">Open</button>
+          <button class="prob-filter" data-filter="In Progress">In Progress</button>
+          <button class="prob-filter" data-filter="Resolved">Resolved</button>
+        </div>
+
+        <div id="problemsList" class="problems-list"></div>
+      </div>
+
+      <!-- PMs -->
+      <div class="card">
+        <div class="problems-header-row">
+          <h3>PMs</h3>
+          <button id="openPmPanelBtn" class="secondary-btn">+ Add PM</button>
+        </div>
+
+        <div class="pm-filters">
+          <button class="pm-filter active" data-pmfilter="ALL">All</button>
+          <button class="pm-filter" data-pmfilter="DUE">Due</button>
+          <button class="pm-filter" data-pmfilter="DONE">Done</button>
+        </div>
+
+        <div id="pmsList" class="pms-list"></div>
+      </div>
+
+      <div id="partsList"></div>
+    </section>
+
+    <!-- ---------------- INVENTORY SCREEN ---------------- -->
+    <section id="inventoryScreen" class="screen">
+      <h2 class="section-title">Inventory</h2>
+
+      <div class="card">
+        <label>Search Inventory</label>
+        <input
+          id="searchInventoryInput"
+          type="text"
+          placeholder="Search by name, category, or location"
+        />
+
+        <button id="addInventoryBtn" class="primary-btn full">
+          + Add Inventory Item
+        </button>
+      </div>
+
+      <div id="inventoryList"></div>
+    </section>
+
+    <!-- ---------------- AC CALCULATOR SCREEN ---------------- -->
+    <section id="acScreen" class="screen">
+      <h2 class="section-title">Virgin AC Calculator</h2>
+
+      <div class="card light">
+        <label>Residual AC in RAP (%)</label>
+        <input id="ac_residual" type="number" step="0.1" value="4.9">
+
+        <label>% RAP in Mix (%)</label>
+        <input id="ac_rapPct" type="number" step="1" value="30">
+
+        <label>AC Target of Mix (%)</label>
+        <input id="ac_target" type="number" step="0.1" value="5.4">
+
+        <label>TPH Running Plant</label>
+        <input id="ac_tph" type="number" value="180">
+
+        <label>Total Tons Needed</label>
+        <input id="ac_totalTons" type="number" value="1200">
+
+        <button id="acCalcBtn" class="primary-btn full">Calculate</button>
+      </div>
+
+      <div class="card result-card">
+        <h3>Results</h3>
+        <p>Pump Rate (TPH): <span id="ac_pumpRate">0.00</span></p>
+        <p>Total AC Needed (Tons): <span id="ac_totalAc">0.00</span></p>
+      </div>
+    </section>
+
+    <!-- ---------------- SETTINGS SCREEN ---------------- -->
+    <section id="settingsScreen" class="screen">
+      <h2 class="section-title">Settings</h2>
+
+      <div class="card">
+        <button id="exportBtn" class="primary-btn full">Export Data</button>
+
+        <!-- GOLD UPDATE: Supervisor PM compliance export -->
+        <button id="exportPmComplianceBtn" class="secondary-btn full">Export PM Compliance (CSV)</button>
+        <!-- END -->
+
+        <button id="resetAllBtn" class="danger-btn full">Reset Entire App</button>
+      </div>
+    
+
+      <!-- ===================================================
+           Phase 3.4 (Additive Only) — Roles + Admin PIN (NEW PANEL)
+           This panel does NOT alter existing Settings behavior.
+      ==================================================== -->
+      <div class="card pm34-settings-card">
+        <div class="pm34-settings-header">
+          <h3 class="pm34-h3">Admin & Roles</h3>
+          <button id="pm34AdminStatus" class="pm34-chip" type="button">Locked</button>
+        </div>
+
+        <div class="pm34-row">
+          <div class="pm34-label">This device role</div>
+          <select id="pm34RoleSelect" class="pm34-select">
+            <option value="Ground">Ground Man</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Supervisor">Supervisor</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+
+        <div class="pm34-row pm34-btnrow">
+          <button id="pm34AdminUnlockBtn" class="pm34-btn pm34-btn-primary" type="button">Unlock Admin (PIN)</button>
+          <button id="pm34AdminLockBtn" class="pm34-btn pm34-btn-ghost hidden" type="button">Lock Admin</button>
+        </div>
+
+        <div id="pm34AdminPanel" class="pm34-admin-panel hidden">
+          <div class="pm34-subtitle">Set / Change Admin PIN</div>
+          <input id="pm34PinNew" class="pm34-input" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN (4–8 digits)">
+          <input id="pm34PinConfirm" class="pm34-input" type="password" inputmode="numeric" maxlength="8" placeholder="Confirm PIN">
+          <button id="pm34SavePinBtn" class="pm34-btn pm34-btn-primary" type="button">Save PIN</button>
+
+          <div class="pm34-subtitle" style="margin-top:14px;">PM Permissions (Locked)</div>
+          <div class="pm34-perm-note">PM permissions follow the Phase 3.4 matrix and are enforced only in the new PMs tab.</div>
+
+          <div class="pm34-perm-grid">
+            <div class="pm34-perm-card">
+              <div class="pm34-perm-role">Ground Man</div>
+              <div class="pm34-perm-line">View PMs ✅</div>
+              <div class="pm34-perm-line">Complete PM ❌</div>
+              <div class="pm34-perm-line">Checklist ❌</div>
+              <div class="pm34-perm-line">Photos ❌</div>
+            </div>
+            <div class="pm34-perm-card">
+              <div class="pm34-perm-role">Maintenance</div>
+              <div class="pm34-perm-line">View PMs ✅</div>
+              <div class="pm34-perm-line">Complete PM ✅</div>
+              <div class="pm34-perm-line">Checklist ✅</div>
+              <div class="pm34-perm-line">Photos ✅</div>
+            </div>
+            <div class="pm34-perm-card">
+              <div class="pm34-perm-role">Supervisor</div>
+              <div class="pm34-perm-line">View PMs ✅</div>
+              <div class="pm34-perm-line">Complete PM ✅</div>
+              <div class="pm34-perm-line">Checklist ✅</div>
+              <div class="pm34-perm-line">Photos ✅</div>
+            </div>
+            <div class="pm34-perm-card">
+              <div class="pm34-perm-role">Admin</div>
+              <div class="pm34-perm-line">Full PM Control ✅</div>
+              <div class="pm34-perm-line">Add/Edit/Delete ✅</div>
+              <div class="pm34-perm-line">Edit Checklists ✅</div>
+              <div class="pm34-perm-line">Visibility Controls ✅</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ================= END Phase 3.4 Settings Panel ================= -->
+</section>
+
+        <!-- ===================================================
+         Phase 3.4 (Additive Only) — NEW PMs TAB (ZERO-DRIFT)
+         NOTE: This does not use class="screen" and does not
+         participate in existing tab logic. It is isolated.
+    ==================================================== -->
+    <section id="pm34Screen" class="pm34-screen hidden" aria-hidden="true">
+      <div class="pm34-topbar">
+        <div>
+          <div class="pm34-title">Preventive Maintenance</div>
+          <div class="pm34-sub" id="pm34DueLine">0 PMs due today</div>
+        </div>
+        <button id="pm34AddPmBtn" class="pm34-btn pm34-btn-primary" type="button">+ Add PM</button>
+      </div>
+
+      <div class="pm34-filterbar">
+        <button class="pm34-filter active" data-filter="DUE" type="button">Due Today</button>
+        <button class="pm34-filter" data-filter="ALL" type="button">All</button>
+        <button class="pm34-filter" data-filter="DONE" type="button">Completed</button>
+      </div>
+
+      <div id="pm34List" class="pm34-list"></div>
+    </section>
+
+    <!-- PM34 COMPLETE PANEL (Checklist + Notes + Photos) -->
+    <div id="pm34CompleteOverlay" class="pm34-overlay hidden" aria-hidden="true">
+      <div class="pm34-modal" role="dialog" aria-modal="true">
+        <div class="pm34-modal-head">
+          <div class="pm34-modal-title" id="pm34CompleteTitle">Complete PM</div>
+          <button class="pm34-x" id="pm34CloseComplete" type="button">×</button>
+        </div>
+
+        <div class="pm34-modal-body">
+          <label class="pm34-label">Date</label>
+          <input id="pm34CompleteDate" class="pm34-input" type="date">
+
+          <div id="pm34ChecklistBlock" class="pm34-block hidden">
+            <div class="pm34-block-title">Checklist Items</div>
+            <div id="pm34Checklist" class="pm34-checklist"></div>
+            <div id="pm34ChecklistHint" class="pm34-hint">Check all items to enable completion.</div>
+          </div>
+
+          <label class="pm34-label">Notes</label>
+          <textarea id="pm34CompleteNotes" class="pm34-textarea" placeholder="Add any notes..."></textarea>
+
+          <div class="pm34-block">
+            <div class="pm34-block-title">Photos (Optional)</div>
+            <button id="pm34AddPhotoBtn" class="pm34-btn pm34-btn-ghost" type="button">📷 Add Photo (<span id="pm34PhotoCount">0</span>/4)</button>
+            <input id="pm34PhotoInput" type="file" accept="image/*" multiple class="pm34-file">
+            <div id="pm34PhotoGrid" class="pm34-photo-grid"></div>
+          </div>
+
+          <button id="pm34CompleteBtn" class="pm34-btn pm34-btn-primary pm34-btn-big" type="button">Complete PM</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PM34 ADMIN PIN MODAL -->
+    <div id="pm34PinOverlay" class="pm34-overlay hidden" aria-hidden="true">
+      <div class="pm34-modal" role="dialog" aria-modal="true">
+        <div class="pm34-modal-head">
+          <div class="pm34-modal-title">Admin PIN</div>
+          <button class="pm34-x" id="pm34ClosePin" type="button">×</button>
+        </div>
+        <div class="pm34-modal-body">
+          <label class="pm34-label">Enter PIN</label>
+          <input id="pm34PinInput" class="pm34-input" type="password" inputmode="numeric" maxlength="8" placeholder="4–8 digits">
+          <div id="pm34PinMsg" class="pm34-hint"></div>
+          <button id="pm34SubmitPinBtn" class="pm34-btn pm34-btn-primary pm34-btn-big" type="button">Unlock Admin</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ---------------- BOTTOM NAV ---------------- -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-screen="dashboardScreen">🏠<br>Home</button>
+      <button class="nav-btn" data-screen="maintenanceScreen">🛠️<br>Maint</button>
+      <button class="pm34-nav-btn" id="pm34NavBtn" type="button">📋<br>PMs</button>
+      <button class="nav-btn" data-screen="inventoryScreen">📦<br>Inventory</button>
+      <button class="nav-btn" data-screen="acScreen">📊<br>AC Calc</button>
+      <button class="nav-btn" data-screen="settingsScreen">⚙️<br>Settings</button>
+    </nav>
+
+  </div>
+
+  <!-- ADD / EDIT PART PANEL -->
+  <div id="partPanelOverlay" class="panel-overlay hidden">
+    <div id="addPartPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="partPanelTitle">Add New Part</h3>
+        <button id="closePartPanel" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+
+        <label>Part Name</label>
+        <input id="newPartName" type="text" list="inventoryNameList">
+
+        <datalist id="inventoryNameList"></datalist>
+
+        <label>Category</label>
+        <select id="newPartCategory"></select>
+
+        <label>Section / Location</label>
+        <input id="newPartSection" type="text">
+
+        <label>Days Interval</label>
+        <input id="newPartDays" type="number">
+
+        <label>Ton Interval</label>
+        <input id="newPartTons" type="number">
+
+        <div class="panel-footer">
+          <button id="savePartBtn" class="primary-btn full">Save Part</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT INVENTORY PANEL -->
+  <div id="inventoryPanelOverlay" class="panel-overlay hidden">
+    <div id="inventoryPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="inventoryPanelTitle">Add Inventory Item</h3>
+        <button id="closeInventoryPanel" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+
+        <label>Part Name</label>
+        <input id="invPartName" type="text">
+
+        <label>Category</label>
+        <select id="invCategory"></select>
+
+        <label>Location</label>
+        <input id="invLocation" type="text">
+
+        <label>Quantity</label>
+        <input id="invQty" type="number">
+
+        <label>Notes</label>
+        <input id="invNotes" type="text">
+
+        <div class="panel-footer">
+          <button id="saveInventoryBtn" class="primary-btn full">
+            Save Inventory Item
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLETE MAINTENANCE PANEL -->
+  <div id="completePanelOverlay" class="panel-overlay hidden">
+    <div id="completePanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3>Complete Maintenance</h3>
+        <button id="closeCompletePanel" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <label>Completion Date</label>
+        <input id="compDate" type="date">
+
+        <label>Tons at Completion</label>
+        <input id="compTons" type="number">
+
+        <label>Notes</label>
+        <input id="compNotes" type="text">
+
+        <h4 class="subheading">Photos (optional)</h4>
+        <button id="compAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <input id="compPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
+        <div id="compPhotoPreview" class="photo-preview"></div>
+
+        <h4 class="subheading">Inventory Used (optional)</h4>
+
+        <label>Inventory Item</label>
+        <select id="compInvSelect"></select>
+
+        <label>Quantity Used</label>
+        <input id="compInvQty" type="number" min="1" value="1">
+
+        <button id="compAddItemBtn" class="secondary-btn full">
+          + Add Used Item
+        </button>
+
+        <div id="compUsedList" class="used-items-list"></div>
+
+        <div class="panel-footer">
+          <button id="saveCompletionBtn" class="primary-btn full">
+            Save Maintenance
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORT PROBLEM PANEL -->
+  <div id="problemPanelOverlay" class="panel-overlay hidden">
+    <div id="problemPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3>Report a Problem</h3>
+        <button id="closeProblemPanel" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+
+        <label>Title</label>
+        <input id="probTitle" type="text" placeholder="Short issue name (ex: Slat conveyor squeal)">
+
+        <label>Category</label>
+        <select id="probCategory"></select>
+
+        <label>Area / Location</label>
+        <input id="probLocation" type="text" placeholder="Where is it?">
+
+        <label>Severity</label>
+        <select id="probSeverity">
+          <option value="Low">Low</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+
+        <label>Status</label>
+        <select id="probStatus">
+          <option value="Open" selected>Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+
+        <label>Notes</label>
+        <input id="probNotes" type="text" placeholder="Extra details (optional)">
+
+        <h4 class="subheading">Photos (optional)</h4>
+        <button id="probAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <input id="probPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
+        <div id="probPhotoPreview" class="photo-preview"></div>
+
+        <div class="panel-footer">
+          <button id="saveProblemBtn" type="button" class="primary-btn full">Save Problem</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- PROBLEM DETAIL PANEL -->
+  <div id="problemDetailOverlay" class="panel-overlay hidden">
+    <div id="problemDetailPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="problemDetailTitle">Problem</h3>
+        <button id="closeProblemDetail" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <div id="problemDetailMeta" class="problem-detail-meta"></div>
+
+        <h4 class="subheading">Status</h4>
+        <div id="problemDetailStatus" class="status-pill-row"></div>
+
+        <h4 class="subheading">Photos</h4>
+        <div id="problemDetailPhotos" class="photo-preview"></div>
+
+        <div class="panel-footer">
+          <button id="resolveLogBtn" class="primary-btn full">Resolve &amp; Log Maintenance</button>
+          <button id="deleteProblemBtn" class="danger-btn full">Delete Problem</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PM ADD/EDIT PANEL -->
+  <div id="pmPanelOverlay" class="panel-overlay hidden">
+    <div id="pmPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="pmPanelTitle">Add PM</h3>
+        <button id="closePmPanel" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <label>PM Name</label>
+        <input id="pmName" type="text" placeholder="ex: Grease bearings">
+
+        <label>Area</label>
+        <select id="pmArea"></select>
+
+        <label>Frequency</label>
+        <select id="pmFrequency">
+          <option value="Daily">Daily</option>
+          <option value="Weekly">Weekly</option>
+        </select>
+
+        <div class="panel-footer">
+          <button id="savePmBtn" class="primary-btn full">Save PM</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PM COMPLETE PANEL -->
+  <div id="pmCompleteOverlay" class="panel-overlay hidden">
+    <div id="pmCompletePanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="pmCompleteTitle">Complete PM</h3>
+        <button id="closePmComplete" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <label>Completion Date</label>
+        <input id="pmCompDate" type="date">
+
+        <label>Notes</label>
+        <input id="pmCompNotes" type="text" placeholder="Optional notes">
+
+        <h4 class="subheading">Photos (optional)</h4>
+        <button id="pmAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <input id="pmPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
+        <div id="pmPhotoPreview" class="photo-preview"></div>
+
+        <div class="panel-footer">
+          <button id="savePmCompletionBtn" class="primary-btn full">Save PM</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOLD UPDATE: PM GALLERY (view all photos for one PM) -->
+  <div id="pmGalleryOverlay" class="panel-overlay hidden">
+    <div id="pmGalleryPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="pmGalleryTitle">PM Photos</h3>
+        <button id="closePmGallery" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <div id="pmGalleryMeta" class="part-meta"></div>
+        <div id="pmGalleryGrid" class="photo-preview"></div>
+      </div>
+    </div>
+  </div>
+  <!-- END PM GALLERY -->
+
+  <!-- LIGHTBOX -->
+  <div id="lightboxOverlay" class="lightbox-overlay hidden" aria-hidden="true">
+    <button id="lightboxClose" class="lightbox-close" aria-label="Close">✖</button>
+    <img id="lightboxImg" class="lightbox-img" alt="Full size photo">
+  </div>
+
+  <!-- TOAST -->
+  <div id="toastContainer" class="toast"></div>
+
+  <script src="inventory.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
