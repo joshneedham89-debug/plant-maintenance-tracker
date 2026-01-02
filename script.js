@@ -1,3 +1,9 @@
+/*
+GOLD BASELINE VERIFIED
+Baseline: Locked (Pre-Phase 3.4)
+Changes: Additive Only
+No Existing Logic Modified
+*/
 /* ---------------------------------------------------
    STORAGE KEYS
 --------------------------------------------------- */
@@ -1724,3 +1730,591 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
    }
+
+
+/* ===================================================
+   Phase 3.4 (Additive Only) — PMs Tab + Checklist Completion + Roles
+   ZERO-DRIFT MODE: This block is isolated and does NOT modify
+   existing functions or execution paths. It only adds new listeners
+   and reads/writes localStorage using existing keys.
+=================================================== */
+(() => {
+  "use strict";
+
+  // Existing key (do not change)
+  const PM34_PMS_KEY = "pm_pms";
+
+  // New namespaced keys (optional, backward compatible)
+  const PM34_ROLE_KEY = "pm34_role";
+  const PM34_ADMIN_PIN_KEY = "pm34_admin_pin";
+
+  const ROLES = ["Ground", "Maintenance", "Supervisor", "Admin"];
+  const AREAS = ["Cold Feed", "RAP", "Drum", "Drag", "Silos", "Scales"];
+
+  // UI refs (all new IDs/classes)
+  const navBtn = document.getElementById("pm34NavBtn");
+  const pmScreen = document.getElementById("pm34Screen");
+  const pmList = document.getElementById("pm34List");
+  const dueLine = document.getElementById("pm34DueLine");
+  const addPmBtn = document.getElementById("pm34AddPmBtn"); // admin-only (Phase 3.4)
+  const filterBtns = Array.from(document.querySelectorAll(".pm34-filter"));
+
+  // Complete modal
+  const compOverlay = document.getElementById("pm34CompleteOverlay");
+  const compTitle = document.getElementById("pm34CompleteTitle");
+  const compDate = document.getElementById("pm34CompleteDate");
+  const compNotes = document.getElementById("pm34CompleteNotes");
+  const checklistBlock = document.getElementById("pm34ChecklistBlock");
+  const checklistEl = document.getElementById("pm34Checklist");
+  const checklistHint = document.getElementById("pm34ChecklistHint");
+  const addPhotoBtn = document.getElementById("pm34AddPhotoBtn");
+  const photoInput = document.getElementById("pm34PhotoInput");
+  const photoGrid = document.getElementById("pm34PhotoGrid");
+  const photoCount = document.getElementById("pm34PhotoCount");
+  const completeBtn = document.getElementById("pm34CompleteBtn");
+  const closeComplete = document.getElementById("pm34CloseComplete");
+
+  // Admin/roles settings
+  const roleSelect = document.getElementById("pm34RoleSelect");
+  const adminStatusChip = document.getElementById("pm34AdminStatus");
+  const adminUnlockBtn = document.getElementById("pm34AdminUnlockBtn");
+  const adminLockBtn = document.getElementById("pm34AdminLockBtn");
+  const adminPanel = document.getElementById("pm34AdminPanel");
+  const pinNew = document.getElementById("pm34PinNew");
+  const pinConfirm = document.getElementById("pm34PinConfirm");
+  const savePinBtn = document.getElementById("pm34SavePinBtn");
+
+  // PIN modal
+  const pinOverlay = document.getElementById("pm34PinOverlay");
+  const pinInput = document.getElementById("pm34PinInput");
+  const pinMsg = document.getElementById("pm34PinMsg");
+  const pinSubmit = document.getElementById("pm34SubmitPinBtn");
+  const pinClose = document.getElementById("pm34ClosePin");
+
+  // State (isolated)
+  let pmFilter = "DUE";
+  let currentRole = loadRole();
+  let adminUnlocked = false;
+
+  let completingPmId = null;
+  let checklistState = [];
+  let completionPhotos = [];
+
+  // Guard: if new UI not present, do nothing (baseline safe)
+  if (!navBtn || !pmScreen) return;
+
+  function loadRole() {
+    const r = String(localStorage.getItem(PM34_ROLE_KEY) || "Maintenance");
+    if (ROLES.includes(r)) return r;
+    return "Maintenance";
+  }
+  function saveRole(r) {
+    localStorage.setItem(PM34_ROLE_KEY, r);
+  }
+
+  function getAdminPin() {
+    return String(localStorage.getItem(PM34_ADMIN_PIN_KEY) || "");
+  }
+  function setAdminPin(pin) {
+    localStorage.setItem(PM34_ADMIN_PIN_KEY, String(pin));
+  }
+  function validPin(pin) {
+    return /^[0-9]{4,8}$/.test(String(pin || "").trim());
+  }
+
+  function can(action) {
+    // Locked matrix for PM34 (new flow only)
+    // view: all; complete/checklist/photos: not Ground; manage: Admin + unlocked
+    if (action === "view") return true;
+    if (action === "complete" || action === "checklist" || action === "photos") return currentRole !== "Ground";
+    if (action === "manage") return currentRole === "Admin" && adminUnlocked;
+    return false;
+  }
+
+  function readPms() {
+    try {
+      const raw = localStorage.getItem(PM34_PMS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+  function writePms(arr) {
+    try {
+      localStorage.setItem(PM34_PMS_KEY, JSON.stringify(arr || []));
+      return true;
+    } catch (e) {
+      toast("Save failed (storage full). Export photos or reduce images.");
+      return false;
+    }
+  }
+
+  function todayStr() {
+    const d = new Date();
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    const yyyy = String(d.getFullYear());
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function parseDate(s) {
+    // supports YYYY-MM-DD or MM/DD/YYYY (fallback)
+    const str = String(s || "").trim();
+    if (!str) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return new Date(str+"T00:00:00");
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+      const [m,d,y]=str.split("/");
+      return new Date(`${y}-${m}-${d}T00:00:00`);
+    }
+    const d = new Date(str);
+    return Number.isFinite(d.getTime()) ? d : null;
+  }
+
+  function lastDoneDate(pm) {
+    const h = Array.isArray(pm.history) ? pm.history : [];
+    if (!h.length) return "";
+    return String(h[0].date || "");
+  }
+
+  function isDue(pm) {
+    const freq = String(pm.frequency || "Daily");
+    const last = parseDate(lastDoneDate(pm));
+    if (!last) return true;
+    const now = parseDate(todayStr());
+    const diffDays = Math.floor((now - last) / (1000*60*60*24));
+    if (freq === "Weekly") return diffDays >= 7;
+    return diffDays >= 1; // Daily default
+  }
+
+  function visAllows(pm) {
+    // Optional visibility object; default visible
+    const v = pm && pm.visibility;
+    if (!v) return true;
+    if (currentRole === "Admin") return v.Admin !== false;
+    if (currentRole === "Supervisor") return v.Supervisor !== false;
+    if (currentRole === "Maintenance") return v.Maintenance !== false;
+    if (currentRole === "Ground") return v.Ground !== false;
+    return true;
+  }
+
+  function groupByArea(pms) {
+    const g = {};
+    AREAS.forEach(a => g[a] = []);
+    pms.forEach(pm => {
+      const a = AREAS.includes(pm.area) ? pm.area : AREAS[0];
+      g[a].push(pm);
+    });
+    return g;
+  }
+
+  // Screen show/hide isolated (doesn't touch existing .screen logic)
+  function showPm34() {
+    pmScreen.classList.remove("hidden");
+    pmScreen.setAttribute("aria-hidden", "false");
+    navBtn.classList.add("pm34-active");
+    render();
+  }
+  function hidePm34() {
+    pmScreen.classList.add("hidden");
+    pmScreen.setAttribute("aria-hidden", "true");
+    navBtn.classList.remove("pm34-active");
+    closeCompleteModal();
+    closePinModal();
+  }
+
+  // Close PM34 if user taps any existing nav button (additive listener)
+  document.addEventListener("click", (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLElement)) return;
+    const nav = t.closest(".nav-btn");
+    if (nav) hidePm34();
+  });
+
+  navBtn.addEventListener("click", () => {
+    const isOpen = !pmScreen.classList.contains("hidden");
+    if (isOpen) hidePm34();
+    else showPm34();
+  });
+
+  // Filters
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      pmFilter = String(btn.dataset.filter || "DUE");
+      filterBtns.forEach(b => b.classList.toggle("active", b === btn));
+      render();
+    });
+  });
+
+  // Add PM (admin-only) — placeholder behavior is NOT allowed.
+  // We will reuse existing "Add PM" UI if it exists in baseline by clicking it,
+  // but WITHOUT changing any baseline logic.
+  addPmBtn.addEventListener("click", () => {
+    if (!can("manage")) return toast("Admin only (unlock PIN).");
+    // Try to open existing baseline Add PM panel if it exists (id may vary).
+    const legacyBtn = document.querySelector("#openPmPanelBtn, #addPmBtn, [data-action='add-pm']");
+    if (legacyBtn instanceof HTMLElement) {
+      legacyBtn.click();
+      return;
+    }
+    toast("Add PM uses the existing PM add panel in Gold Baseline.");
+  });
+
+  // Role select
+  function applyRoleUi() {
+    if (roleSelect) roleSelect.value = currentRole;
+    const isAdmin = currentRole === "Admin";
+    const unlocked = isAdmin && adminUnlocked;
+    if (adminStatusChip) adminStatusChip.textContent = unlocked ? "Unlocked" : "Locked";
+    if (adminLockBtn) adminLockBtn.classList.toggle("hidden", !unlocked);
+    if (adminPanel) adminPanel.classList.toggle("hidden", !unlocked);
+  }
+
+  if (roleSelect) {
+    roleSelect.addEventListener("change", () => {
+      const next = String(roleSelect.value || "Maintenance");
+      currentRole = ROLES.includes(next) ? next : "Maintenance";
+      saveRole(currentRole);
+      // If role changes away from Admin, lock admin
+      if (currentRole !== "Admin") adminUnlocked = false;
+      applyRoleUi();
+      render();
+    });
+  }
+
+  // PIN modal open/close
+  function openPinModal(msg) {
+    if (pinMsg) pinMsg.textContent = msg || "";
+    if (pinInput) pinInput.value = "";
+    pinOverlay.classList.remove("hidden");
+    pinOverlay.setAttribute("aria-hidden", "false");
+  }
+  function closePinModal() {
+    if (!pinOverlay) return;
+    pinOverlay.classList.add("hidden");
+    pinOverlay.setAttribute("aria-hidden", "true");
+    if (pinMsg) pinMsg.textContent = "";
+    if (pinInput) pinInput.value = "";
+  }
+
+  if (pinClose) pinClose.addEventListener("click", closePinModal);
+  if (pinOverlay) pinOverlay.addEventListener("click", (e) => { if (e.target === pinOverlay) closePinModal(); });
+
+  if (adminUnlockBtn) adminUnlockBtn.addEventListener("click", () => {
+    if (currentRole !== "Admin") return toast("Set role to Admin first.");
+    const stored = getAdminPin();
+    if (!stored) openPinModal("No PIN set yet. Enter a new PIN to set it.");
+    else openPinModal("Enter Admin PIN");
+  });
+
+  if (pinSubmit) pinSubmit.addEventListener("click", () => {
+    if (currentRole !== "Admin") return;
+    const entered = String(pinInput.value || "").trim();
+    const stored = getAdminPin();
+
+    if (!stored) {
+      if (!validPin(entered)) {
+        if (pinMsg) pinMsg.textContent = "PIN must be 4–8 digits.";
+        return;
+      }
+      setAdminPin(entered);
+      adminUnlocked = true;
+      closePinModal();
+      applyRoleUi();
+      toast("Admin unlocked (PIN set).");
+      return;
+    }
+
+    if (entered === stored) {
+      adminUnlocked = true;
+      closePinModal();
+      applyRoleUi();
+      toast("Admin unlocked.");
+    } else {
+      if (pinMsg) pinMsg.textContent = "Incorrect PIN.";
+      toast("Incorrect PIN.");
+    }
+  });
+
+  if (adminLockBtn) adminLockBtn.addEventListener("click", () => {
+    adminUnlocked = false;
+    applyRoleUi();
+    toast("Admin locked.");
+  });
+
+  if (savePinBtn) savePinBtn.addEventListener("click", () => {
+    if (!can("manage")) return toast("Admin only.");
+    const p1 = String(pinNew.value || "").trim();
+    const p2 = String(pinConfirm.value || "").trim();
+    if (!validPin(p1)) return toast("PIN must be 4–8 digits.");
+    if (p1 !== p2) return toast("PINs do not match.");
+    setAdminPin(p1);
+    pinNew.value = "";
+    pinConfirm.value = "";
+    toast("PIN saved.");
+  });
+
+  // Completion modal logic
+  function openCompleteModal(pm) {
+    completingPmId = pm.id;
+    completionPhotos = [];
+    renderPhotoGrid();
+
+    if (compTitle) compTitle.textContent = `Complete PM - ${pm.area || "PM"}`;
+    if (compDate) compDate.value = todayStr();
+    if (compNotes) compNotes.value = "";
+
+    const checklist = Array.isArray(pm.checklist) ? pm.checklist : [];
+    checklistState = checklist.map(() => false);
+
+    // Checklist block
+    if (checklist.length) {
+      checklistBlock.classList.remove("hidden");
+      checklistEl.innerHTML = checklist.map((item, idx) => {
+        const disabled = !can("checklist");
+        return `
+          <label class="pm34-check ${disabled ? "disabled" : ""}">
+            <input type="checkbox" data-idx="${idx}" ${disabled ? "disabled" : ""}>
+            <span>${escapeHtml(item)}</span>
+          </label>
+        `;
+      }).join("");
+      if (checklistHint) checklistHint.textContent = can("checklist")
+        ? "Check all items to enable completion."
+        : "Ground role is view-only.";
+      // Disabled until all checked
+      setCompleteEnabled(false);
+    } else {
+      checklistBlock.classList.add("hidden");
+      checklistEl.innerHTML = "";
+      setCompleteEnabled(true);
+    }
+
+    // Photos permission
+    const photosOk = can("photos");
+    addPhotoBtn.disabled = !photosOk;
+    addPhotoBtn.style.opacity = photosOk ? "" : "0.55";
+
+    // Complete permission
+    if (!can("complete")) {
+      setCompleteEnabled(false);
+      completeBtn.textContent = "View Only";
+      completeBtn.disabled = true;
+    } else {
+      completeBtn.textContent = "Complete PM";
+    }
+
+    compOverlay.classList.remove("hidden");
+    compOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function closeCompleteModal() {
+    if (!compOverlay) return;
+    compOverlay.classList.add("hidden");
+    compOverlay.setAttribute("aria-hidden", "true");
+    completingPmId = null;
+    checklistState = [];
+    completionPhotos = [];
+    if (checklistEl) checklistEl.innerHTML = "";
+    renderPhotoGrid();
+  }
+
+  function setCompleteEnabled(enabled) {
+    if (!completeBtn) return;
+    completeBtn.disabled = !enabled;
+  }
+
+  if (closeComplete) closeComplete.addEventListener("click", closeCompleteModal);
+  if (compOverlay) compOverlay.addEventListener("click", (e) => { if (e.target === compOverlay) closeCompleteModal(); });
+
+  if (checklistEl) checklistEl.addEventListener("change", (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement)) return;
+    const idx = Number(t.dataset.idx);
+    if (!Number.isFinite(idx)) return;
+    checklistState[idx] = !!t.checked;
+    const all = checklistState.length ? checklistState.every(Boolean) : true;
+    // Only enable if role can complete
+    if (can("complete")) setCompleteEnabled(all);
+  });
+
+  // Photos
+  function updatePhotoCount() {
+    if (photoCount) photoCount.textContent = String(completionPhotos.length);
+  }
+  function renderPhotoGrid() {
+    if (!photoGrid) return;
+    updatePhotoCount();
+    photoGrid.innerHTML = completionPhotos.map(src => `<img src="${src}" alt="photo">`).join("");
+  }
+  async function filesToBase64(files, max) {
+    const arr = Array.from(files || []).slice(0, max);
+    const reads = arr.map(f => new Promise((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ""));
+      r.onerror = () => resolve("");
+      r.readAsDataURL(f);
+    }));
+    const res = await Promise.all(reads);
+    return res.filter(Boolean);
+  }
+
+  addPhotoBtn.addEventListener("click", () => {
+    if (!can("photos")) return;
+    photoInput.click();
+  });
+
+  photoInput.addEventListener("change", async () => {
+    if (!can("photos")) return;
+    const add = await filesToBase64(photoInput.files, 4 - completionPhotos.length);
+    completionPhotos = completionPhotos.concat(add).slice(0, 4);
+    renderPhotoGrid();
+    photoInput.value = "";
+  });
+
+  // Complete
+  completeBtn.addEventListener("click", () => {
+    if (!can("complete")) return;
+
+    const pms = readPms();
+    const idx = pms.findIndex(x => x && x.id === completingPmId);
+    if (idx < 0) return;
+
+    const pm = pms[idx];
+    const checklist = Array.isArray(pm.checklist) ? pm.checklist : [];
+    if (checklist.length) {
+      const all = checklistState.length ? checklistState.every(Boolean) : false;
+      if (!all) return toast("Check all checklist items first.");
+    }
+
+    const entry = {
+      date: compDate.value || todayStr(),
+      notes: String(compNotes.value || "").trim(),
+      photos: completionPhotos.slice(0, 4)
+    };
+    if (checklist.length) entry.checklistResults = checklistState.slice();
+
+    pm.history = Array.isArray(pm.history) ? pm.history : [];
+    pm.history.unshift(entry);
+
+    pms[idx] = pm;
+    if (!writePms(pms)) return;
+
+    closeCompleteModal();
+    render();
+    toast("PM completed.");
+  });
+
+  // PM list click
+  pmList.addEventListener("click", (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLElement)) return;
+    const card = t.closest("[data-pm34-id]");
+    if (!card) return;
+    const id = card.getAttribute("data-pm34-id");
+    const pms = readPms().filter(visAllows);
+    const pm = pms.find(x => x && x.id === id);
+    if (!pm) return;
+
+    if (t.closest(".pm34-do-complete")) {
+      // Ground is view-only
+      if (!can("complete")) return toast("Ground is view-only for PMs.");
+      // If due filter shows only due, but can still complete
+      openCompleteModal(pm);
+      return;
+    }
+  });
+
+  function render() {
+    const raw = readPms().filter(visAllows);
+
+    const dueCount = raw.filter(isDue).length;
+    if (dueLine) dueLine.textContent = `${dueCount} PMs due today`;
+
+    // Admin-only button visibility
+    addPmBtn.style.display = can("manage") ? "" : "none";
+
+    const list = raw.filter(pm => {
+      const due = isDue(pm);
+      if (pmFilter === "DUE") return due;
+      if (pmFilter === "DONE") return !due;
+      return true; // ALL
+    });
+
+    if (!list.length) {
+      pmList.innerHTML = `<div class="pm34-card">No PMs in this filter.</div>`;
+      return;
+    }
+
+    const grouped = groupByArea(list);
+    pmList.innerHTML = AREAS.map(area => {
+      const items = grouped[area] || [];
+      if (!items.length) return "";
+      return `
+        <div class="pm34-area">
+          <div class="pm34-area-title">${escapeHtml(area)}</div>
+          ${items.map(pm => {
+            const due = isDue(pm);
+            const last = lastDoneDate(pm);
+            const checklist = Array.isArray(pm.checklist) ? pm.checklist.length : 0;
+            const pill = due ? `<span class="pm34-pill due">DUE</span>` : `<span class="pm34-pill done">DONE</span>`;
+            const hint = `${escapeHtml(pm.frequency || "Daily")}${last ? " • Last: " + escapeHtml(last) : ""}${checklist ? " • ☑️ " + checklist : ""}`;
+            return `
+              <div class="pm34-card" data-pm34-id="${escapeHtml(pm.id)}">
+                <div class="pm34-card-top">
+                  <div>
+                    <div class="pm34-name">${escapeHtml(pm.name || "PM")}</div>
+                    <div class="pm34-meta">${hint}</div>
+                  </div>
+                  ${pill}
+                </div>
+                <div class="pm34-actions">
+                  <button class="pm34-btn pm34-btn-primary pm34-do-complete" type="button" ${can("complete") ? "" : "disabled"}>${can("complete") ? "Complete PM" : "View Only"}</button>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }).join("");
+
+    applyRoleUi();
+  }
+
+  function toast(msg) {
+    // Use existing toast if present, else minimal
+    if (typeof window.showToast === "function") { window.showToast(msg); return; }
+    const el = document.createElement("div");
+    el.textContent = msg;
+    el.style.position = "fixed";
+    el.style.left = "50%";
+    el.style.transform = "translateX(-50%)";
+    el.style.bottom = "86px";
+    el.style.background = "rgba(0,0,0,0.85)";
+    el.style.color = "#fff";
+    el.style.padding = "10px 12px";
+    el.style.borderRadius = "12px";
+    el.style.fontWeight = "800";
+    el.style.zIndex = "9999";
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1700);
+  }
+
+  function escapeHtml(str) {
+    return String(str || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  // Initialize UI
+  document.addEventListener("DOMContentLoaded", () => {
+    currentRole = loadRole();
+    applyRoleUi();
+  });
+
+  // Immediate apply (in case script runs after DOM is ready)
+  applyRoleUi();
+})();

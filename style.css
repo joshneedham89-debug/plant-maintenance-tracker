@@ -1,3 +1,9 @@
+/*
+GOLD BASELINE VERIFIED
+Baseline: Locked (Pre-Phase 3.4)
+Changes: Additive Only
+No Existing Logic Modified
+*/
 /* ---------------------------------------------------
    Global Theme
 --------------------------------------------------- */
@@ -682,3 +688,308 @@ select {
    Utility
 --------------------------------------------------- */
 .hidden { display: none; }
+
+
+/* ===================================================
+   Phase 3.4 (Additive Only) — PMs Tab + Admin/Role Panel
+   Namespaced: pm34-*
+   Does NOT touch existing classes/variables.
+=================================================== */
+
+.pm34-nav-btn{
+  border:0;
+  background: transparent;
+  font-weight: 900;
+  font-size: 13px;
+  padding: 8px 8px;
+  border-radius: 12px;
+  cursor:pointer;
+  color: inherit;
+}
+.pm34-nav-btn.pm34-active{
+  background: rgba(255,255,255,0.12);
+}
+
+.pm34-screen{
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  padding: 14px 14px 92px;
+  overflow:auto;
+  background: transparent;
+}
+
+.pm34-topbar{
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 2px 10px;
+}
+.pm34-title{
+  font-size: 22px;
+  font-weight: 900;
+}
+.pm34-sub{
+  opacity: 0.85;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.pm34-filterbar{
+  display:flex;
+  gap: 10px;
+  margin: 8px 0 12px;
+  flex-wrap: wrap;
+}
+.pm34-filter{
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 900;
+  cursor:pointer;
+  background: rgba(255,255,255,0.08);
+  color: inherit;
+}
+.pm34-filter.active{
+  background: rgba(84, 140, 255, 0.22);
+}
+
+.pm34-list{
+  display:flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pm34-area-title{
+  font-weight: 900;
+  margin: 12px 2px 6px;
+  opacity: 0.9;
+}
+
+.pm34-card{
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.pm34-card-top{
+  display:flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+.pm34-name{
+  font-weight: 900;
+  font-size: 16px;
+}
+.pm34-meta{
+  font-size: 12px;
+  opacity: 0.75;
+  margin-top: 4px;
+}
+.pm34-pill{
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.16);
+  white-space: nowrap;
+}
+.pm34-pill.due{ background: rgba(255, 84, 84, 0.18); border-color: rgba(255,84,84,0.28); }
+.pm34-pill.done{ background: rgba(84, 255, 140, 0.14); border-color: rgba(84,255,140,0.22); }
+
+.pm34-actions{
+  display:flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.pm34-btn{
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 900;
+  cursor:pointer;
+}
+.pm34-btn-primary{
+  background: rgba(84, 140, 255, 0.88);
+  color: #fff;
+}
+.pm34-btn-ghost{
+  background: rgba(255,255,255,0.08);
+  color: inherit;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.pm34-btn-big{
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 16px;
+  font-size: 16px;
+}
+.pm34-btn[disabled]{
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pm34-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0,0,0,0.55);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding: 18px;
+}
+.pm34-modal{
+  width: 100%;
+  max-width: 520px;
+  border-radius: 22px;
+  background: rgba(20,20,20,0.96);
+  border: 1px solid rgba(255,255,255,0.10);
+  overflow:hidden;
+}
+.pm34-modal-head{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 14px 14px 10px;
+}
+.pm34-modal-title{
+  font-weight: 900;
+  font-size: 18px;
+}
+.pm34-x{
+  border:0;
+  background: transparent;
+  color: inherit;
+  font-size: 22px;
+  font-weight: 900;
+  cursor:pointer;
+  line-height: 1;
+}
+.pm34-modal-body{
+  padding: 10px 14px 16px;
+}
+
+.pm34-label{
+  display:block;
+  font-size: 13px;
+  font-weight: 900;
+  opacity: 0.75;
+  margin: 12px 0 6px;
+}
+.pm34-input, .pm34-select, .pm34-textarea{
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: inherit;
+  font-size: 16px;
+}
+.pm34-textarea{
+  min-height: 84px;
+  resize: vertical;
+}
+
+.pm34-block{
+  margin-top: 12px;
+  border-radius: 18px;
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+.pm34-block-title{
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.pm34-checklist{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pm34-check{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+}
+.pm34-check input{
+  width: 22px;
+  height: 22px;
+}
+.pm34-check.disabled{
+  opacity: 0.55;
+}
+.pm34-hint{
+  margin-top: 10px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.pm34-file{ display:none; }
+.pm34-photo-grid{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+.pm34-photo-grid img{
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.pm34-settings-card{ }
+.pm34-settings-header{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pm34-h3{ margin: 0; font-size: 16px; font-weight: 900; }
+.pm34-chip{
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: inherit;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+.pm34-row{ margin-top: 10px; }
+.pm34-btnrow{ display:flex; gap: 10px; flex-wrap: wrap; }
+.pm34-admin-panel{
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255,255,255,0.14);
+}
+.pm34-subtitle{
+  font-weight: 900;
+  font-size: 13px;
+  opacity: 0.8;
+  margin: 6px 0 8px;
+}
+.pm34-perm-note{
+  font-size: 12px;
+  opacity: 0.75;
+  margin-bottom: 10px;
+}
+.pm34-perm-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.pm34-perm-card{
+  border-radius: 16px;
+  padding: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+.pm34-perm-role{ font-weight: 900; margin-bottom: 6px; }
+.pm34-perm-line{ font-size: 12px; opacity: 0.85; margin: 3px 0; }
+
