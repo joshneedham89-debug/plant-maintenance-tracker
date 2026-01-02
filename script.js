@@ -1258,3 +1258,105 @@ document.addEventListener("DOMContentLoaded", () => {
   loadState();
   showScreen("dashboardScreen");
 });
+
+/* ===================================================
+   STEP 3A — GOLD-SAFE BUTTON WIRING
+   Restores all existing button functionality
+   NO logic changes
+=================================================== */
+document.addEventListener("DOMContentLoaded", () => {
+
+  /* ---------- DASHBOARD ---------- */
+  updateTonsBtn?.addEventListener("click", updateTonsBtn.onclick);
+  resetTonsBtn?.addEventListener("click", resetTonsBtn.onclick);
+  openProblemPanelBtn?.addEventListener("click", () => openProblemPanel());
+
+  /* ---------- MAINTENANCE ---------- */
+  addPartBtn?.addEventListener("click", () => openAddPartPanel());
+  openProblemPanelBtn2?.addEventListener("click", () => openProblemPanel());
+
+  filterCategory?.addEventListener("change", renderParts);
+  searchPartsInput?.addEventListener("input", renderParts);
+
+  partsList?.addEventListener("click", handlePartsListClick);
+
+  /* ---------- INVENTORY ---------- */
+  addInventoryBtn?.addEventListener("click", () => openInventoryPanel(false));
+  searchInventoryInput?.addEventListener("input", renderInventory);
+  inventoryList?.addEventListener("click", handleInventoryListClick);
+
+  /* ---------- AC CALCULATOR ---------- */
+  acCalcBtn?.addEventListener("click", calculateAC);
+
+  /* ---------- PROBLEMS ---------- */
+  problemFilterBtns?.forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentProblemFilter = btn.dataset.filter;
+      renderProblemsList();
+    });
+  });
+
+  problemsListEl?.addEventListener("click", handleProblemListClick);
+
+  saveProblemBtn?.addEventListener("click", saveProblem);
+
+  closeProblemPanelBtn?.addEventListener("click", closeProblemPanel);
+  closeProblemDetailBtn?.addEventListener("click", closeProblemDetail);
+
+  resolveLogBtn?.addEventListener("click", resolveAndLogProblem);
+  deleteProblemBtn?.addEventListener("click", deleteProblem);
+
+  /* ---------- PART / INVENTORY PANELS ---------- */
+  closePartPanelBtn?.addEventListener("click", closePartPanel);
+  savePartBtn?.addEventListener("click", savePart);
+
+  closeInventoryPanelBtn?.addEventListener("click", closeInventoryPanel);
+  saveInventoryBtn?.addEventListener("click", saveInventory);
+
+  /* ---------- MAINTENANCE COMPLETE ---------- */
+  closeCompletePanelBtn?.addEventListener("click", closeCompletePanel);
+  addUsedItemBtn?.addEventListener("click", addUsedInventoryItem);
+  saveCompletionBtn?.addEventListener("click", saveMaintenanceCompletion);
+
+  addPhotoBtn?.addEventListener("click", () => photoInput.click());
+
+  /* ---------- PMs ---------- */
+  openPmPanelBtn?.addEventListener("click", () => openPmPanel(false));
+  openPmPanelBtnPmTab?.addEventListener("click", () => openPmPanel(false));
+
+  pmFilterBtns?.forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentPmFilter = btn.dataset.pmfilter;
+      renderPmsList();
+    });
+  });
+
+  pmFilterBtnsPmTab?.forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentPmFilter = btn.dataset.pmfilter;
+      renderPmsList();
+    });
+  });
+
+  pmsListEl?.addEventListener("click", handlePmListClick);
+  pmsListPmTab?.addEventListener("click", handlePmListClick);
+
+  savePmBtn?.addEventListener("click", savePm);
+  savePmCompletionBtn?.addEventListener("click", savePmCompletion);
+
+  closePmPanelBtn?.addEventListener("click", closePmPanel);
+  closePmCompleteBtn?.addEventListener("click", closePmComplete);
+  closePmGalleryBtn?.addEventListener("click", closePmGallery);
+
+  /* ---------- SETTINGS ---------- */
+  roleSelect?.addEventListener("change", () => setRole(roleSelect.value));
+  unlockAdminBtn?.addEventListener("click", openAdminPinModal);
+  lockAdminBtn?.addEventListener("click", lockAdmin);
+
+  savePermsBtn?.addEventListener("click", saveRolePermissions);
+
+  exportBtn?.addEventListener("click", exportAllData);
+  exportPmComplianceBtn?.addEventListener("click", exportPmCompliance);
+  resetAllBtn?.addEventListener("click", resetAllData);
+
+});
