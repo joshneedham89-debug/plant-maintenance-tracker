@@ -2547,3 +2547,12 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
    }
+
+/* ---------------------------------------------------
+   GOLD SAFE FIX: Ensure bottom nav handlers attach
+--------------------------------------------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.addEventListener("click", () => showScreen(btn.dataset.screen));
+  });
+});
