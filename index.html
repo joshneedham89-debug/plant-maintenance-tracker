@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,75 +6,50 @@
   <title>Plant Maintenance Tracker</title>
 
   <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f5132" />
+
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-  <div class="app-container">
+  <div class="app">
 
     <!-- ---------------- HEADER ---------------- -->
-    <header class="app-header">
-      <img src="icons/icon-192.png" class="logo" alt="Logo">
+    <header class="top-header">
+      <div class="brand">
+        <img src="icons/icon-192.png" class="logo" alt="Logo">
+      </div>
       <h1>Plant Maintenance Tracker</h1>
     </header>
 
-    <!-- ---------------- DASHBOARD ---------------- -->
+    <!-- ---------------- DASHBOARD SCREEN ---------------- -->
     <section id="dashboardScreen" class="screen active">
       <h2 class="section-title">Dashboard</h2>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">OK</div>
-          <div id="okCount" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Due Soon</div>
-          <div id="dueCount" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Overdue</div>
-          <div id="overCount" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Tons Run</div>
-          <div id="tonsRun" class="stat-value">0</div>
+      <div class="dashboard-grid">
+        <div class="card">
+          <h3>Tons Run</h3>
+          <div class="tons-row">
+            <div class="tons-big" id="tonsDisplay">0</div>
+          </div>
+
+          <div class="row">
+            <input id="tonsInput" type="number" placeholder="Enter tons">
+            <button id="addTonsBtn" class="primary-btn">Update</button>
+          </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-label">Completed Today</div>
-          <div id="completedTodayCount" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Completed This Month</div>
-          <div id="completedMonthCount" class="stat-value">0</div>
+        <div class="card">
+          <h3>Open Problems</h3>
+          <div class="big-number" id="openProblemsCount">0</div>
+          <button id="dashboardReportProblemBtn" class="secondary-btn full">Report a Problem</button>
         </div>
 
-        <!-- Open Problems -->
-        <div class="stat-card stat-problems">
-          <div class="stat-label">Open Problems</div>
-          <div id="openProblemsCount" class="stat-value">0</div>
+        <div class="card">
+          <h3>PMs Due Today</h3>
+          <div class="big-number" id="pmDueTodayCount">0</div>
+          <button class="secondary-btn full nav-jump" data-screen="pmScreen">Go to PMs</button>
         </div>
-
-        <!-- GOLD UPDATE: PM Due Today -->
-        <div class="stat-card stat-pm">
-          <div class="stat-label">PM Due Today</div>
-          <div id="pmDueTodayCount" class="stat-value">0</div>
-        </div>
-        <!-- END -->
-      </div>
-
-      <!-- Tons Update -->
-      <div class="card">
-        <h3>Update Tons</h3>
-        <input id="currentTonsInput" type="number" placeholder="Enter current tons" />
-        <button id="updateTonsBtn" class="primary-btn">Update</button>
-        <button id="resetTonsBtn" class="secondary-btn">Reset Tons</button>
-      </div>
-
-      <!-- Report Problem -->
-      <div class="card">
-        <h3>Problems</h3>
-        <button id="openProblemPanelBtn" class="primary-btn full">⚠️ Report a Problem</button>
       </div>
     </section>
 
@@ -83,30 +57,14 @@
     <section id="maintenanceScreen" class="screen">
       <h2 class="section-title">Maintenance</h2>
 
-      <div class="card maintenance-header">
-        <label>Search Parts</label>
-        <input
-          id="searchPartsInput"
-          type="text"
-          placeholder="Search by name, category, or section"
-        >
-
-        <label>Filter by Category</label>
-        <select id="filterCategory"></select>
-
-        <button id="addPartBtn" class="primary-btn full">+ Add Part</button>
-      </div>
-
-      <!-- Problems list -->
       <div class="card">
         <div class="problems-header-row">
           <h3>Problems</h3>
-          <button id="openProblemPanelBtn2" class="secondary-btn">+ Report</button>
+          <button id="openProblemPanelBtn" class="secondary-btn">+ Report</button>
         </div>
 
         <div class="problem-filters">
-          <button class="prob-filter active" data-filter="ALL">All</button>
-          <button class="prob-filter" data-filter="Open">Open</button>
+          <button class="prob-filter active" data-filter="Open">Open</button>
           <button class="prob-filter" data-filter="In Progress">In Progress</button>
           <button class="prob-filter" data-filter="Resolved">Resolved</button>
         </div>
@@ -114,78 +72,83 @@
         <div id="problemsList" class="problems-list"></div>
       </div>
 
+      <div id="partsList"></div>
+    </section>
+
+    <!-- ---------------- PM SCREEN ---------------- -->
+    <section id="pmScreen" class="screen">
       <!-- PMs -->
       <div class="card">
         <div class="problems-header-row">
-          <h3>PMs</h3>
+          <h3>Preventive Maintenance</h3>
           <button id="openPmPanelBtn" class="secondary-btn">+ Add PM</button>
         </div>
+        <div id="pmDueCount" class="pm-due-count">0 PMs due today</div>
 
         <div class="pm-filters">
           <button class="pm-filter active" data-pmfilter="ALL">All</button>
-          <button class="pm-filter" data-pmfilter="DUE">Due</button>
-          <button class="pm-filter" data-pmfilter="DONE">Done</button>
+          <button class="pm-filter" data-pmfilter="DUE">Due Today</button>
+          <button class="pm-filter" data-pmfilter="DONE">Completed</button>
         </div>
 
         <div id="pmsList" class="pms-list"></div>
       </div>
-
-      <div id="partsList"></div>
     </section>
 
     <!-- ---------------- INVENTORY SCREEN ---------------- -->
     <section id="inventoryScreen" class="screen">
       <h2 class="section-title">Inventory</h2>
-
-      <div class="card">
-        <label>Search Inventory</label>
-        <input
-          id="searchInventoryInput"
-          type="text"
-          placeholder="Search by name, category, or location"
-        />
-
-        <button id="addInventoryBtn" class="primary-btn full">
-          + Add Inventory Item
-        </button>
-      </div>
-
       <div id="inventoryList"></div>
     </section>
 
-    <!-- ---------------- AC CALCULATOR SCREEN ---------------- -->
+    <!-- ---------------- AC CALC SCREEN ---------------- -->
     <section id="acScreen" class="screen">
-      <h2 class="section-title">Virgin AC Calculator</h2>
+      <h2 class="section-title">AC Calc</h2>
 
-      <div class="card light">
-        <label>Residual AC in RAP (%)</label>
-        <input id="ac_residual" type="number" step="0.1" value="4.9">
+      <div class="card">
+        <label>Enter Total Tons</label>
+        <input id="acTons" type="number" placeholder="0">
 
-        <label>% RAP in Mix (%)</label>
-        <input id="ac_rapPct" type="number" step="1" value="30">
-
-        <label>AC Target of Mix (%)</label>
-        <input id="ac_target" type="number" step="0.1" value="5.4">
-
-        <label>TPH Running Plant</label>
-        <input id="ac_tph" type="number" value="180">
-
-        <label>Total Tons Needed</label>
-        <input id="ac_totalTons" type="number" value="1200">
+        <label>Asphalt %</label>
+        <input id="acPercent" type="number" placeholder="0">
 
         <button id="acCalcBtn" class="primary-btn full">Calculate</button>
-      </div>
 
-      <div class="card result-card">
-        <h3>Results</h3>
-        <p>Pump Rate (TPH): <span id="ac_pumpRate">0.00</span></p>
-        <p>Total AC Needed (Tons): <span id="ac_totalAc">0.00</span></p>
+        <div id="acResult" class="ac-result"></div>
       </div>
     </section>
 
     <!-- ---------------- SETTINGS SCREEN ---------------- -->
     <section id="settingsScreen" class="screen">
       <h2 class="section-title">Settings</h2>
+
+      <div class="card">
+        <h3>Role (this device)</h3>
+        <div class="row">
+          <select id="roleSelect" class="select full">
+            <option value="Ground">Ground</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Supervisor">Supervisor</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        <div class="row">
+          <button id="adminLoginBtn" class="secondary-btn full">Admin Login</button>
+          <button id="adminLogoutBtn" class="ghost-btn full hidden">Admin Logout</button>
+        </div>
+
+        <div id="adminPanel" class="admin-panel hidden">
+          <h4 class="subheading">Admin Controls</h4>
+
+          <label>Change / Set Admin PIN</label>
+          <input id="adminPinNew" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN (4-8 digits)">
+          <input id="adminPinConfirm" type="password" inputmode="numeric" maxlength="8" placeholder="Confirm New PIN">
+          <button id="saveAdminPinBtn" class="primary-btn full">Save PIN</button>
+
+          <label class="check-row"><input type="checkbox" id="allowRoleChangeChk" checked> Allow role changes on this device without PIN</label>
+          <div class="hint">Tip: Turn this off after you set the role on each phone.</div>
+        </div>
+      </div>
 
       <div class="card">
         <button id="exportBtn" class="primary-btn full">Export Data</button>
@@ -202,6 +165,7 @@
     <nav class="bottom-nav">
       <button class="nav-btn active" data-screen="dashboardScreen">🏠<br>Home</button>
       <button class="nav-btn" data-screen="maintenanceScreen">🛠️<br>Maint</button>
+      <button class="nav-btn" data-screen="pmScreen">✅<br>PMs</button>
       <button class="nav-btn" data-screen="inventoryScreen">📦<br>Inventory</button>
       <button class="nav-btn" data-screen="acScreen">📊<br>AC Calc</button>
       <button class="nav-btn" data-screen="settingsScreen">⚙️<br>Settings</button>
@@ -216,69 +180,33 @@
         <h3 id="partPanelTitle">Add New Part</h3>
         <button id="closePartPanel" class="close-btn">✖</button>
       </div>
-
       <div class="slide-panel-body">
-
         <label>Part Name</label>
-        <input id="newPartName" type="text" list="inventoryNameList">
-
-        <datalist id="inventoryNameList"></datalist>
+        <input id="newPartName" type="text" placeholder="ex: Bearing 2in">
 
         <label>Category</label>
         <select id="newPartCategory"></select>
 
-        <label>Section / Location</label>
-        <input id="newPartSection" type="text">
-
-        <label>Days Interval</label>
-        <input id="newPartDays" type="number">
-
-        <label>Ton Interval</label>
-        <input id="newPartTons" type="number">
-
-        <div class="panel-footer">
-          <button id="savePartBtn" class="primary-btn full">Save Part</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ADD / EDIT INVENTORY PANEL -->
-  <div id="inventoryPanelOverlay" class="panel-overlay hidden">
-    <div id="inventoryPanel" class="slide-panel">
-      <div class="slide-panel-header">
-        <h3 id="inventoryPanelTitle">Add Inventory Item</h3>
-        <button id="closeInventoryPanel" class="close-btn">✖</button>
-      </div>
-
-      <div class="slide-panel-body">
-
-        <label>Part Name</label>
-        <input id="invPartName" type="text">
-
-        <label>Category</label>
-        <select id="invCategory"></select>
-
-        <label>Location</label>
-        <input id="invLocation" type="text">
-
-        <label>Quantity</label>
-        <input id="invQty" type="number">
+        <label>Qty</label>
+        <input id="newPartQty" type="number" min="1" value="1">
 
         <label>Notes</label>
-        <input id="invNotes" type="text">
+        <input id="newPartNotes" type="text" placeholder="Optional notes">
+
+        <h4 class="subheading">Photos (optional)</h4>
+        <button id="addPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <input id="photoInput" type="file" accept="image/*" multiple class="file-input-hidden">
+        <div id="photoPreview" class="photo-preview"></div>
 
         <div class="panel-footer">
-          <button id="saveInventoryBtn" class="primary-btn full">
-            Save Inventory Item
-          </button>
+          <button id="savePartBtn" class="primary-btn full">Save</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- COMPLETE MAINTENANCE PANEL -->
-  <div id="completePanelOverlay" class="panel-overlay hidden">
+  <div id="completeOverlay" class="panel-overlay hidden">
     <div id="completePanel" class="slide-panel">
       <div class="slide-panel-header">
         <h3>Complete Maintenance</h3>
@@ -286,44 +214,38 @@
       </div>
 
       <div class="slide-panel-body">
-        <label>Completion Date</label>
+        <label>Date</label>
         <input id="compDate" type="date">
 
-        <label>Tons at Completion</label>
-        <input id="compTons" type="number">
+        <label>Tons (optional)</label>
+        <input id="compTons" type="number" placeholder="Optional">
 
         <label>Notes</label>
-        <input id="compNotes" type="text">
+        <input id="compNotes" type="text" placeholder="Optional notes">
+
+        <h4 class="subheading">Inventory Item</h4>
+        <select id="compInvSelect"></select>
+
+        <label>Quantity Used</label>
+        <input id="compInvQty" type="number" min="1" value="1">
+
+        <button id="compAddItemBtn" class="secondary-btn full">+ Add Item</button>
+
+        <div id="compUsedList"></div>
 
         <h4 class="subheading">Photos (optional)</h4>
         <button id="compAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
         <input id="compPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
         <div id="compPhotoPreview" class="photo-preview"></div>
 
-        <h4 class="subheading">Inventory Used (optional)</h4>
-
-        <label>Inventory Item</label>
-        <select id="compInvSelect"></select>
-
-        <label>Quantity Used</label>
-        <input id="compInvQty" type="number" min="1" value="1">
-
-        <button id="compAddItemBtn" class="secondary-btn full">
-          + Add Used Item
-        </button>
-
-        <div id="compUsedList" class="used-items-list"></div>
-
         <div class="panel-footer">
-          <button id="saveCompletionBtn" class="primary-btn full">
-            Save Maintenance
-          </button>
+          <button id="saveCompletionBtn" class="primary-btn full">Save Completion</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- REPORT PROBLEM PANEL -->
+  <!-- PROBLEM PANEL -->
   <div id="problemPanelOverlay" class="panel-overlay hidden">
     <div id="problemPanel" class="slide-panel">
       <div class="slide-panel-header">
@@ -332,48 +254,28 @@
       </div>
 
       <div class="slide-panel-body">
-
         <label>Title</label>
-        <input id="probTitle" type="text" placeholder="Short issue name (ex: Slat conveyor squeal)">
+        <input id="problemTitle" type="text" placeholder="ex: RAP belt squealing">
 
         <label>Category</label>
-        <select id="probCategory"></select>
+        <select id="problemCategory"></select>
 
-        <label>Area / Location</label>
-        <input id="probLocation" type="text" placeholder="Where is it?">
-
-        <label>Severity</label>
-        <select id="probSeverity">
-          <option value="Low">Low</option>
-          <option value="Medium" selected>Medium</option>
-          <option value="High">High</option>
-          <option value="Critical">Critical</option>
-        </select>
-
-        <label>Status</label>
-        <select id="probStatus">
-          <option value="Open" selected>Open</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Resolved">Resolved</option>
-        </select>
-
-        <label>Notes</label>
-        <input id="probNotes" type="text" placeholder="Extra details (optional)">
+        <label>Description</label>
+        <input id="problemDesc" type="text" placeholder="Details / what you saw">
 
         <h4 class="subheading">Photos (optional)</h4>
-        <button id="probAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
-        <input id="probPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
-        <div id="probPhotoPreview" class="photo-preview"></div>
+        <button id="problemAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <input id="problemPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
+        <div id="problemPhotoPreview" class="photo-preview"></div>
 
         <div class="panel-footer">
-          <button id="saveProblemBtn" type="button" class="primary-btn full">Save Problem</button>
+          <button id="saveProblemBtn" class="primary-btn full">Save Problem</button>
         </div>
-
       </div>
     </div>
   </div>
 
-  <!-- PROBLEM DETAIL PANEL -->
+  <!-- PROBLEM DETAIL OVERLAY -->
   <div id="problemDetailOverlay" class="panel-overlay hidden">
     <div id="problemDetailPanel" class="slide-panel">
       <div class="slide-panel-header">
@@ -382,23 +284,19 @@
       </div>
 
       <div class="slide-panel-body">
-        <div id="problemDetailMeta" class="problem-detail-meta"></div>
-
-        <h4 class="subheading">Status</h4>
-        <div id="problemDetailStatus" class="status-pill-row"></div>
-
-        <h4 class="subheading">Photos</h4>
-        <div id="problemDetailPhotos" class="photo-preview"></div>
+        <div id="problemDetailMeta" class="part-meta"></div>
+        <div id="problemDetailStatus" class="pill"></div>
+        <div id="problemDetailPhotos" class="gallery-grid"></div>
 
         <div class="panel-footer">
-          <button id="resolveLogBtn" class="primary-btn full">Resolve &amp; Log Maintenance</button>
-          <button id="deleteProblemBtn" class="danger-btn full">Delete Problem</button>
+          <button id="resolveLogBtn" class="primary-btn full">Resolve & Log Maintenance</button>
+          <button id="deleteProblemBtn" class="danger-btn full">Delete</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- PM ADD/EDIT PANEL -->
+  <!-- PM ADD / EDIT PANEL -->
   <div id="pmPanelOverlay" class="panel-overlay hidden">
     <div id="pmPanel" class="slide-panel">
       <div class="slide-panel-header">
@@ -418,6 +316,19 @@
           <option value="Daily">Daily</option>
           <option value="Weekly">Weekly</option>
         </select>
+
+        <label>Checklist (optional)</label>
+        <textarea id="pmChecklistDef" class="textarea" rows="4" placeholder="One checklist item per line"></textarea>
+
+        <h4 class="subheading">Visibility (who can see this PM)</h4>
+        <div class="role-grid">
+          <label class="check-row"><input type="checkbox" id="pmVisAdmin" checked> Admin</label>
+          <label class="check-row"><input type="checkbox" id="pmVisSupervisor" checked> Supervisor</label>
+          <label class="check-row"><input type="checkbox" id="pmVisMaintenance" checked> Maintenance</label>
+          <label class="check-row"><input type="checkbox" id="pmVisGround" checked> Ground</label>
+        </div>
+
+        <label class="check-row"><input type="checkbox" id="pmDefLocked"> Lock PM definition (prevents edits)</label>
 
         <div class="panel-footer">
           <button id="savePmBtn" class="primary-btn full">Save PM</button>
@@ -441,6 +352,12 @@
         <label>Notes</label>
         <input id="pmCompNotes" type="text" placeholder="Optional notes">
 
+        <div id="pmChecklistWrap" class="pm-checklist-wrap hidden">
+          <h4 class="subheading">Checklist (required)</h4>
+          <div id="pmChecklistList" class="pm-checklist-list"></div>
+          <div id="pmChecklistHint" class="hint"></div>
+        </div>
+
         <h4 class="subheading">Photos (optional)</h4>
         <button id="pmAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
         <input id="pmPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
@@ -450,33 +367,47 @@
           <button id="savePmCompletionBtn" class="primary-btn full">Save PM</button>
         </div>
       </div>
+
     </div>
   </div>
 
-  <!-- GOLD UPDATE: PM GALLERY (view all photos for one PM) -->
+  <!-- PM GALLERY OVERLAY -->
   <div id="pmGalleryOverlay" class="panel-overlay hidden">
     <div id="pmGalleryPanel" class="slide-panel">
       <div class="slide-panel-header">
-        <h3 id="pmGalleryTitle">PM Photos</h3>
+        <h3 id="pmGalleryTitle">PM Gallery</h3>
         <button id="closePmGallery" class="close-btn">✖</button>
       </div>
-
       <div class="slide-panel-body">
-        <div id="pmGalleryMeta" class="part-meta"></div>
-        <div id="pmGalleryGrid" class="photo-preview"></div>
+        <div id="pmGalleryGrid" class="gallery-grid"></div>
       </div>
     </div>
   </div>
-  <!-- END PM GALLERY -->
 
   <!-- LIGHTBOX -->
-  <div id="lightboxOverlay" class="lightbox-overlay hidden" aria-hidden="true">
-    <button id="lightboxClose" class="lightbox-close" aria-label="Close">✖</button>
-    <img id="lightboxImg" class="lightbox-img" alt="Full size photo">
+  <div id="lightboxOverlay" class="lightbox hidden">
+    <button id="lightboxClose" class="lightbox-close">✖</button>
+    <img id="lightboxImg" alt="Photo">
+    <div id="lightboxMeta" class="lightbox-meta"></div>
   </div>
 
-  <!-- TOAST -->
-  <div id="toastContainer" class="toast"></div>
+  <!-- ADMIN PIN PROMPT -->
+  <div id="adminPinOverlay" class="panel-overlay hidden">
+    <div id="adminPinPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3>Admin PIN</h3>
+        <button id="closeAdminPin" class="close-btn">✖</button>
+      </div>
+      <div class="slide-panel-body">
+        <label>Enter PIN</label>
+        <input id="adminPinInput" type="password" inputmode="numeric" maxlength="8" placeholder="4-8 digits">
+        <div id="adminPinMsg" class="hint"></div>
+        <div class="panel-footer">
+          <button id="submitAdminPinBtn" class="primary-btn full">Unlock Admin</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="inventory.js"></script>
   <script src="script.js"></script>
