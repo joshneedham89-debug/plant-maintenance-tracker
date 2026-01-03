@@ -1,9 +1,3 @@
-<!--
-GOLD BASELINE VERIFIED
-Baseline locked pre-Phase 3.4
-Additive changes only
-No existing logic modified
--->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -118,15 +112,27 @@ No existing logic modified
         </div>
 
         <div id="problemsList" class="problems-list"></div>
+      </div><div id="partsList"></div>
+    </section>
+
+
+    <!-- ---------------- PMs SCREEN ---------------- -->
+    <section id="pmScreen" class="screen">
+      <div class="pm-page-header">
+        <div>
+          <h2 class="section-title pm-title-inline">Preventive Maintenance</h2>
+          <div id="pmDueLabel" class="pm-page-sub">0 PMs due today</div>
+        </div>
+        <button id="openPmPanelBtn" class="primary-btn pm-add-btn">+ Add PM</button>
       </div>
 
-      <!-- PMs -->
-      <div class="card" id="maintenancePmCard">
-        <div class="problems-header-row">
-          <h3>PMs</h3>
-          <button id="openPmPanelBtn" class="secondary-btn">+ Add PM</button>
-        </div>
+      <div class="pm-admin-row">
+        <button id="pmAdminLoginBtn" class="pm-chip">Admin</button>
+        <button id="pmAdminStatusChip" class="pm-chip hidden">Admin</button>
+        <button id="pmAdminLogoutBtn" class="pm-chip pm-chip-right hidden">Normal Mode</button>
+      </div>
 
+      <div class="card">
         <div class="pm-filters">
           <button class="pm-filter active" data-pmfilter="ALL">All</button>
           <button class="pm-filter" data-pmfilter="DUE">Due</button>
@@ -135,29 +141,8 @@ No existing logic modified
 
         <div id="pmsList" class="pms-list"></div>
       </div>
-
-      <div id="partsList"></div>
     </section>
 
-    <!-- ---------------- PM SCREEN (PHASE 3.4 ADDITIVE) ---------------- -->
-    <section id="pmScreen" class="screen">
-      <h2 class="section-title">Preventive Maintenance</h2>
-
-      <div class="card">
-        <div class="problems-header-row">
-          <h3>PMs</h3>
-          <button id="openPmPanelBtnPmTab" class="secondary-btn">+ Add PM</button>
-        </div>
-
-        <div class="pm-filters">
-          <button class="pm-filter active" data-pmfilter="DUE">Due Today</button>
-          <button class="pm-filter" data-pmfilter="ALL">All</button>
-          <button class="pm-filter" data-pmfilter="DONE">Completed</button>
-        </div>
-
-        <div id="pmsListPmTab" class="pms-list"></div>
-      </div>
-    </section>
 
     <!-- ---------------- INVENTORY SCREEN ---------------- -->
     <section id="inventoryScreen" class="screen">
@@ -222,57 +207,14 @@ No existing logic modified
 
         <button id="resetAllBtn" class="danger-btn full">Reset Entire App</button>
       </div>
-
-      <!-- ---------------- PHASE 3.4: Roles + Admin PIN (Additive) ---------------- -->
-      <div class="card" id="roleAdminCard">
-        <h3>Roles &amp; Admin</h3>
-
-        <label>Current Role</label>
-        <select id="roleSelect">
-          <option value="Ground">Ground</option>
-          <option value="Maintenance">Maintenance</option>
-          <option value="Supervisor">Supervisor</option>
-          <option value="Admin">Admin</option>
-        </select>
-
-        <div class="admin-status-row">
-          <div id="adminStatusPill" class="status-pill small">Admin: Locked</div>
-          <button id="unlockAdminBtn" class="secondary-btn">Unlock Admin</button>
-          <button id="lockAdminBtn" class="secondary-btn hidden">Lock Admin</button>
-        </div>
-
-        <div id="adminOnlyPerms" class="hidden">
-          <h4 class="subheading">Admin Permissions</h4>
-          <div class="perm-grid">
-            <div class="perm-role">
-              <div class="perm-role-title">Supervisor</div>
-              <label class="perm-toggle"><input type="checkbox" id="permSupPmComplete"> Can complete PMs</label>
-              <label class="perm-toggle"><input type="checkbox" id="permSupPmPhotos"> Can add PM photos</label>
-            </div>
-            <div class="perm-role">
-              <div class="perm-role-title">Maintenance</div>
-              <label class="perm-toggle"><input type="checkbox" id="permMaintPmComplete"> Can complete PMs</label>
-              <label class="perm-toggle"><input type="checkbox" id="permMaintPmPhotos"> Can add PM photos</label>
-            </div>
-            <div class="perm-role">
-              <div class="perm-role-title">Ground</div>
-              <label class="perm-toggle"><input type="checkbox" id="permGroundPmView"> Can view PMs</label>
-            </div>
-          </div>
-
-          <div class="panel-footer">
-            <button id="savePermsBtn" class="primary-btn full">Save Permissions</button>
-          </div>
-        </div>
-      </div>
     </section>
 
     <!-- ---------------- BOTTOM NAV ---------------- -->
     <nav class="bottom-nav">
       <button class="nav-btn active" data-screen="dashboardScreen">🏠<br>Home</button>
       <button class="nav-btn" data-screen="maintenanceScreen">🛠️<br>Maint</button>
-      <button class="nav-btn" data-screen="pmScreen">✅<br>PMs</button>
-      <button class="nav-btn" data-screen="inventoryScreen">📦<br>Inventory</button>
+            <button class="nav-btn" data-screen="pmScreen">📋<br>PMs</button>
+<button class="nav-btn" data-screen="inventoryScreen">📦<br>Inventory</button>
       <button class="nav-btn" data-screen="acScreen">📊<br>AC Calc</button>
       <button class="nav-btn" data-screen="settingsScreen">⚙️<br>Settings</button>
     </nav>
@@ -288,26 +230,27 @@ No existing logic modified
       </div>
 
       <div class="slide-panel-body">
+
         <label>Part Name</label>
-        <input id="newPartName" type="text" placeholder="Enter part name" />
+        <input id="newPartName" type="text" list="inventoryNameList">
+
+        <datalist id="inventoryNameList"></datalist>
 
         <label>Category</label>
         <select id="newPartCategory"></select>
 
         <label>Section / Location</label>
-        <input id="newPartSection" type="text" placeholder="ex: Drum, Baghouse" />
+        <input id="newPartSection" type="text">
 
         <label>Days Interval</label>
-        <input id="newPartDays" type="number" placeholder="ex: 30" />
+        <input id="newPartDays" type="number">
 
-        <label>Tons Interval</label>
-        <input id="newPartTons" type="number" placeholder="ex: 1000" />
+        <label>Ton Interval</label>
+        <input id="newPartTons" type="number">
 
         <div class="panel-footer">
-          <button id="savePartBtn" class="primary-btn full">Save</button>
+          <button id="savePartBtn" class="primary-btn full">Save Part</button>
         </div>
-
-        <datalist id="inventoryNameList"></datalist>
       </div>
     </div>
   </div>
@@ -321,23 +264,26 @@ No existing logic modified
       </div>
 
       <div class="slide-panel-body">
+
         <label>Part Name</label>
-        <input id="invPartName" type="text" placeholder="Enter part name">
+        <input id="invPartName" type="text">
 
         <label>Category</label>
         <select id="invCategory"></select>
 
         <label>Location</label>
-        <input id="invLocation" type="text" placeholder="ex: Drum, Motors shelf">
+        <input id="invLocation" type="text">
 
         <label>Quantity</label>
-        <input id="invQty" type="number" placeholder="ex: 2">
+        <input id="invQty" type="number">
 
         <label>Notes</label>
-        <input id="invNotes" type="text" placeholder="optional">
+        <input id="invNotes" type="text">
 
         <div class="panel-footer">
-          <button id="saveInventoryBtn" class="primary-btn full">Save</button>
+          <button id="saveInventoryBtn" class="primary-btn full">
+            Save Inventory Item
+          </button>
         </div>
       </div>
     </div>
@@ -352,32 +298,44 @@ No existing logic modified
       </div>
 
       <div class="slide-panel-body">
-        <label>Date Completed</label>
+        <label>Completion Date</label>
         <input id="compDate" type="date">
 
         <label>Tons at Completion</label>
-        <input id="compTons" type="number" placeholder="Auto filled">
+        <input id="compTons" type="number">
 
-        <h4 class="subheading">Used Inventory</h4>
-        <select id="compInventorySelect"></select>
-        <input id="compQty" type="number" placeholder="Qty used">
-        <button id="addUsedItemBtn" class="secondary-btn full">Add Used Item</button>
-
-        <div id="usedItemsList" class="used-items-list"></div>
+        <label>Notes</label>
+        <input id="compNotes" type="text">
 
         <h4 class="subheading">Photos (optional)</h4>
-        <button id="addPhotoBtn" class="secondary-btn full">+ Add Photo</button>
-        <input id="photoInput" type="file" accept="image/*" multiple class="file-input-hidden">
-        <div id="photoPreview" class="photo-preview"></div>
+        <button id="compAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <input id="compPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
+        <div id="compPhotoPreview" class="photo-preview"></div>
+
+        <h4 class="subheading">Inventory Used (optional)</h4>
+
+        <label>Inventory Item</label>
+        <select id="compInvSelect"></select>
+
+        <label>Quantity Used</label>
+        <input id="compInvQty" type="number" min="1" value="1">
+
+        <button id="compAddItemBtn" class="secondary-btn full">
+          + Add Used Item
+        </button>
+
+        <div id="compUsedList" class="used-items-list"></div>
 
         <div class="panel-footer">
-          <button id="saveCompletionBtn" class="primary-btn full">Save Maintenance</button>
+          <button id="saveCompletionBtn" class="primary-btn full">
+            Save Maintenance
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- PROBLEM REPORT PANEL -->
+  <!-- REPORT PROBLEM PANEL -->
   <div id="problemPanelOverlay" class="panel-overlay hidden">
     <div id="problemPanel" class="slide-panel">
       <div class="slide-panel-header">
@@ -386,17 +344,29 @@ No existing logic modified
       </div>
 
       <div class="slide-panel-body">
+
         <label>Title</label>
-        <input id="probTitle" type="text" placeholder="Short description">
+        <input id="probTitle" type="text" placeholder="Short issue name (ex: Slat conveyor squeal)">
 
         <label>Category</label>
         <select id="probCategory"></select>
 
+        <label>Area / Location</label>
+        <input id="probLocation" type="text" placeholder="Where is it?">
+
         <label>Severity</label>
         <select id="probSeverity">
           <option value="Low">Low</option>
-          <option value="Med">Med</option>
+          <option value="Medium" selected>Medium</option>
           <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+
+        <label>Status</label>
+        <select id="probStatus">
+          <option value="Open" selected>Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
         </select>
 
         <label>Notes</label>
@@ -461,11 +431,8 @@ No existing logic modified
           <option value="Weekly">Weekly</option>
         </select>
 
-        <label>Checklist (one per line)</label>
-        <textarea id="pmChecklistText" rows="5" placeholder="ex:
-Grease bearings
-Check belt tracking
-Inspect guards"></textarea>
+        <label>Checklist Items (one per line)</label>
+        <textarea id="pmItems" rows="5" placeholder="ex:\nCheck belt alignment\nInspect conveyor rollers"></textarea>
 
         <div class="panel-footer">
           <button id="savePmBtn" class="primary-btn full">Save PM</button>
@@ -483,20 +450,17 @@ Inspect guards"></textarea>
       </div>
 
       <div class="slide-panel-body">
-        <label>Completion Date</label>
+        <label>Date</label>
         <input id="pmCompDate" type="date">
 
-        <div id="pmChecklistWrap" class="pm-checklist hidden">
-          <h4 class="subheading">Checklist</h4>
-          <div id="pmChecklistList" class="checklist-list"></div>
-          <div id="pmChecklistNote" class="small-note"></div>
-        </div>
+        <label>Checklist Items</label>
+        <div id="pmChecklistBox" class="pm-checklist-box"></div>
 
         <label>Notes</label>
-        <input id="pmCompNotes" type="text" placeholder="Optional notes">
+        <textarea id="pmCompNotes" rows="4" placeholder="Add any notes..."></textarea>
 
-        <h4 class="subheading">Photos (optional)</h4>
-        <button id="pmAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <h4 class="subheading">Photos (Optional)</h4>
+        <button id="pmAddPhotoBtn" class="secondary-btn full">📷 Add Photo <span id="pmPhotoCount">(0/4)</span></button>
         <input id="pmPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
         <div id="pmPhotoPreview" class="photo-preview"></div>
 
@@ -522,26 +486,6 @@ Inspect guards"></textarea>
     </div>
   </div>
   <!-- END PM GALLERY -->
-
-  <!-- PHASE 3.4: ADMIN PIN OVERLAY (single system) -->
-  <div id="adminPinOverlay" class="panel-overlay hidden">
-    <div id="adminPinPanel" class="slide-panel">
-      <div class="slide-panel-header">
-        <h3 id="adminPinTitle">Unlock Admin</h3>
-        <button id="closeAdminPin" class="close-btn">✖</button>
-      </div>
-      <div class="slide-panel-body">
-        <div id="adminPinMsg" class="part-meta"></div>
-
-        <label>PIN (4–8 digits)</label>
-        <input id="adminPinInput" type="password" inputmode="numeric" pattern="\d*" maxlength="8" placeholder="Enter PIN">
-
-        <div class="panel-footer">
-          <button id="submitAdminPinBtn" class="primary-btn full">Continue</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- LIGHTBOX -->
   <div id="lightboxOverlay" class="lightbox-overlay hidden" aria-hidden="true">
