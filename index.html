@@ -112,27 +112,31 @@
         </div>
 
         <div id="problemsList" class="problems-list"></div>
-      </div><div id="partsList"></div>
+      </div>
+
+<div id="partsList"></div>
     </section>
 
-
+    
     <!-- ---------------- PMs SCREEN ---------------- -->
     <section id="pmScreen" class="screen">
-      <div class="pm-page-header">
-        <div>
-          <h2 class="section-title pm-title-inline">Preventive Maintenance</h2>
-          <div id="pmDueLabel" class="pm-page-sub">0 PMs due today</div>
-        </div>
-        <button id="openPmPanelBtn" class="primary-btn pm-add-btn">+ Add PM</button>
-      </div>
-
-      <div class="pm-admin-row">
-        <button id="pmAdminLoginBtn" class="pm-chip">Admin</button>
-        <button id="pmAdminStatusChip" class="pm-chip hidden">Admin</button>
-        <button id="pmAdminLogoutBtn" class="pm-chip pm-chip-right hidden">Normal Mode</button>
-      </div>
+      <h2 class="section-title">PMs</h2>
 
       <div class="card">
+        <div class="problems-header-row">
+          <div>
+            <h3 style="margin:0">PMs</h3>
+            <div id="pmDueTodayText" class="part-meta">0 PMs due today</div>
+          </div>
+
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button id="pmAdminBtn" class="secondary-btn">Admin</button>
+            <button id="pmAdminLockBtn" class="secondary-btn hidden">Normal Mode</button>
+          </div>
+        </div>
+
+        <button id="openPmPanelBtn" class="secondary-btn full hidden">+ Add PM</button>
+
         <div class="pm-filters">
           <button class="pm-filter active" data-pmfilter="ALL">All</button>
           <button class="pm-filter" data-pmfilter="DUE">Due</button>
@@ -143,8 +147,7 @@
       </div>
     </section>
 
-
-    <!-- ---------------- INVENTORY SCREEN ---------------- -->
+<!-- ---------------- INVENTORY SCREEN ---------------- -->
     <section id="inventoryScreen" class="screen">
       <h2 class="section-title">Inventory</h2>
 
@@ -431,10 +434,11 @@
           <option value="Weekly">Weekly</option>
         </select>
 
-        <label>Checklist Items (one per line)</label>
-        <textarea id="pmItems" rows="5" placeholder="ex:\nCheck belt alignment\nInspect conveyor rollers"></textarea>
+        
+        <label>Checklist (one per line)</label>
+        <textarea id="pmChecklist" rows="6" placeholder="ex: Check belt alignment&#10;Inspect conveyor rollers&#10;Lubricate bearings"></textarea>
 
-        <div class="panel-footer">
+<div class="panel-footer">
           <button id="savePmBtn" class="primary-btn full">Save PM</button>
         </div>
       </div>
@@ -450,17 +454,18 @@
       </div>
 
       <div class="slide-panel-body">
-        <label>Date</label>
+        <label>Completion Date</label>
         <input id="pmCompDate" type="date">
 
-        <label>Checklist Items</label>
-        <div id="pmChecklistBox" class="pm-checklist-box"></div>
-
         <label>Notes</label>
-        <textarea id="pmCompNotes" rows="4" placeholder="Add any notes..."></textarea>
+        <input id="pmCompNotes" type="text" placeholder="Optional notes">
 
-        <h4 class="subheading">Photos (Optional)</h4>
-        <button id="pmAddPhotoBtn" class="secondary-btn full">📷 Add Photo <span id="pmPhotoCount">(0/4)</span></button>
+        
+        <h4 class="subheading">Checklist (required)</h4>
+        <div id="pmChecklistComplete" class="checklist"></div>
+
+<h4 class="subheading">Photos (optional)</h4>
+        <button id="pmAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
         <input id="pmPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
         <div id="pmPhotoPreview" class="photo-preview"></div>
 
@@ -470,6 +475,24 @@
       </div>
     </div>
   </div>
+
+  
+  <!-- PM HISTORY PANEL (Problem-style) -->
+  <div id="pmHistoryOverlay" class="panel-overlay hidden">
+    <div id="pmHistoryPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 id="pmHistoryTitle">PM History</h3>
+        <button id="closePmHistory" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <div id="pmHistoryMeta" class="part-meta"></div>
+        <div id="pmHistoryList" class="history-list"></div>
+      </div>
+    </div>
+  </div>
+  <!-- END PM HISTORY -->
+
 
   <!-- GOLD UPDATE: PM GALLERY (view all photos for one PM) -->
   <div id="pmGalleryOverlay" class="panel-overlay hidden">
