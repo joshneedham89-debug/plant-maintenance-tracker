@@ -112,15 +112,27 @@
         </div>
 
         <div id="problemsList" class="problems-list"></div>
+      </div><div id="partsList"></div>
+    </section>
+
+
+    <!-- ---------------- PMs SCREEN ---------------- -->
+    <section id="pmScreen" class="screen">
+      <div class="pm-page-header">
+        <div>
+          <h2 class="section-title pm-title-inline">Preventive Maintenance</h2>
+          <div id="pmDueLabel" class="pm-page-sub">0 PMs due today</div>
+        </div>
+        <button id="openPmPanelBtn" class="primary-btn pm-add-btn">+ Add PM</button>
       </div>
 
-      <!-- PMs -->
-      <div class="card">
-        <div class="problems-header-row">
-          <h3>PMs</h3>
-          <button id="openPmPanelBtn" class="secondary-btn">+ Add PM</button>
-        </div>
+      <div class="pm-admin-row">
+        <button id="pmAdminLoginBtn" class="pm-chip">Admin</button>
+        <button id="pmAdminStatusChip" class="pm-chip hidden">Admin</button>
+        <button id="pmAdminLogoutBtn" class="pm-chip pm-chip-right hidden">Normal Mode</button>
+      </div>
 
+      <div class="card">
         <div class="pm-filters">
           <button class="pm-filter active" data-pmfilter="ALL">All</button>
           <button class="pm-filter" data-pmfilter="DUE">Due</button>
@@ -129,9 +141,8 @@
 
         <div id="pmsList" class="pms-list"></div>
       </div>
-
-      <div id="partsList"></div>
     </section>
+
 
     <!-- ---------------- INVENTORY SCREEN ---------------- -->
     <section id="inventoryScreen" class="screen">
@@ -202,7 +213,8 @@
     <nav class="bottom-nav">
       <button class="nav-btn active" data-screen="dashboardScreen">🏠<br>Home</button>
       <button class="nav-btn" data-screen="maintenanceScreen">🛠️<br>Maint</button>
-      <button class="nav-btn" data-screen="inventoryScreen">📦<br>Inventory</button>
+            <button class="nav-btn" data-screen="pmScreen">📋<br>PMs</button>
+<button class="nav-btn" data-screen="inventoryScreen">📦<br>Inventory</button>
       <button class="nav-btn" data-screen="acScreen">📊<br>AC Calc</button>
       <button class="nav-btn" data-screen="settingsScreen">⚙️<br>Settings</button>
     </nav>
@@ -419,6 +431,9 @@
           <option value="Weekly">Weekly</option>
         </select>
 
+        <label>Checklist Items (one per line)</label>
+        <textarea id="pmItems" rows="5" placeholder="ex:\nCheck belt alignment\nInspect conveyor rollers"></textarea>
+
         <div class="panel-footer">
           <button id="savePmBtn" class="primary-btn full">Save PM</button>
         </div>
@@ -435,14 +450,17 @@
       </div>
 
       <div class="slide-panel-body">
-        <label>Completion Date</label>
+        <label>Date</label>
         <input id="pmCompDate" type="date">
 
-        <label>Notes</label>
-        <input id="pmCompNotes" type="text" placeholder="Optional notes">
+        <label>Checklist Items</label>
+        <div id="pmChecklistBox" class="pm-checklist-box"></div>
 
-        <h4 class="subheading">Photos (optional)</h4>
-        <button id="pmAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
+        <label>Notes</label>
+        <textarea id="pmCompNotes" rows="4" placeholder="Add any notes..."></textarea>
+
+        <h4 class="subheading">Photos (Optional)</h4>
+        <button id="pmAddPhotoBtn" class="secondary-btn full">📷 Add Photo <span id="pmPhotoCount">(0/4)</span></button>
         <input id="pmPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
         <div id="pmPhotoPreview" class="photo-preview"></div>
 

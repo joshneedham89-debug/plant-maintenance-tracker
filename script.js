@@ -7,10 +7,10 @@ const INVENTORY_KEY = "pm_inventory";
 const PROBLEMS_KEY = "pm_problems";
 const PMS_KEY = "pm_pms";
 
-
-/* Admin (PM edit lock) */
+/* Admin (additive) */
 const ADMIN_PIN_KEY = "pm_admin_pin";
 const ADMIN_UNLOCK_KEY = "pm_admin_unlocked";
+
 /* ---------------------------------------------------
    GLOBAL STATE
 --------------------------------------------------- */
@@ -35,67 +35,18 @@ let problems = [];
 let currentProblemFilter = "ALL";
 let viewingProblemId = null;
 
-
-/* ---------------------------------------------------
-   ADMIN (PM edit lock)
---------------------------------------------------- */
-function isAdminUnlocked() {
-  return localStorage.getItem(ADMIN_UNLOCK_KEY) === "1";
-}
-
-function setAdminUnlocked(flag) {
-  localStorage.setItem(ADMIN_UNLOCK_KEY, flag ? "1" : "0");
-}
-
-function applyPmAdminUi() {
-  const unlocked = isAdminUnlocked();
-
-  // Add/Edit/Delete are Admin-only
-  if (openPmPanelBtn) openPmPanelBtn.classList.toggle("hidden", !unlocked);
-  if (pmAdminBtn) pmAdminBtn.classList.toggle("hidden", unlocked);
-  if (pmAdminLockBtn) pmAdminLockBtn.classList.toggle("hidden", !unlocked);
-
-  // Re-render PM list so action buttons match
-  renderPmsList();
-}
-
-pmAdminBtn?.addEventListener("click", () => {
-  const existing = localStorage.getItem(ADMIN_PIN_KEY);
-
-  // First time: create PIN
-  if (!existing) {
-    const p1 = prompt("Create Admin PIN (4-8 digits):");
-    if (!p1) return;
-    if (!/^[0-9]{4,8}$/.test(p1)) return showToast("PIN must be 4-8 digits", "error");
-    localStorage.setItem(ADMIN_PIN_KEY, p1);
-    setAdminUnlocked(true);
-    showToast("Admin unlocked");
-    return applyPmAdminUi();
-  }
-
-  const pin = prompt("Enter Admin PIN:");
-  if (!pin) return;
-  if (pin === existing) {
-    setAdminUnlocked(true);
-    showToast("Admin unlocked");
-    return applyPmAdminUi();
-  }
-  showToast("Wrong PIN", "error");
-});
-
-pmAdminLockBtn?.addEventListener("click", () => {
-  setAdminUnlocked(false);
-  showToast("Locked");
-  applyPmAdminUi();
-});
-
 /* PMs */
 let pms = [];
 let currentPmFilter = "ALL";
 let editingPmId = null;
 let completingPmId = null;
 
-let pmChecklistState = []; // [{text, checked}]
+/* Admin */
+let isAdminUnlocked = false;
+
+/* PM checklist completion */
+let pmChecklistChecked = [];
+
 /* ---------------------------------------------------
    ELEMENT REFERENCES
 --------------------------------------------------- */
@@ -230,9 +181,10 @@ const deleteProblemBtn = document.getElementById("deleteProblemBtn");
 
 /* PMs */
 const openPmPanelBtn = document.getElementById("openPmPanelBtn");
-const pmDueTodayTextEl = document.getElementById("pmDueTodayText");
-const pmAdminBtn = document.getElementById("pmAdminBtn");
-const pmAdminLockBtn = document.getElementById("pmAdminLockBtn");
+const pmDueLabel = document.getElementById("pmDueLabel");
+const pmAdminLoginBtn = document.getElementById("pmAdminLoginBtn");
+const pmAdminStatusChip = document.getElementById("pmAdminStatusChip");
+const pmAdminLogoutBtn = document.getElementById("pmAdminLogoutBtn");
 const pmsListEl = document.getElementById("pmsList");
 const pmFilterBtns = document.querySelectorAll(".pm-filter");
 
@@ -241,9 +193,9 @@ const pmPanel = document.getElementById("pmPanel");
 const pmPanelTitle = document.getElementById("pmPanelTitle");
 const closePmPanelBtn = document.getElementById("closePmPanel");
 const pmName = document.getElementById("pmName");
+const pmItems = document.getElementById("pmItems");
 const pmArea = document.getElementById("pmArea");
 const pmFrequency = document.getElementById("pmFrequency");
-const pmChecklist = document.getElementById("pmChecklist");
 const savePmBtn = document.getElementById("savePmBtn");
 
 const pmCompleteOverlay = document.getElementById("pmCompleteOverlay");
@@ -252,7 +204,8 @@ const pmCompleteTitle = document.getElementById("pmCompleteTitle");
 const closePmCompleteBtn = document.getElementById("closePmComplete");
 const pmCompDate = document.getElementById("pmCompDate");
 const pmCompNotes = document.getElementById("pmCompNotes");
-const pmChecklistComplete = document.getElementById("pmChecklistComplete");
+const pmChecklistBox = document.getElementById("pmChecklistBox");
+const pmPhotoCount = document.getElementById("pmPhotoCount");
 const pmAddPhotoBtn = document.getElementById("pmAddPhotoBtn");
 const pmPhotoInput = document.getElementById("pmPhotoInput");
 const pmPhotoPreview = document.getElementById("pmPhotoPreview");
@@ -266,14 +219,6 @@ const closePmGalleryBtn = document.getElementById("closePmGallery");
 const pmGalleryMeta = document.getElementById("pmGalleryMeta");
 const pmGalleryGrid = document.getElementById("pmGalleryGrid");
 
-
-/* PM History */
-const pmHistoryOverlay = document.getElementById("pmHistoryOverlay");
-const pmHistoryPanel = document.getElementById("pmHistoryPanel");
-const pmHistoryTitle = document.getElementById("pmHistoryTitle");
-const closePmHistoryBtn = document.getElementById("closePmHistory");
-const pmHistoryMeta = document.getElementById("pmHistoryMeta");
-const pmHistoryList = document.getElementById("pmHistoryList");
 /* Toast */
 const toastContainer = document.getElementById("toastContainer");
 let toastTimeoutId = null;
@@ -358,6 +303,8 @@ function loadState() {
   problems = JSON.parse(localStorage.getItem(PROBLEMS_KEY)) || [];
   pms = JSON.parse(localStorage.getItem(PMS_KEY)) || [];
 
+  isAdminUnlocked = localStorage.getItem(ADMIN_UNLOCK_KEY) === "1";
+
   if (currentTonsInput) currentTonsInput.value = currentTons;
 
   buildCategoryDropdown();
@@ -372,6 +319,8 @@ function loadState() {
   renderInventory();
   renderProblemsList();
   renderPmsList();
+  updatePmDueLabel();
+  updatePmAdminUi();
 }
 
 function saveState() {
@@ -406,13 +355,16 @@ function showScreen(screenId) {
   if (screenId === "maintenanceScreen") {
     renderParts();
     renderProblemsList();
-  }
-  if (screenId === "pmScreen") {
     renderPmsList();
-    updatePmDueTodayText();
-    applyPmAdminUi();
+  updatePmDueLabel();
+  updatePmAdminUi();
   }
   if (screenId === "inventoryScreen") renderInventory();
+  if (screenId === "pmScreen") {
+    renderPmsList();
+    updatePmDueLabel();
+    updatePmAdminUi();
+  }
 }
 
 navButtons.forEach(btn => {
@@ -482,13 +434,6 @@ function renderDashboard() {
     pmDueTodayCountEl.textContent = duePmCount;
   }
 }
-
-function updatePmDueTodayText() {
-  if (!pmDueTodayTextEl) return;
-  const duePmCount = (pms || []).filter(pm => isPmDue(pm)).length;
-  pmDueTodayTextEl.textContent = `${duePmCount} PM${duePmCount === 1 ? "" : "s"} due today`;
-}
-
 
 /* ---------------------------------------------------
    CATEGORY DROPDOWNS
@@ -961,6 +906,7 @@ compPhotoInput?.addEventListener("change", async () => {
 
   compPhotoInput.value = "";
   renderCompletionPhotoPreview();
+  if (pmPhotoCount) pmPhotoCount.textContent = `(${pmCompletionPhotos.length}/4)`;
   showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
 });
 
@@ -971,6 +917,7 @@ compPhotoPreview?.addEventListener("click", (e) => {
     if (!Number.isFinite(idx)) return;
     completionPhotos.splice(idx, 1);
     renderCompletionPhotoPreview();
+    if (pmPhotoCount) pmPhotoCount.textContent = `(${pmCompletionPhotos.length}/4)`;
     showToast("Photo removed");
     return;
   }
@@ -1138,6 +1085,7 @@ probPhotoInput?.addEventListener("change", async () => {
 
   probPhotoInput.value = "";
   renderProblemPhotoPreview();
+  if (pmPhotoCount) pmPhotoCount.textContent = `(${pmCompletionPhotos.length}/4)`;
   showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
 });
 
@@ -1382,6 +1330,27 @@ deleteProblemBtn?.addEventListener("click", () => {
 /* ===================================================
    PMs (Due Today + Gallery + compressed photo save)
 =================================================== */
+
+function updatePmDueLabel() {
+  if (!pmDueLabel) return;
+  const duePmCount = (pms || []).filter(pm => isPmDue(pm)).length;
+  pmDueLabel.textContent = `${duePmCount} PM${duePmCount === 1 ? "" : "s"} due today`;
+}
+
+function updatePmAdminUi() {
+  // Admin affects: Add/Edit/Delete PMs only
+  const unlocked = !!isAdminUnlocked;
+
+  if (pmAdminStatusChip) pmAdminStatusChip.classList.toggle("hidden", !unlocked);
+  if (pmAdminLogoutBtn) pmAdminLogoutBtn.classList.toggle("hidden", !unlocked);
+
+  // If not admin, keep Add PM button but disable it (so UI stays consistent)
+  if (openPmPanelBtn) {
+    openPmPanelBtn.disabled = !unlocked;
+    openPmPanelBtn.style.opacity = unlocked ? "1" : "0.55";
+  }
+}
+
 function buildPmAreaDropdown() {
   if (!pmArea) return;
   const PM_AREAS = ["Cold Feed", "RAP", "Drum", "Drag", "Silos", "Scales"];
@@ -1424,14 +1393,14 @@ function openPmPanel(isEdit, id) {
       if (pmName) pmName.value = item.name || "";
       if (pmArea) pmArea.value = item.area || "Cold Feed";
       if (pmFrequency) pmFrequency.value = item.frequency || "Daily";
-          if (pmChecklist) pmChecklist.value = Array.isArray(item.checklist) ? item.checklist.join("\n") : "";
-}
+      if (pmItems) pmItems.value = (Array.isArray(item.items) ? item.items : []).join("\n");
+    }
   } else {
     if (pmName) pmName.value = "";
     if (pmArea) pmArea.value = "Cold Feed";
     if (pmFrequency) pmFrequency.value = "Daily";
-      if (pmChecklist) pmChecklist.value = "";
-}
+    if (pmItems) pmItems.value = "";
+  }
 
   pmPanelOverlay?.classList.remove("hidden");
   setTimeout(() => pmPanel?.classList.add("show"), 10);
@@ -1443,30 +1412,31 @@ function closePmPanel() {
   editingPmId = null;
 }
 
-openPmPanelBtn?.addEventListener("click", () => openPmPanel(false, null));
+openPmPanelBtn?.addEventListener("click", () => {
+  if (!isAdminUnlocked) return showToast("Admin only", "error");
+  openPmPanel(false, null);
+});
 closePmPanelBtn?.addEventListener("click", closePmPanel);
 pmPanelOverlay?.addEventListener("click", (e) => { if (e.target === pmPanelOverlay) closePmPanel(); });
 
 savePmBtn?.addEventListener("click", () => {
-    if (!isAdminUnlocked()) return showToast("Admin required to edit PMs", "error");
-const name = (pmName?.value || "").trim();
+  const name = (pmName?.value || "").trim();
   const area = pmArea?.value || "Cold Feed";
   const frequency = pmFrequency?.value || "Daily";
-    const checklistLines = (pmChecklist?.value || "")
-    .split("\n")
-    .map(s => s.trim())
-    .filter(Boolean);
-if (!name) return showToast("Enter PM name", "error");
+  if (!isAdminUnlocked) return showToast("Admin only", "error");
+  const items = (pmItems?.value || "").split("\n").map(x => x.trim()).filter(Boolean);
+
+  if (!name) return showToast("Enter PM name", "error");
 
   if (editingPmId) {
     const idx = (pms || []).findIndex(x => x.id === editingPmId);
-    if (idx >= 0) pms[idx] = { ...pms[idx], name, area, frequency, checklist: checklistLines };
+    if (idx >= 0) pms[idx] = { ...pms[idx], name, area, frequency, items };
   } else {
     pms.unshift({
       id: "pm_" + Date.now(),
       createdAt: new Date().toISOString(),
       name, area, frequency,
-      checklist: checklistLines,
+      items,
       history: []
     });
   }
@@ -1474,6 +1444,8 @@ if (!name) return showToast("Enter PM name", "error");
   if (!saveState()) return;
 
   renderPmsList();
+  updatePmDueLabel();
+  updatePmAdminUi();
   renderDashboard();
   showToast(editingPmId ? "PM updated" : "PM added");
   closePmPanel();
@@ -1483,7 +1455,44 @@ pmFilterBtns?.forEach(btn => {
   btn.addEventListener("click", () => {
     currentPmFilter = btn.dataset.pmfilter || "ALL";
     renderPmsList();
+  updatePmDueLabel();
+  updatePmAdminUi();
   });
+
+/* Admin login/logout (PM screen) */
+pmAdminLoginBtn?.addEventListener("click", () => {
+  // If no PIN set yet, allow creating one
+  const existingPin = localStorage.getItem(ADMIN_PIN_KEY) || "";
+  if (!existingPin) {
+    const newPin = prompt("Create Admin PIN (4-8 digits):") || "";
+    const clean = newPin.trim();
+    if (!/^[0-9]{4,8}$/.test(clean)) return showToast("PIN must be 4-8 digits", "error");
+    localStorage.setItem(ADMIN_PIN_KEY, clean);
+    localStorage.setItem(ADMIN_UNLOCK_KEY, "1");
+    isAdminUnlocked = true;
+    updatePmAdminUi();
+    renderPmsList();
+    showToast("Admin unlocked");
+    return;
+  }
+
+  const pin = prompt("Enter Admin PIN:") || "";
+  if (pin.trim() !== existingPin) return showToast("Wrong PIN", "error");
+
+  localStorage.setItem(ADMIN_UNLOCK_KEY, "1");
+  isAdminUnlocked = true;
+  updatePmAdminUi();
+  renderPmsList();
+  showToast("Admin unlocked");
+});
+
+pmAdminLogoutBtn?.addEventListener("click", () => {
+  localStorage.setItem(ADMIN_UNLOCK_KEY, "0");
+  isAdminUnlocked = false;
+  updatePmAdminUi();
+  renderPmsList();
+  showToast("Normal mode");
+});
 });
 
 function countPmPhotoTotal(pm) {
@@ -1511,60 +1520,67 @@ function renderPmsList() {
     return;
   }
 
+  
   pmsListEl.innerHTML = filtered.map(pm => {
-        const admin = isAdminUnlocked();
-const last = getPmLastDate(pm);
+    const last = getPmLastDate(pm);
     const due = isPmDue(pm);
     const pill = due ? `<span class="pm-pill pm-due">DUE</span>` : `<span class="pm-pill pm-done">DONE</span>`;
-    const historyCount = Array.isArray(pm.history) ? pm.history.length : 0;
-    const photoTotal = countPmPhotoTotal(pm);
+    const items = Array.isArray(pm.items) ? pm.items : [];
+    const preview = items.slice(0, 4).map(t => `<div class="pm-item-row">✅ ${escapeHtml(t)}</div>`).join("") || `<div class="pm-item-row pm-item-muted">No checklist items</div>`;
+
+    const canEdit = !!isAdminUnlocked;
 
     return `
-      <div class="pm-card" data-pmid="${pm.id}">
+      <div class="pm-card pm-card-gold" data-pmid="${pm.id}">
         <div class="pm-card-top">
-          <div>
-            <div class="pm-title">${escapeHtml(pm.name || "PM")}</div>
-            <div class="pm-sub">${escapeHtml(pm.area || "")} — ${escapeHtml(pm.frequency || "")}</div>
-            <div class="pm-sub">${last ? `Last: ${escapeHtml(last)}` : "Last: (none)"}${historyCount ? ` • History: ${historyCount}` : ""}${photoTotal ? ` • 📷 ${photoTotal}` : ""}</div>
+          <div class="pm-left">
+            <div class="pm-title">${escapeHtml(pm.area || "")}</div>
+            <div class="pm-sub">${escapeHtml(pm.frequency || "")}</div>
           </div>
-          ${pill}
+
+          <div class="pm-right">
+            ${pill}
+            <button class="pm-icon-btn pm-edit-btn ${canEdit ? "" : "hidden"}" data-pmid="${pm.id}" title="Edit">✏️</button>
+            <button class="pm-icon-btn pm-delete-btn ${canEdit ? "" : "hidden"}" data-pmid="${pm.id}" title="Delete">🗑️</button>
+          </div>
         </div>
 
-        <div class="pm-actions">
-          <button class="pm-complete-btn" data-pmid="${pm.id}">Complete</button>
-          <button class="pm-history-btn" data-pmid="${pm.id}">History</button>
-          ${admin ? `<button class="pm-edit-btn" data-pmid="${pm.id}">Edit</button>` : ``}
-          ${admin ? `<button class="pm-delete-btn" data-pmid="${pm.id}">Delete</button>` : ``}
+        <div class="pm-checklist-preview">
+          ${preview}
         </div>
+
+        <button class="primary-btn full pm-complete-btn" data-pmid="${pm.id}">Complete PM</button>
       </div>
     `;
   }).join("");
-  updatePmDueTodayText();
 }
+
 
 pmsListEl?.addEventListener("click", (e) => {
   const id = e.target?.dataset?.pmid || e.target.closest("[data-pmid]")?.dataset?.pmid;
   if (!id) return;
 
   if (e.target.classList.contains("pm-edit-btn")) {
-    if (!isAdminUnlocked()) return showToast("Admin required", "error");
+    if (!isAdminUnlocked) return showToast("Admin only", "error");
     return openPmPanel(true, id);
   }
 
-  
-  if (e.target.classList.contains("pm-history-btn")) return openPmHistory(id);
-if (e.target.classList.contains("pm-delete-btn")) {
-    if (!isAdminUnlocked()) return showToast("Admin required", "error");
+  if (e.target.classList.contains("pm-delete-btn")) {
+    if (!isAdminUnlocked) return showToast("Admin only", "error");
     if (!confirm("Delete this PM?")) return;
     pms = (pms || []).filter(x => x.id !== id);
     if (!saveState()) return;
     renderPmsList();
+    updatePmDueLabel();
     renderDashboard();
     return showToast("PM deleted");
   }
 
-  if (e.target.classList.contains("pm-complete-btn")) return openPmComplete(id);
+  if (e.target.classList.contains("pm-complete-btn")) {
+    return openPmComplete(id);
+  }
 });
+
 
 function openPmComplete(id) {
   completingPmId = id;
@@ -1575,14 +1591,29 @@ function openPmComplete(id) {
   const pm = (pms || []).find(x => x.id === id);
   if (!pm) return;
 
+  // Build checklist
+  const items = Array.isArray(pm.items) ? pm.items : [];
+  pmChecklistChecked = items.map(() => false);
+  if (pmChecklistBox) {
+    if (!items.length) {
+      pmChecklistBox.innerHTML = `<div class="part-meta">No checklist items for this PM.</div>`;
+    } else {
+      pmChecklistBox.innerHTML = items.map((t, idx) => `
+        <label class="pm-check-item">
+          <input type="checkbox" data-pmcheck="${idx}">
+          <span>${escapeHtml(t)}</span>
+        </label>
+      `).join("");
+    }
+  }
+  if (pmPhotoCount) pmPhotoCount.textContent = "(0/4)";
+
+
   if (pmCompleteTitle) pmCompleteTitle.textContent = `Complete PM — ${pm.name || ""}`;
   if (pmCompDate) pmCompDate.value = getTodayStr();
   if (pmCompNotes) pmCompNotes.value = "";
 
-  
-  buildPmChecklistState(pm);
-  renderPmChecklistComplete();
-pmCompleteOverlay?.classList.remove("hidden");
+  pmCompleteOverlay?.classList.remove("hidden");
   setTimeout(() => pmCompletePanel?.classList.add("show"), 10);
 }
 
@@ -1594,37 +1625,6 @@ function closePmComplete() {
 
 closePmCompleteBtn?.addEventListener("click", closePmComplete);
 pmCompleteOverlay?.addEventListener("click", (e) => { if (e.target === pmCompleteOverlay) closePmComplete(); });
-
-
-function buildPmChecklistState(pm) {
-  const items = Array.isArray(pm?.checklist) ? pm.checklist : [];
-  pmChecklistState = items.map(t => ({ text: String(t), checked: false }));
-}
-
-function renderPmChecklistComplete() {
-  if (!pmChecklistComplete) return;
-  if (!pmChecklistState.length) {
-    pmChecklistComplete.innerHTML = `<div class="part-meta">No checklist set for this PM.</div>`;
-    return;
-  }
-  pmChecklistComplete.innerHTML = pmChecklistState.map((it, idx) => `
-    <label class="checklist-item">
-      <input type="checkbox" data-ck="${idx}" ${it.checked ? "checked" : ""}>
-      <div>
-        <div class="checklist-text">${escapeHtml(it.text)}</div>
-        <div class="checklist-sub">Required</div>
-      </div>
-    </label>
-  `).join("");
-}
-
-pmChecklistComplete?.addEventListener("change", (e) => {
-  const cb = e.target;
-  if (!(cb instanceof HTMLInputElement)) return;
-  const idx = Number(cb.dataset.ck);
-  if (!Number.isFinite(idx) || !pmChecklistState[idx]) return;
-  pmChecklistState[idx].checked = cb.checked;
-});
 
 function renderPmPhotoPreview() {
   if (!pmPhotoPreview) return;
@@ -1660,6 +1660,7 @@ pmPhotoInput?.addEventListener("change", async () => {
 
   pmPhotoInput.value = "";
   renderPmPhotoPreview();
+  if (pmPhotoCount) pmPhotoCount.textContent = `(${pmCompletionPhotos.length}/4)`;
   showToast(`Added ${toAdd.length} photo${toAdd.length > 1 ? "s" : ""}`);
 });
 
@@ -1686,92 +1687,20 @@ savePmCompletionBtn?.addEventListener("click", () => {
   const notes = (pmCompNotes?.value || "").trim();
   if (!date) return showToast("Pick a date", "error");
 
-  
-  // Checklist enforcement (Option A)
-  if (pmChecklistState.length) {
-    const allChecked = pmChecklistState.every(x => x.checked === true);
-    if (!allChecked) return showToast("All checklist items must be completed before closing this PM", "error");
-  }
-const entry = { date, notes, checklist: pmChecklistState.map(x => ({ text: x.text, checked: x.checked })), photos: pmCompletionPhotos.slice() };
+  const pmItemsArr = Array.isArray(pm.items) ? pm.items : [];
+  const entry = { date, notes, photos: pmCompletionPhotos.slice(), checklist: { items: pmItemsArr.slice(), checked: pmChecklistChecked.slice() } };
   if (!Array.isArray(pm.history)) pm.history = [];
   pm.history.push(entry);
 
   if (!saveState()) return;
 
   renderPmsList();
+  updatePmDueLabel();
+  updatePmAdminUi();
   renderDashboard();
   showToast("PM logged");
-  pmChecklistState = [];
   closePmComplete();
 });
-
-
-/* PM HISTORY (Problem-style) */
-function openPmHistory(id) {
-  const pm = (pms || []).find(x => x.id === id);
-  if (!pm) return;
-
-  if (pmHistoryTitle) pmHistoryTitle.textContent = `PM History — ${pm.name || ""}`;
-
-  const total = Array.isArray(pm.history) ? pm.history.length : 0;
-  if (pmHistoryMeta) pmHistoryMeta.textContent = `${pm.area || ""} • ${pm.frequency || ""} • Entries: ${total}`;
-
-  const h = (Array.isArray(pm.history) ? pm.history : []).slice().reverse();
-
-  if (pmHistoryList) {
-    if (!h.length) {
-      pmHistoryList.innerHTML = `<div class="part-meta">No history yet.</div>`;
-    } else {
-      pmHistoryList.innerHTML = h.map(entry => {
-        const photos = Array.isArray(entry.photos) ? entry.photos : [];
-        const checklist = Array.isArray(entry.checklist) ? entry.checklist : [];
-        const checklistHtml = checklist.length ? `
-          <div class="history-checklist">
-            ${checklist.map(c => `
-              <div class="history-checkline">${c.checked ? "✅" : "⬜"} ${escapeHtml(c.text || "")}</div>
-            `).join("")}
-          </div>
-        ` : `<div class="part-meta">No checklist snapshot</div>`;
-
-        const photosHtml = photos.length ? `
-          <div class="photo-preview-grid" style="margin-top:10px;">
-            ${photos.map(src => `<div class="photo-thumb"><img src="${src}" alt="PM Photo"></div>`).join("")}
-          </div>
-        ` : `<div class="part-meta" style="margin-top:10px;">No photos</div>`;
-
-        const notes = (entry.notes || "").trim();
-
-        return `
-          <div class="history-entry">
-            <div class="history-top">
-              <div class="history-date">${escapeHtml(entry.date || "")}</div>
-            </div>
-            ${notes ? `<div class="history-notes">${escapeHtml(notes)}</div>` : ``}
-            ${checklistHtml}
-            ${photosHtml}
-          </div>
-        `;
-      }).join("");
-    }
-  }
-
-  pmHistoryOverlay?.classList.remove("hidden");
-  setTimeout(() => pmHistoryPanel?.classList.add("show"), 10);
-}
-
-function closePmHistory() {
-  pmHistoryPanel?.classList.remove("show");
-  setTimeout(() => pmHistoryOverlay?.classList.add("hidden"), 250);
-}
-
-closePmHistoryBtn?.addEventListener("click", closePmHistory);
-pmHistoryOverlay?.addEventListener("click", (e) => { if (e.target === pmHistoryOverlay) closePmHistory(); });
-
-pmHistoryList?.addEventListener("click", (e) => {
-  const img = e.target?.tagName === "IMG" ? e.target : null;
-  if (img?.src) openLightbox(img.src);
-});
-
 
 /* PM GALLERY */
 function collectPmGalleryPhotos(pm) {
@@ -1787,6 +1716,24 @@ function collectPmGalleryPhotos(pm) {
 function openPmGallery(id) {
   const pm = (pms || []).find(x => x.id === id);
   if (!pm) return;
+
+  // Build checklist
+  const items = Array.isArray(pm.items) ? pm.items : [];
+  pmChecklistChecked = items.map(() => false);
+  if (pmChecklistBox) {
+    if (!items.length) {
+      pmChecklistBox.innerHTML = `<div class="part-meta">No checklist items for this PM.</div>`;
+    } else {
+      pmChecklistBox.innerHTML = items.map((t, idx) => `
+        <label class="pm-check-item">
+          <input type="checkbox" data-pmcheck="${idx}">
+          <span>${escapeHtml(t)}</span>
+        </label>
+      `).join("");
+    }
+  }
+  if (pmPhotoCount) pmPhotoCount.textContent = "(0/4)";
+
 
   const photos = collectPmGalleryPhotos(pm);
   if (pmGalleryTitle) pmGalleryTitle.textContent = `PM Photos — ${pm.name || ""}`;
@@ -1930,3 +1877,12 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
    }
+
+
+pmChecklistBox?.addEventListener("change", (e) => {
+  const cb = e.target;
+  if (!cb || cb.type !== "checkbox") return;
+  const idx = Number(cb.dataset.pmcheck);
+  if (!Number.isFinite(idx)) return;
+  pmChecklistChecked[idx] = !!cb.checked;
+});

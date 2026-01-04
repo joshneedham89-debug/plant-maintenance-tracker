@@ -3,7 +3,7 @@
    Offline caching + auto update
 ======================================================= */
 
-const CACHE_NAME = "pm_v11_cache";
+const CACHE_NAME = "pm_v10_cache";
 const APP_FILES = [
   "./",
   "index.html",
