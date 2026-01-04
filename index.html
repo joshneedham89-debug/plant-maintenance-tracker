@@ -114,28 +114,12 @@
         <div id="problemsList" class="problems-list"></div>
       </div>
 
-<div id="partsList"></div>
-    </section>
-
-    
-    <!-- ---------------- PMs SCREEN ---------------- -->
-    <section id="pmScreen" class="screen">
-      <h2 class="section-title">PMs</h2>
-
+      <!-- PMs -->
       <div class="card">
         <div class="problems-header-row">
-          <div>
-            <h3 style="margin:0">PMs</h3>
-            <div id="pmDueTodayText" class="part-meta">0 PMs due today</div>
-          </div>
-
-          <div style="display:flex; gap:8px; align-items:center;">
-            <button id="pmAdminBtn" class="secondary-btn">Admin</button>
-            <button id="pmAdminLockBtn" class="secondary-btn hidden">Normal Mode</button>
-          </div>
+          <h3>PMs</h3>
+          <button id="openPmPanelBtn" class="secondary-btn">+ Add PM</button>
         </div>
-
-        <button id="openPmPanelBtn" class="secondary-btn full hidden">+ Add PM</button>
 
         <div class="pm-filters">
           <button class="pm-filter active" data-pmfilter="ALL">All</button>
@@ -145,9 +129,11 @@
 
         <div id="pmsList" class="pms-list"></div>
       </div>
+
+      <div id="partsList"></div>
     </section>
 
-<!-- ---------------- INVENTORY SCREEN ---------------- -->
+    <!-- ---------------- INVENTORY SCREEN ---------------- -->
     <section id="inventoryScreen" class="screen">
       <h2 class="section-title">Inventory</h2>
 
@@ -216,8 +202,7 @@
     <nav class="bottom-nav">
       <button class="nav-btn active" data-screen="dashboardScreen">🏠<br>Home</button>
       <button class="nav-btn" data-screen="maintenanceScreen">🛠️<br>Maint</button>
-            <button class="nav-btn" data-screen="pmScreen">📋<br>PMs</button>
-<button class="nav-btn" data-screen="inventoryScreen">📦<br>Inventory</button>
+      <button class="nav-btn" data-screen="inventoryScreen">📦<br>Inventory</button>
       <button class="nav-btn" data-screen="acScreen">📊<br>AC Calc</button>
       <button class="nav-btn" data-screen="settingsScreen">⚙️<br>Settings</button>
     </nav>
@@ -434,11 +419,7 @@
           <option value="Weekly">Weekly</option>
         </select>
 
-        
-        <label>Checklist (one per line)</label>
-        <textarea id="pmChecklist" rows="6" placeholder="ex: Check belt alignment&#10;Inspect conveyor rollers&#10;Lubricate bearings"></textarea>
-
-<div class="panel-footer">
+        <div class="panel-footer">
           <button id="savePmBtn" class="primary-btn full">Save PM</button>
         </div>
       </div>
@@ -460,11 +441,7 @@
         <label>Notes</label>
         <input id="pmCompNotes" type="text" placeholder="Optional notes">
 
-        
-        <h4 class="subheading">Checklist (required)</h4>
-        <div id="pmChecklistComplete" class="checklist"></div>
-
-<h4 class="subheading">Photos (optional)</h4>
+        <h4 class="subheading">Photos (optional)</h4>
         <button id="pmAddPhotoBtn" class="secondary-btn full">+ Add Photo</button>
         <input id="pmPhotoInput" type="file" accept="image/*" multiple class="file-input-hidden">
         <div id="pmPhotoPreview" class="photo-preview"></div>
@@ -475,24 +452,6 @@
       </div>
     </div>
   </div>
-
-  
-  <!-- PM HISTORY PANEL (Problem-style) -->
-  <div id="pmHistoryOverlay" class="panel-overlay hidden">
-    <div id="pmHistoryPanel" class="slide-panel">
-      <div class="slide-panel-header">
-        <h3 id="pmHistoryTitle">PM History</h3>
-        <button id="closePmHistory" class="close-btn">✖</button>
-      </div>
-
-      <div class="slide-panel-body">
-        <div id="pmHistoryMeta" class="part-meta"></div>
-        <div id="pmHistoryList" class="history-list"></div>
-      </div>
-    </div>
-  </div>
-  <!-- END PM HISTORY -->
-
 
   <!-- GOLD UPDATE: PM GALLERY (view all photos for one PM) -->
   <div id="pmGalleryOverlay" class="panel-overlay hidden">

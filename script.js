@@ -1539,7 +1539,6 @@ const last = getPmLastDate(pm);
       </div>
     `;
   }).join("");
-}
   updatePmDueTodayText();
 }
 
