@@ -1550,6 +1550,7 @@ function renderPmsList() {
         </div>
 
         <button class="primary-btn full pm-complete-btn" data-pmid="${pm.id}">Complete PM</button>
+        <button class="secondary-btn full pm-history-btn" data-pmid="${pm.id}">History</button>
       </div>
     `;
   }).join("");
@@ -1576,7 +1577,11 @@ pmsListEl?.addEventListener("click", (e) => {
     return showToast("PM deleted");
   }
 
-  if (e.target.classList.contains("pm-complete-btn")) {
+  
+  if (e.target.classList.contains("pm-history-btn")) {
+    return openPmHistory(id);
+  }
+if (e.target.classList.contains("pm-complete-btn")) {
     return openPmComplete(id);
   }
 });
@@ -1688,6 +1693,15 @@ savePmCompletionBtn?.addEventListener("click", () => {
   if (!date) return showToast("Pick a date", "error");
 
   const pmItemsArr = Array.isArray(pm.items) ? pm.items : [];
+  // GOLD UPDATE: Enforce checklist completion (cannot save unless ALL checked)
+  if (pmItemsArr.length && Array.isArray(pmChecklistChecked) && pmChecklistChecked.length === pmItemsArr.length) {
+    const allChecked = pmChecklistChecked.every(Boolean);
+    if (!allChecked) {
+      showToast("Complete all checklist items before saving.", "error");
+      return;
+    }
+  }
+
   const entry = { date, notes, photos: pmCompletionPhotos.slice(), checklist: { items: pmItemsArr.slice(), checked: pmChecklistChecked.slice() } };
   if (!Array.isArray(pm.history)) pm.history = [];
   pm.history.push(entry);
@@ -1703,6 +1717,107 @@ savePmCompletionBtn?.addEventListener("click", () => {
 });
 
 /* PM GALLERY */
+/* ---------------------------------------------------
+   PM HISTORY (Gold Additive)
+   - Shows past completions like Problems detail panel
+--------------------------------------------------- */
+const pmHistoryOverlay = document.getElementById("pmHistoryOverlay");
+const pmHistoryPanel = document.getElementById("pmHistoryPanel");
+const pmHistoryTitle = document.getElementById("pmHistoryTitle");
+const closePmHistoryBtn = document.getElementById("closePmHistory");
+const pmHistoryMeta = document.getElementById("pmHistoryMeta");
+const pmHistoryList = document.getElementById("pmHistoryList");
+
+let viewingPmHistoryId = null;
+
+function openPmHistory(id) {
+  const pm = (pms || []).find(x => x.id === id);
+  if (!pm) return;
+
+  viewingPmHistoryId = id;
+
+  if (pmHistoryTitle) pmHistoryTitle.textContent = `PM History — ${pm.name || ""}`;
+  if (pmHistoryMeta) {
+    const total = Array.isArray(pm.history) ? pm.history.length : 0;
+    const photos = countPmPhotoTotal(pm);
+    const last = getPmLastDate(pm) || "—";
+    pmHistoryMeta.innerHTML = `
+      <div class="part-meta"><b>Area:</b> ${escapeHtml(pm.area || "")}</div>
+      <div class="part-meta"><b>Frequency:</b> ${escapeHtml(pm.frequency || "")}</div>
+      <div class="part-meta"><b>Last Completed:</b> ${escapeHtml(last)}</div>
+      <div class="part-meta"><b>Total Entries:</b> ${total} • <b>Total Photos:</b> ${photos}</div>
+    `;
+  }
+
+  renderPmHistoryList(pm);
+
+  pmHistoryOverlay?.classList.remove("hidden");
+  setTimeout(() => pmHistoryPanel?.classList.add("show"), 10);
+}
+
+function renderPmHistoryList(pm) {
+  if (!pmHistoryList) return;
+  const hist = Array.isArray(pm.history) ? pm.history.slice().reverse() : [];
+
+  if (!hist.length) {
+    pmHistoryList.innerHTML = `<div class="part-meta">No history yet for this PM.</div>`;
+    return;
+  }
+
+  pmHistoryList.innerHTML = hist.map((h, idx) => {
+    const notes = (h.notes || "").trim();
+    const photos = Array.isArray(h.photos) ? h.photos : [];
+    const checklist = h.checklist && Array.isArray(h.checklist.items) ? h.checklist : null;
+
+    const checklistHtml = checklist ? `
+      <div class="pm-history-checklist">
+        ${checklist.items.map((t, i) => {
+          const checked = !!(checklist.checked && checklist.checked[i]);
+          return `<div class="pm-history-check-row">${checked ? "✅" : "⬜"} ${escapeHtml(t)}</div>`;
+        }).join("")}
+      </div>
+    ` : "";
+
+    const photoHtml = photos.length ? `
+      <div class="photo-preview-grid pm-history-photos">
+        ${photos.map((src, pidx) => `
+          <div class="photo-thumb">
+            <img src="${src}" alt="PM Photo ${pidx + 1}" data-pmphoto="1">
+          </div>
+        `).join("")}
+      </div>
+    ` : `<div class="part-meta">No photos</div>`;
+
+    return `
+      <div class="pm-history-entry">
+        <div class="pm-history-top">
+          <div class="pm-history-date"><b>${escapeHtml(h.date || "")}</b></div>
+          <div class="pm-history-badge">#${hist.length - idx}</div>
+        </div>
+        ${notes ? `<div class="part-meta"><b>Notes:</b> ${escapeHtml(notes)}</div>` : ""}
+        ${checklistHtml}
+        ${photoHtml}
+      </div>
+    `;
+  }).join("");
+}
+
+function closePmHistory() {
+  pmHistoryPanel?.classList.remove("show");
+  setTimeout(() => pmHistoryOverlay?.classList.add("hidden"), 250);
+  viewingPmHistoryId = null;
+}
+
+closePmHistoryBtn?.addEventListener("click", closePmHistory);
+pmHistoryOverlay?.addEventListener("click", (e) => { if (e.target === pmHistoryOverlay) closePmHistory(); });
+
+pmHistoryList?.addEventListener("click", (e) => {
+  const img = e.target?.tagName === "IMG" ? e.target : null;
+  if (img?.src) openLightbox(img.src);
+});
+
+
+
 function collectPmGalleryPhotos(pm) {
   const out = [];
   const h = Array.isArray(pm.history) ? pm.history : [];

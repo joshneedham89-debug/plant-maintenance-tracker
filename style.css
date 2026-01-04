@@ -826,3 +826,58 @@ textarea{
   box-sizing: border-box;
   resize: vertical;
 }
+
+
+/* ---------------------------------------------------
+   PM History (Gold Additive)
+--------------------------------------------------- */
+.pm-history-list{
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pm-history-entry{
+  background:#0b1220;
+  border:1px solid #223049;
+  border-radius:14px;
+  padding:12px;
+}
+
+.pm-history-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom: 6px;
+}
+
+.pm-history-badge{
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #223049;
+  background: #ffffff10;
+  color: var(--text);
+}
+
+.pm-history-checklist{
+  margin-top: 8px;
+  border: 1px solid #223049;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+}
+
+.pm-history-check-row{
+  font-size: 14px;
+  padding: 6px 0;
+  color: var(--text);
+}
+
+.pm-history-photos{
+  margin-top: 10px;
+}
+
