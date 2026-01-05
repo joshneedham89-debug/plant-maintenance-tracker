@@ -197,8 +197,6 @@
 
     <!-- ---------------- SETTINGS SCREEN ---------------- -->
     <section id="settingsScreen" class="screen">
-  <div id="adminPanelAnchor"></div>
-
       <h2 class="section-title">Settings</h2>
       <div id="roleBadgeSettings" class="role-badge">Current Role: <span id="roleNameSettings">Ground Man</span></div>
 
@@ -213,6 +211,36 @@
 
         <button id="resetAllBtn" class="danger-btn full">Reset Entire App</button>
       </div>
+
+<div id="adminPanelCard" class="card admin-card hidden">
+  <h3 class="card-title">Admin Panel</h3>
+  <div class="status-row">
+    <div class="status-pill" id="systemStatusPill">SYSTEM STATUS: NORMAL</div>
+  </div>
+  <div class="toggle-group">
+    <div class="toggle-row"><label>Read-Only Lock</label><input id="toggleReadOnly" type="checkbox"></div>
+    <div class="toggle-row"><label>AC Calculator Enabled</label><input id="toggleAcEnabled" type="checkbox"></div>
+    <div class="toggle-row"><label>Inventory Editing Enabled</label><input id="toggleInventoryEditEnabled" type="checkbox"></div>
+    <div class="toggle-row"><label>Parts Editing Enabled</label><input id="togglePartsEditEnabled" type="checkbox"></div>
+    <div class="toggle-row"><label>PM Template Editing Enabled</label><input id="togglePmEditEnabled" type="checkbox"></div>
+  </div>
+  <div class="admin-section">
+    <h4>Temporary Role Impersonation</h4>
+    <select id="impersonateSelect" class="select full">
+      <option value="">— None —</option>
+      <option value="ground">Ground</option>
+      <option value="maintenance">Maintenance</option>
+      <option value="supervisor">Supervisor</option>
+    </select>
+    <button id="impersonateApplyBtn">Apply</button>
+    <button id="clearImpersonationBtn">Clear</button>
+  </div>
+  <div class="admin-section">
+    <h4>Admin Actions</h4>
+    <ul id="adminActionLog"></ul>
+  </div>
+</div>
+
     </section>
 
     <!-- ---------------- BOTTOM NAV ---------------- -->
