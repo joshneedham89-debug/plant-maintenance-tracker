@@ -11,12 +11,7 @@
 </head>
 
 <body>
-  
-    <div id="impersonationBanner" class="impersonation-banner hidden">
-      <div class="impersonation-text">ADMIN VIEWING AS: <span id="impersonationRoleText">—</span></div>
-      <button id="clearImpersonationBtn" class="secondary-btn">Clear</button>
-    </div>
-<div class="app-container">
+  <div class="app-container">
 
     <!-- ---------------- HEADER ---------------- -->
     <header class="app-header">
@@ -202,6 +197,8 @@
 
     <!-- ---------------- SETTINGS SCREEN ---------------- -->
     <section id="settingsScreen" class="screen">
+  <div id="adminPanelAnchor"></div>
+
       <h2 class="section-title">Settings</h2>
       <div id="roleBadgeSettings" class="role-badge">Current Role: <span id="roleNameSettings">Ground Man</span></div>
 
@@ -216,84 +213,6 @@
 
         <button id="resetAllBtn" class="danger-btn full">Reset Entire App</button>
       </div>
-    
-      <div id="adminPanelCard" class="card admin-card hidden">
-        <h3 class="card-title">Admin Panel</h3>
-
-        <div class="status-row">
-          <div class="status-pill" id="systemStatusPill">SYSTEM STATUS: NORMAL</div>
-        </div>
-
-        <div class="toggle-group">
-          <div class="toggle-row">
-            <label class="toggle-label" for="toggleReadOnly">Read-Only Lock</label>
-            <input id="toggleReadOnly" type="checkbox">
-          </div>
-
-          <div class="toggle-row">
-            <label class="toggle-label" for="toggleAcEnabled">AC Calculator Enabled</label>
-            <input id="toggleAcEnabled" type="checkbox">
-          </div>
-
-          <div class="toggle-row">
-            <label class="toggle-label" for="toggleInventoryEditEnabled">Inventory Editing Enabled</label>
-            <input id="toggleInventoryEditEnabled" type="checkbox">
-          </div>
-
-          <div class="toggle-row">
-            <label class="toggle-label" for="togglePartsEditEnabled">Parts Editing Enabled</label>
-            <input id="togglePartsEditEnabled" type="checkbox">
-          </div>
-
-          <div class="toggle-row">
-            <label class="toggle-label" for="togglePmEditEnabled">PM Template Editing Enabled</label>
-            <input id="togglePmEditEnabled" type="checkbox">
-          </div>
-        </div>
-
-        <div class="admin-section">
-          <h4 class="admin-subtitle">Role Permissions (Reference)</h4>
-          <div class="table-wrap">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>Feature</th>
-                  <th>Ground</th>
-                  <th>Maint</th>
-                  <th>Supervisor</th>
-                  <th>Admin</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>Tons</td><td>—</td><td>—</td><td>Yes</td><td>Yes</td></tr>
-                <tr><td>Inventory</td><td>View</td><td>Edit qty/notes</td><td>Full</td><td>Full</td></tr>
-                <tr><td>Parts</td><td>View</td><td>Full</td><td>Full</td><td>Full</td></tr>
-                <tr><td>PM Templates</td><td>—</td><td>—</td><td>—</td><td>Admin only</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="admin-section">
-          <h4 class="admin-subtitle">Temporary Role Impersonation (session)</h4>
-          <div class="impersonate-row">
-            <select id="impersonateSelect" class="select full">
-              <option value="">— None —</option>
-              <option value="ground">Ground Man</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="supervisor">Supervisor</option>
-            </select>
-            <button id="impersonateApplyBtn" class="primary-btn">Apply</button>
-          </div>
-          <div class="muted small">Does not change saved role. Clears on refresh.</div>
-        </div>
-
-        <div class="admin-section">
-          <h4 class="admin-subtitle">Last Admin Actions</h4>
-          <ul id="adminActionLog" class="admin-log"></ul>
-        </div>
-      </div>
-
     </section>
 
     <!-- ---------------- BOTTOM NAV ---------------- -->

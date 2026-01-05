@@ -6,79 +6,10 @@ const TONS_KEY = "pm_tons";
 const INVENTORY_KEY = "pm_inventory";
 const PROBLEMS_KEY = "pm_problems";
 const PMS_KEY = "pm_pms";
-const SETTINGS_KEY = "pm_settings_v1";
 
 /* Admin (additive) */
 const ADMIN_PIN_KEY = "pm_admin_pin";
 const ADMIN_UNLOCK_KEY = "pm_admin_unlocked";
-
-
-/* ---------------------------------------------------
-   ADMIN PANEL SETTINGS (Gold-safe additive)
---------------------------------------------------- */
-const DEFAULT_ADMIN_SETTINGS = {
-  readOnlyLock: false,
-  features: {
-    acEnabled: true,
-    inventoryEditEnabled: true,
-    partsEditEnabled: true,
-    pmEditEnabled: true
-  },
-  adminLog: [],
-  impersonateRole: null
-};
-
-let adminSettings = null;
-
-function loadAdminSettings() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    adminSettings = raw ? JSON.parse(raw) : structuredClone(DEFAULT_ADMIN_SETTINGS);
-  } catch (e) {
-    adminSettings = structuredClone(DEFAULT_ADMIN_SETTINGS);
-  }
-}
-
-function saveAdminSettings() {
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(adminSettings));
-    return true;
-  } catch (e) {
-    console.error(e);
-    showToast("Settings save failed", "error");
-    return false;
-  }
-}
-
-function logAdminAction(text) {
-  if (!adminSettings) return;
-  const ts = new Date().toLocaleString();
-  adminSettings.adminLog.unshift(`${ts} • ${text}`);
-  adminSettings.adminLog = adminSettings.adminLog.slice(0, 12);
-  saveAdminSettings();
-  renderAdminLog();
-}
-
-function getEffectiveRole() {
-  const actual = getCurrentRole();
-  if (actual === "admin" && adminSettings?.impersonateRole) return adminSettings.impersonateRole;
-  return actual;
-}
-function isReadOnlyLocked() { return !!adminSettings?.readOnlyLock; }
-function featureEnabled(key) { return !!adminSettings?.features?.[key]; }
-
-function requireRole(allowedRoles, message = "Not permitted") {
-  if (isReadOnlyLocked()) {
-    showToast("Read-Only Mode (Admin Lock)", "error");
-    return false;
-  }
-  const role = getEffectiveRole();
-  if (!allowedRoles.includes(role)) {
-    showToast(message, "error");
-    return false;
-  }
-  return true;
-}
 
 /* ---------------------------------------------------
    GLOBAL STATE
@@ -155,7 +86,6 @@ const ac_target = document.getElementById("ac_target");
 const ac_tph = document.getElementById("ac_tph");
 const ac_totalTons = document.getElementById("ac_totalTons");
 const acCalcBtn = document.getElementById("acCalcBtn");
-const acNavBtn = document.querySelector('.nav-btn[data-screen="acScreen"]');
 const ac_pumpRate = document.getElementById("ac_pumpRate");
 const ac_totalAc = document.getElementById("ac_totalAc");
 
@@ -163,21 +93,6 @@ const ac_totalAc = document.getElementById("ac_totalAc");
 const exportBtn = document.getElementById("exportBtn");
 const exportPmComplianceBtn = document.getElementById("exportPmComplianceBtn");
 const resetAllBtn = document.getElementById("resetAllBtn");
-
-// Admin Panel (Settings)
-const adminPanelCard = document.getElementById("adminPanelCard");
-const systemStatusPill = document.getElementById("systemStatusPill");
-const toggleReadOnly = document.getElementById("toggleReadOnly");
-const toggleAcEnabled = document.getElementById("toggleAcEnabled");
-const toggleInventoryEditEnabled = document.getElementById("toggleInventoryEditEnabled");
-const togglePartsEditEnabled = document.getElementById("togglePartsEditEnabled");
-const togglePmEditEnabled = document.getElementById("togglePmEditEnabled");
-const adminActionLog = document.getElementById("adminActionLog");
-const impersonateSelect = document.getElementById("impersonateSelect");
-const impersonateApplyBtn = document.getElementById("impersonateApplyBtn");
-const impersonationBanner = document.getElementById("impersonationBanner");
-const impersonationRoleText = document.getElementById("impersonationRoleText");
-const clearImpersonationBtn = document.getElementById("clearImpersonationBtn");
 
 /* Add/Edit Part Panel */
 const partPanelOverlay = document.getElementById("partPanelOverlay");
@@ -716,9 +631,6 @@ newPartName?.addEventListener("change", () => {
 });
 
 savePartBtn?.addEventListener("click", () => {
-  if (!featureEnabled("partsEditEnabled")) { showToast("Parts editing disabled (Admin)", "error"); return; }
-  if (!requireRole(["maintenance","supervisor","admin"], "Maintenance or higher only")) return;
-
   const name = newPartName.value.trim();
   const category = newPartCategory.value;
   const section = newPartSection.value.trim();
@@ -753,8 +665,6 @@ savePartBtn?.addEventListener("click", () => {
    DELETE / DUPLICATE PART
 --------------------------------------------------- */
 function deletePart(i) {
-  if (!featureEnabled("partsEditEnabled")) { showToast("Parts editing disabled (Admin)", "error"); return; }
-  if (!requireRole(["maintenance","supervisor","admin"], "Maintenance or higher only")) return;
   if (!confirm("Delete this part?")) return;
   parts.splice(i, 1);
   if (!saveState()) return;
@@ -822,17 +732,10 @@ function renderInventory() {
 searchInventoryInput?.addEventListener("input", renderInventory);
 
 inventoryList?.addEventListener("click", (e) => {
-  if (e.target.classList.contains("edit-inv-btn")) {
-    if (!featureEnabled("inventoryEditEnabled")) { showToast("Inventory editing disabled (Admin)", "error"); return; }
-    if (!requireRole(["maintenance","supervisor","admin"], "Maintenance or higher only")) return;
-    openInventoryForEdit(Number(e.target.dataset.idx));
-  }
-  if (e.target.classList.contains("delete-inv-btn")) {
-    if (!featureEnabled("inventoryEditEnabled")) { showToast("Inventory editing disabled (Admin)", "error"); return; }
-    if (!requireRole(["supervisor","admin"], "Supervisor or Admin only")) return;
-    deleteInventoryItem(Number(e.target.dataset.idx));
-  }
+  if (e.target.classList.contains("edit-inv-btn")) openInventoryForEdit(Number(e.target.dataset.idx));
+  if (e.target.classList.contains("delete-inv-btn")) deleteInventoryItem(Number(e.target.dataset.idx));
 });
+
 function openInventoryPanel(isEdit, index) {
   editingInventoryIndex = isEdit ? index : null;
 
@@ -866,19 +769,13 @@ function closeInventoryPanel() {
   setTimeout(() => inventoryPanelOverlay?.classList.add("hidden"), 250);
 }
 
-addInventoryBtn?.addEventListener("click", () => {
-  if (!featureEnabled("inventoryEditEnabled")) { showToast("Inventory editing disabled (Admin)", "error"); return; }
-  if (!requireRole(["supervisor","admin"], "Supervisor or Admin only")) return;
-  openInventoryPanel(false, null);
-});
+addInventoryBtn?.addEventListener("click", () => openInventoryPanel(false, null));
 function openInventoryForEdit(index) { openInventoryPanel(true, index); }
 
 closeInventoryPanelBtn?.addEventListener("click", closeInventoryPanel);
 inventoryPanelOverlay?.addEventListener("click", (e) => { if (e.target === inventoryPanelOverlay) closeInventoryPanel(); });
 
 saveInventoryBtn?.addEventListener("click", () => {
-  if (!featureEnabled("inventoryEditEnabled")) { showToast("Inventory editing disabled (Admin)", "error"); return; }
-
   const part = invPartName.value.trim();
   const category = invCategory.value;
   const location = invLocation.value.trim();
@@ -905,8 +802,6 @@ saveInventoryBtn?.addEventListener("click", () => {
 });
 
 function deleteInventoryItem(i) {
-  if (!featureEnabled("inventoryEditEnabled")) { showToast("Inventory editing disabled (Admin)", "error"); return; }
-  if (!requireRole(["supervisor","admin"], "Supervisor or Admin only")) return;
   if (!confirm("Delete this item?")) return;
   inventory.splice(i, 1);
   if (!saveState()) return;
@@ -1088,8 +983,6 @@ saveCompletionBtn?.addEventListener("click", () => {
    AC CALCULATOR
 --------------------------------------------------- */
 acCalcBtn?.addEventListener("click", () => {
-  if (!featureEnabled("acEnabled")) { showToast("AC Calculator disabled (Admin)", "error"); return; }
-
   const R = Number(ac_residual.value) / 100;
   const RAPpct = Number(ac_rapPct.value) / 100;
   const ACtarget = Number(ac_target.value) / 100;
@@ -1539,9 +1432,6 @@ closePmPanelBtn?.addEventListener("click", closePmPanel);
 pmPanelOverlay?.addEventListener("click", (e) => { if (e.target === pmPanelOverlay) closePmPanel(); });
 
 savePmBtn?.addEventListener("click", () => {
-  if (!featureEnabled("pmEditEnabled")) { showToast("PM template editing disabled (Admin)", "error"); return; }
-  if (!requireRole(["admin"], "Admin only")) return;
-
   const name = (pmName?.value || "").trim();
   const area = pmArea?.value || "Cold Feed";
   const frequency = pmFrequency?.value || "Daily";
@@ -2235,119 +2125,48 @@ function tryRoleLogin() {
   });
 })();
 
-function renderAdminLog() {
-  if (!adminActionLog) return;
-  adminActionLog.innerHTML = "";
-  const items = adminSettings?.adminLog || [];
-  if (!items.length) {
-    const li = document.createElement("li");
-    li.textContent = "No actions yet.";
-    adminActionLog.appendChild(li);
-    return;
+
+// --- ADMIN PANEL MOUNT FIX ---
+function mountAdminPanel() {
+  const anchor = document.getElementById("adminPanelAnchor");
+  if (!anchor || document.getElementById("adminPanelCard")) return;
+
+  anchor.innerHTML = `
+    <div id="adminPanelCard" class="card admin-card hidden">
+      <h3 class="card-title">Admin Panel</h3>
+      <div class="status-row">
+        <div class="status-pill" id="systemStatusPill">SYSTEM STATUS: NORMAL</div>
+      </div>
+      <div class="toggle-group">
+        <div class="toggle-row"><label>Read-Only Lock</label><input id="toggleReadOnly" type="checkbox"></div>
+        <div class="toggle-row"><label>AC Calculator Enabled</label><input id="toggleAcEnabled" type="checkbox"></div>
+        <div class="toggle-row"><label>Inventory Editing Enabled</label><input id="toggleInventoryEditEnabled" type="checkbox"></div>
+        <div class="toggle-row"><label>Parts Editing Enabled</label><input id="togglePartsEditEnabled" type="checkbox"></div>
+        <div class="toggle-row"><label>PM Template Editing Enabled</label><input id="togglePmEditEnabled" type="checkbox"></div>
+      </div>
+      <div class="admin-section">
+        <h4>Temporary Role Impersonation</h4>
+        <select id="impersonateSelect" class="select full">
+          <option value="">— None —</option>
+          <option value="ground">Ground</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="supervisor">Supervisor</option>
+        </select>
+        <button id="impersonateApplyBtn">Apply</button>
+        <button id="clearImpersonationBtn">Clear</button>
+      </div>
+      <div class="admin-section">
+        <h4>Admin Actions</h4>
+        <ul id="adminActionLog"></ul>
+      </div>
+    </div>
+  `;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  mountAdminPanel();
+  if (typeof renderAdminPanel === "function") {
+    renderAdminPanel();
+    applyAdminControlsEverywhere();
   }
-  items.forEach(t => {
-    const li = document.createElement("li");
-    li.textContent = t;
-    adminActionLog.appendChild(li);
-  });
-}
-
-function applySystemStatusUI() {
-  if (!systemStatusPill) return;
-  const locked = isReadOnlyLocked();
-  systemStatusPill.textContent = locked ? "SYSTEM STATUS: READ-ONLY (ADMIN LOCK)" : "SYSTEM STATUS: NORMAL";
-  systemStatusPill.classList.toggle("locked", locked);
-}
-
-function applyFeatureVisibility() {
-  if (acNavBtn) acNavBtn.style.display = featureEnabled("acEnabled") ? "" : "none";
-}
-
-function applyImpersonationUI() {
-  const actual = getCurrentRole();
-  const imp = (actual === "admin") ? (adminSettings?.impersonateRole || "") : "";
-  if (impersonationBanner) impersonationBanner.classList.toggle("hidden", !(actual === "admin" && !!imp));
-  if (impersonationRoleText) impersonationRoleText.textContent = imp ? (imp.charAt(0).toUpperCase() + imp.slice(1)) : "—";
-  if (impersonateSelect && actual === "admin") impersonateSelect.value = imp;
-}
-
-function renderAdminPanel() {
-  const actual = getCurrentRole();
-  if (!adminPanelCard) return;
-  const isAdmin = actual === "admin";
-  adminPanelCard.classList.toggle("hidden", !isAdmin);
-  if (!isAdmin) return;
-
-  if (toggleReadOnly) toggleReadOnly.checked = !!adminSettings.readOnlyLock;
-  if (toggleAcEnabled) toggleAcEnabled.checked = !!adminSettings.features.acEnabled;
-  if (toggleInventoryEditEnabled) toggleInventoryEditEnabled.checked = !!adminSettings.features.inventoryEditEnabled;
-  if (togglePartsEditEnabled) togglePartsEditEnabled.checked = !!adminSettings.features.partsEditEnabled;
-  if (togglePmEditEnabled) togglePmEditEnabled.checked = !!adminSettings.features.pmEditEnabled;
-
-  applySystemStatusUI();
-  applyFeatureVisibility();
-  applyImpersonationUI();
-  renderAdminLog();
-}
-
-function applyAdminControlsEverywhere() {
-  applySystemStatusUI();
-  applyFeatureVisibility();
-  applyImpersonationUI();
-}
-
-toggleReadOnly?.addEventListener("change", () => {
-  if (getCurrentRole() !== "admin") return;
-  adminSettings.readOnlyLock = !!toggleReadOnly.checked;
-  saveAdminSettings();
-  logAdminAction(adminSettings.readOnlyLock ? "App locked to READ-ONLY" : "App unlocked (NORMAL)");
-  applyAdminControlsEverywhere();
-});
-
-toggleAcEnabled?.addEventListener("change", () => {
-  if (getCurrentRole() !== "admin") return;
-  adminSettings.features.acEnabled = !!toggleAcEnabled.checked;
-  saveAdminSettings();
-  logAdminAction(adminSettings.features.acEnabled ? "AC Calculator enabled" : "AC Calculator disabled");
-  applyAdminControlsEverywhere();
-});
-
-toggleInventoryEditEnabled?.addEventListener("change", () => {
-  if (getCurrentRole() !== "admin") return;
-  adminSettings.features.inventoryEditEnabled = !!toggleInventoryEditEnabled.checked;
-  saveAdminSettings();
-  logAdminAction(adminSettings.features.inventoryEditEnabled ? "Inventory editing enabled" : "Inventory editing disabled");
-});
-
-togglePartsEditEnabled?.addEventListener("change", () => {
-  if (getCurrentRole() !== "admin") return;
-  adminSettings.features.partsEditEnabled = !!togglePartsEditEnabled.checked;
-  saveAdminSettings();
-  logAdminAction(adminSettings.features.partsEditEnabled ? "Parts editing enabled" : "Parts editing disabled");
-});
-
-togglePmEditEnabled?.addEventListener("change", () => {
-  if (getCurrentRole() !== "admin") return;
-  adminSettings.features.pmEditEnabled = !!togglePmEditEnabled.checked;
-  saveAdminSettings();
-  logAdminAction(adminSettings.features.pmEditEnabled ? "PM template editing enabled" : "PM template editing disabled");
-});
-
-impersonateApplyBtn?.addEventListener("click", () => {
-  if (getCurrentRole() !== "admin") return;
-  const val = (impersonateSelect?.value || "").trim();
-  adminSettings.impersonateRole = val || null;
-  saveAdminSettings();
-  logAdminAction(val ? `Impersonation set: ${val}` : "Impersonation cleared");
-  applyAdminControlsEverywhere();
-  updateRoleBadges?.();
-});
-
-clearImpersonationBtn?.addEventListener("click", () => {
-  if (getCurrentRole() !== "admin") return;
-  adminSettings.impersonateRole = null;
-  saveAdminSettings();
-  logAdminAction("Impersonation cleared");
-  applyAdminControlsEverywhere();
-  updateRoleBadges?.();
 });
