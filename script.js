@@ -776,6 +776,12 @@ closeInventoryPanelBtn?.addEventListener("click", closeInventoryPanel);
 inventoryPanelOverlay?.addEventListener("click", (e) => { if (e.target === inventoryPanelOverlay) closeInventoryPanel(); });
 
 saveInventoryBtn?.addEventListener("click", () => {
+  if (editingInventoryIndex === null) {
+    if (!requireRole(["supervisor","admin"], "Supervisor or Admin only")) return;
+  } else {
+    if (!requireRole(["maintenance","supervisor","admin"], "Maintenance or higher only")) return;
+  }
+
   const part = invPartName.value.trim();
   const category = invCategory.value;
   const location = invLocation.value.trim();
@@ -802,6 +808,7 @@ saveInventoryBtn?.addEventListener("click", () => {
 });
 
 function deleteInventoryItem(i) {
+  if (!requireRole(["supervisor","admin"], "Supervisor or Admin only")) return;
   if (!confirm("Delete this item?")) return;
   inventory.splice(i, 1);
   if (!saveState()) return;
@@ -2037,6 +2044,15 @@ const ROLE_LABELS = {
   admin: "Admin"
 };
 
+
+function requireRole(allowedRoles, message = "Not permitted") {
+  const role = getCurrentRole();
+  if (!allowedRoles.includes(role)) {
+    showToast(message, "error");
+    return false;
+  }
+  return true;
+}
 function getCurrentRole() {
   return localStorage.getItem(ROLE_KEY) || "ground";
 }
