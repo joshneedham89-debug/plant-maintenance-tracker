@@ -86,6 +86,7 @@ const ac_target = document.getElementById("ac_target");
 const ac_tph = document.getElementById("ac_tph");
 const ac_totalTons = document.getElementById("ac_totalTons");
 const acCalcBtn = document.getElementById("acCalcBtn");
+const acCalcTab = document.getElementById("acCalcTab");
 const ac_pumpRate = document.getElementById("ac_pumpRate");
 const ac_totalAc = document.getElementById("ac_totalAc");
 
@@ -631,6 +632,8 @@ newPartName?.addEventListener("change", () => {
 });
 
 savePartBtn?.addEventListener("click", () => {
+  if (!requireRole(["maintenance","supervisor","admin"], "Maintenance or higher only")) return;
+
   const name = newPartName.value.trim();
   const category = newPartCategory.value;
   const section = newPartSection.value.trim();
@@ -665,6 +668,7 @@ savePartBtn?.addEventListener("click", () => {
    DELETE / DUPLICATE PART
 --------------------------------------------------- */
 function deletePart(i) {
+  if (!requireRole(["maintenance","supervisor","admin"], "Maintenance or higher only")) return;
   if (!confirm("Delete this part?")) return;
   parts.splice(i, 1);
   if (!saveState()) return;
@@ -776,12 +780,6 @@ closeInventoryPanelBtn?.addEventListener("click", closeInventoryPanel);
 inventoryPanelOverlay?.addEventListener("click", (e) => { if (e.target === inventoryPanelOverlay) closeInventoryPanel(); });
 
 saveInventoryBtn?.addEventListener("click", () => {
-  if (editingInventoryIndex === null) {
-    if (!requireRole(["supervisor","admin"], "Supervisor or Admin only")) return;
-  } else {
-    if (!requireRole(["maintenance","supervisor","admin"], "Maintenance or higher only")) return;
-  }
-
   const part = invPartName.value.trim();
   const category = invCategory.value;
   const location = invLocation.value.trim();
@@ -808,7 +806,6 @@ saveInventoryBtn?.addEventListener("click", () => {
 });
 
 function deleteInventoryItem(i) {
-  if (!requireRole(["supervisor","admin"], "Supervisor or Admin only")) return;
   if (!confirm("Delete this item?")) return;
   inventory.splice(i, 1);
   if (!saveState()) return;
@@ -1439,6 +1436,8 @@ closePmPanelBtn?.addEventListener("click", closePmPanel);
 pmPanelOverlay?.addEventListener("click", (e) => { if (e.target === pmPanelOverlay) closePmPanel(); });
 
 savePmBtn?.addEventListener("click", () => {
+  if (!requireRole(["admin"], "Admin only")) return;
+
   const name = (pmName?.value || "").trim();
   const area = pmArea?.value || "Cold Feed";
   const frequency = pmFrequency?.value || "Daily";
@@ -2060,6 +2059,7 @@ function getCurrentRole() {
 function setCurrentRole(role) {
   localStorage.setItem(ROLE_KEY, role);
   updateRoleBadges();
+  updateAcCalcVisibility();
 }
 
 function updateRoleBadges() {
@@ -2122,6 +2122,7 @@ function tryRoleLogin() {
   if (!localStorage.getItem(ROLE_KEY)) localStorage.setItem(ROLE_KEY, "ground");
 
   updateRoleBadges();
+  updateAcCalcVisibility();
 
   const btn = document.getElementById("roleLoginBtn");
   if (btn) btn.addEventListener("click", openRoleLogin);
@@ -2140,3 +2141,9 @@ function tryRoleLogin() {
     if (e.key === "Enter") tryRoleLogin();
   });
 })();
+
+function updateAcCalcVisibility() {
+  if (!acCalcTab) return;
+  const role = getCurrentRole();
+  acCalcTab.style.display = role === "ground" ? "none" : "";
+}
