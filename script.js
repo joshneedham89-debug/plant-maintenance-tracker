@@ -375,6 +375,12 @@ navButtons.forEach(btn => {
    TONS
 --------------------------------------------------- */
 updateTonsBtn?.addEventListener("click", () => {
+  const role = getCurrentRole();
+  if (role !== "supervisor" && role !== "admin") {
+    showToast("Supervisor or Admin only", "error");
+    return;
+  }
+
   currentTons = Number(currentTonsInput.value) || 0;
   if (!saveState()) return;
   renderDashboard();
@@ -382,6 +388,12 @@ updateTonsBtn?.addEventListener("click", () => {
 });
 
 resetTonsBtn?.addEventListener("click", () => {
+  const role = getCurrentRole();
+  if (role !== "supervisor" && role !== "admin") {
+    showToast("Supervisor or Admin only", "error");
+    return;
+  }
+
   currentTons = 0;
   if (currentTonsInput) currentTonsInput.value = 0;
   if (!saveState()) return;
