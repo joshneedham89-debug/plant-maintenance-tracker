@@ -881,3 +881,34 @@ textarea{
   margin-top: 10px;
 }
 
+
+
+/* ---------------------------------------------------
+   ROLE BADGE (Step 1 – Goldbaseline3)
+--------------------------------------------------- */
+.role-badge{
+  margin: 6px 12px 10px 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #223049;
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.role-badge span{
+  font-weight: 900;
+}
+.role-badge.role-admin{
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.12) inset;
+}
+.role-hint{
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.3;
+}

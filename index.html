@@ -22,6 +22,7 @@
     <!-- ---------------- DASHBOARD ---------------- -->
     <section id="dashboardScreen" class="screen active">
       <h2 class="section-title">Dashboard</h2>
+      <div id="roleBadgeDashboard" class="role-badge">Current Role: <span id="roleNameDashboard">Ground Man</span></div>
 
       <div class="stats-grid">
         <div class="stat-card">
@@ -197,8 +198,11 @@
     <!-- ---------------- SETTINGS SCREEN ---------------- -->
     <section id="settingsScreen" class="screen">
       <h2 class="section-title">Settings</h2>
+      <div id="roleBadgeSettings" class="role-badge">Current Role: <span id="roleNameSettings">Ground Man</span></div>
 
       <div class="card">
+        <button id="roleLoginBtn" class="secondary-btn full">Switch Role / Login</button>
+
         <button id="exportBtn" class="primary-btn full">Export Data</button>
 
         <!-- GOLD UPDATE: Supervisor PM compliance export -->
@@ -503,6 +507,28 @@
     </div>
   </div>
   <!-- END PM HISTORY PANEL -->
+
+
+  <!-- ROLE LOGIN PANEL (Step 1 – Goldbaseline3) -->
+  <div id="roleLoginOverlay" class="panel-overlay hidden">
+    <div class="slide-panel">
+      <div class="slide-panel-header">
+        <h3>Switch Role</h3>
+        <button id="roleLoginClose" class="close-btn">✖</button>
+      </div>
+
+      <div class="slide-panel-body">
+        <label for="rolePinInput">Enter 4-digit PIN</label>
+        <input id="rolePinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" />
+        <div class="role-hint">Ground: 1111 • Maintenance: 2222 • Supervisor: 3333 • Admin: 0000</div>
+
+        <div class="panel-footer">
+          <button id="roleLoginConfirm" class="primary-btn full">Confirm</button>
+          <button id="roleLoginCancel" class="secondary-btn full">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <!-- LIGHTBOX -->
   <div id="lightboxOverlay" class="lightbox-overlay hidden" aria-hidden="true">

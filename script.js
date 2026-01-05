@@ -2001,3 +2001,114 @@ pmChecklistBox?.addEventListener("change", (e) => {
   if (!Number.isFinite(idx)) return;
   pmChecklistChecked[idx] = !!cb.checked;
 });
+
+
+/* ===================================================
+   STEP 1: ROLE LOGIN (Goldbaseline3 – State + UI only)
+   - Default role: Ground Man
+   - Switch role via PIN
+   - Shows role badge on Dashboard + Settings
+   - NO permission enforcement in Step 1
+=================================================== */
+
+const ROLE_KEY = "pm_current_role";
+const ROLE_PINS = {
+  ground: "1111",
+  maintenance: "2222",
+  supervisor: "3333",
+  admin: "0000"
+};
+const ROLE_LABELS = {
+  ground: "Ground Man",
+  maintenance: "Maintenance",
+  supervisor: "Supervisor",
+  admin: "Admin"
+};
+
+function getCurrentRole() {
+  return localStorage.getItem(ROLE_KEY) || "ground";
+}
+
+function setCurrentRole(role) {
+  localStorage.setItem(ROLE_KEY, role);
+  updateRoleBadges();
+}
+
+function updateRoleBadges() {
+  const role = getCurrentRole();
+  const label = ROLE_LABELS[role] || "Ground Man";
+
+  const dashName = document.getElementById("roleNameDashboard");
+  const setName = document.getElementById("roleNameSettings");
+  if (dashName) dashName.textContent = label;
+  if (setName) setName.textContent = label;
+
+  const dashBadge = document.getElementById("roleBadgeDashboard");
+  const setBadge = document.getElementById("roleBadgeSettings");
+
+  const adminClass = role === "admin" ? "role-admin" : "";
+  if (dashBadge) dashBadge.className = "role-badge " + adminClass;
+  if (setBadge) setBadge.className = "role-badge " + adminClass;
+}
+
+function openRoleLogin() {
+  const overlay = document.getElementById("roleLoginOverlay");
+  const panel = overlay ? overlay.querySelector(".slide-panel") : null;
+  const pinInput = document.getElementById("rolePinInput");
+  if (!overlay) return;
+
+  overlay.classList.remove("hidden");
+  requestAnimationFrame(() => { if (panel) panel.classList.add("show"); });
+  setTimeout(() => { if (pinInput) pinInput.focus(); }, 80);
+}
+
+function closeRoleLogin() {
+  const overlay = document.getElementById("roleLoginOverlay");
+  const panel = overlay ? overlay.querySelector(".slide-panel") : null;
+  const pinInput = document.getElementById("rolePinInput");
+  if (!overlay) return;
+
+  if (panel) panel.classList.remove("show");
+  setTimeout(() => overlay.classList.add("hidden"), 220);
+  if (pinInput) pinInput.value = "";
+}
+
+function tryRoleLogin() {
+  const pinInput = document.getElementById("rolePinInput");
+  const pin = (pinInput?.value || "").trim();
+
+  const foundRole = Object.keys(ROLE_PINS).find(r => ROLE_PINS[r] === pin);
+  if (!foundRole) {
+    if (typeof showToast === "function") showToast("Invalid PIN", "error");
+    return;
+  }
+
+  setCurrentRole(foundRole);
+  if (typeof showToast === "function") showToast("Role set: " + (ROLE_LABELS[foundRole] || foundRole), "success");
+  closeRoleLogin();
+}
+
+/* Bind UI (safe: optional elements) */
+(function initRoleLoginStep1() {
+  // Always boot in Ground by default unless role already stored
+  if (!localStorage.getItem(ROLE_KEY)) localStorage.setItem(ROLE_KEY, "ground");
+
+  updateRoleBadges();
+
+  const btn = document.getElementById("roleLoginBtn");
+  if (btn) btn.addEventListener("click", openRoleLogin);
+
+  var _r1=document.getElementById("roleLoginClose"); if (_r1) _r1.addEventListener("click", closeRoleLogin);
+  var _r2=document.getElementById("roleLoginCancel"); if (_r2) _r2.addEventListener("click", closeRoleLogin);
+  var _r3=document.getElementById("roleLoginConfirm"); if (_r3) _r3.addEventListener("click", tryRoleLogin);
+
+  // Close if user taps dim background
+  var _r4=document.getElementById("roleLoginOverlay"); if (_r4) _r4.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "roleLoginOverlay") closeRoleLogin();
+  });
+
+  // Enter key submits
+  var _r5=document.getElementById("rolePinInput"); if (_r5) _r5.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") tryRoleLogin();
+  });
+})();
